@@ -13,7 +13,7 @@ Java 21, Spring Boot 4.1.1, Maven, Spring Data JPA/Hibernate, PostgreSQL 17 y Fl
 - `category`: entidad, repositorio, servicio, API REST, DTOs, mapper y errores de categorías.
 - `product`: entidad, repositorio, servicio, API REST, DTOs, mapper y errores de productos.
 - `inventory`: movimientos históricos, repositorio, servicio transaccional, API REST y errores de stock.
-- `sale`: migración V3, agregado histórico inmutable y repositorio paginado. No hay servicio ni API de ventas.
+- `sale`: migración V3, agregado histórico inmutable, repositorio paginado y servicio de confirmación. No hay API de ventas ni descuento de stock por ventas.
 - `common`: `PageResponse` y `GlobalExceptionHandler`/`ApiError` compartidos.
 
 ## Flujo por capas
@@ -48,4 +48,4 @@ Hay pruebas unitarias de entidades, servicios, validación, mappers y controller
 
 ## Decisiones y límites actuales
 
-No hay SaleService, descuento de stock por ventas, movimientos OUT de venta, bloqueo multi-producto, API/DTOs de ventas, dashboard, frontend, autenticación, clientes, pagos, facturación ni cancelaciones. La igualdad entre `sales.total` y la suma de ítems se garantizará en el servicio transaccional, no mediante un CHECK entre tablas. Las lecturas paginadas de ventas no deben usar `JOIN FETCH` sobre ítems: la lectura detallada se resolverá posteriormente dentro de una transacción.
+`SaleService` confirma únicamente agregados con ítems y verifica que `sales.total` coincida con la suma de subtotales antes de persistir. Aún no hay descuento de stock por ventas, movimientos OUT de venta, bloqueo multi-producto, API/DTOs de ventas, dashboard, frontend, autenticación, clientes, pagos, facturación ni cancelaciones. La igualdad entre `sales.total` y la suma de ítems se garantiza en el servicio transaccional, no mediante un CHECK entre tablas. Las lecturas paginadas de ventas no deben usar `JOIN FETCH` sobre ítems: la lectura detallada se resolverá posteriormente dentro de una transacción.

@@ -2,19 +2,19 @@
 
 ## Completed modules
 
-`category`, `product`, `inventory`, `common` y el agregado persistente `sale` están completados. El esquema incluye categorías, productos, movimientos de stock, ventas e ítems de venta.
+`category`, `product`, `inventory`, `common` y `sale` hasta su confirmación persistente están completados. El esquema incluye categorías, productos, movimientos de stock, ventas e ítems de venta.
 
 ## Current module
 
-`sale`: falta el servicio transaccional que confirme ventas, valide que no estén vacías y coordine el inventario.
+`sale`: la confirmación persistente valida que la venta tenga ítems y que el total sea consistente. Falta integrarla con el descuento transaccional de stock.
 
 ## Next task
 
-Implementar `SaleService` con pruebas unitarias y transaccionales: debe prohibir ventas sin ítems y mantener el total consistente, sin crear todavía DTOs ni endpoints.
+Integrar la venta confirmada con el descuento transaccional de stock, manteniendo ambas operaciones atómicas y sin crear todavía DTOs ni endpoints.
 
 ## Last general test result
 
-Suite completa con PostgreSQL/Testcontainers: **283 pruebas, 0 fallos, 0 errores y 0 omitidas**.
+Suite completa con PostgreSQL/Testcontainers: **288 pruebas, 0 fallos, 0 errores y 0 omitidas**.
 
 ## Pending decisions
 
