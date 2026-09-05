@@ -55,7 +55,7 @@ class InventoryServiceIntegrationTest {
 
     @AfterEach
     void clearDatabase() {
-        jdbcTemplate.execute("TRUNCATE TABLE stock_movements, products, categories RESTART IDENTITY");
+        jdbcTemplate.execute("TRUNCATE TABLE sale_items, sales, stock_movements, products, categories RESTART IDENTITY");
     }
 
     @Test

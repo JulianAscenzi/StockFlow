@@ -36,6 +36,6 @@ public abstract class ApiIntegrationTestSupport {
     @AfterEach
     void clearDatabase() {
         // The product API has no delete endpoint, so this is the only API-independent cleanup.
-        jdbcTemplate.execute("TRUNCATE TABLE stock_movements, products, categories RESTART IDENTITY");
+        jdbcTemplate.execute("TRUNCATE TABLE sale_items, sales, stock_movements, products, categories RESTART IDENTITY");
     }
 }
