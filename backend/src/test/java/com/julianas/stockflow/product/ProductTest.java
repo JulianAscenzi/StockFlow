@@ -15,6 +15,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ProductTest {
@@ -167,6 +168,41 @@ class ProductTest {
         assertEquals(cost, product.getCost());
         assertEquals(2, product.getPrice().scale());
         assertEquals(2, product.getCost().scale());
+    }
+
+    @Test
+    void increaseAndDecreaseStockChangeOnlyStock() {
+        Product product = validProduct("SKU-A1");
+        String name = product.getName();
+        Category category = product.getCategory();
+
+        product.increaseStock(5);
+        product.decreaseStock(3);
+
+        assertEquals(12, product.getStock());
+        assertEquals(name, product.getName());
+        assertSame(category, product.getCategory());
+    }
+
+    @Test
+    void stockOperationsRejectNonPositiveAndInsufficientQuantitiesWithoutChangingStock() {
+        Product product = validProduct("SKU-A1");
+
+        assertThrows(IllegalArgumentException.class, () -> product.increaseStock(0));
+        assertThrows(IllegalArgumentException.class, () -> product.decreaseStock(-1));
+        assertThrows(IllegalArgumentException.class, () -> product.decreaseStock(11));
+
+        assertEquals(10, product.getStock());
+    }
+
+    @Test
+    void increaseStockRejectsOverflowWithoutChangingStock() {
+        Product product = productWith("Mouse", "SKU-A1", BigDecimal.ONE, BigDecimal.ONE,
+                Integer.MAX_VALUE, 0, validCategory());
+
+        assertThrows(ArithmeticException.class, () -> product.increaseStock(1));
+
+        assertEquals(Integer.MAX_VALUE, product.getStock());
     }
 
     private static Product validProduct(String sku) {

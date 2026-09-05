@@ -128,6 +128,19 @@ public class Product {
         active = false;
     }
 
+    public void increaseStock(int quantity) {
+        requirePositiveStockQuantity(quantity);
+        stock = Math.addExact(stock, quantity);
+    }
+
+    public void decreaseStock(int quantity) {
+        requirePositiveStockQuantity(quantity);
+        if (quantity > stock) {
+            throw new IllegalArgumentException("quantity exceeds available stock");
+        }
+        stock -= quantity;
+    }
+
     @PrePersist
     private void initializeTimestamps() {
         Instant now = Instant.now();
@@ -142,6 +155,12 @@ public class Product {
 
     private static String normalizeSku(String sku) {
         return sku == null ? null : sku.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private static void requirePositiveStockQuantity(int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("quantity must be positive");
+        }
     }
 
     public Long getId() {
