@@ -5,6 +5,8 @@ import com.julianas.stockflow.category.CategoryInUseException;
 import com.julianas.stockflow.category.CategoryNotFoundException;
 import com.julianas.stockflow.category.DuplicateCategoryNameException;
 import com.julianas.stockflow.category.api.CategoryCreateRequest;
+import com.julianas.stockflow.inventory.InsufficientStockException;
+import com.julianas.stockflow.inventory.StockLimitExceededException;
 import com.julianas.stockflow.product.DuplicateProductSkuException;
 import com.julianas.stockflow.product.ProductNotFoundException;
 import jakarta.validation.ConstraintViolation;
@@ -108,6 +110,30 @@ class GlobalExceptionHandlerTest {
         mockMvc.perform(get("/test/category-in-use"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("CATEGORY_IN_USE"));
+    }
+
+    @Test
+    void handlesInsufficientStockWithoutInternalDetails() throws Exception {
+        mockMvc.perform(get("/test/insufficient-stock"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.code").value("INSUFFICIENT_STOCK"))
+                .andExpect(jsonPath("$.path").value("/test/insufficient-stock"))
+                .andExpect(jsonPath("$.fieldErrors").isEmpty())
+                .andExpect(content().string(not(containsString("InsufficientStockException"))));
+    }
+
+    @Test
+    void handlesStockLimitExceededWithoutTechnicalDetails() throws Exception {
+        mockMvc.perform(get("/test/stock-limit"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.code").value("STOCK_LIMIT_EXCEEDED"))
+                .andExpect(jsonPath("$.path").value("/test/stock-limit"))
+                .andExpect(jsonPath("$.trace").doesNotExist())
+                .andExpect(jsonPath("$.exception").doesNotExist())
+                .andExpect(content().string(not(containsString("Integer.MAX_VALUE"))))
+                .andExpect(content().string(not(containsString("StockLimitExceededException"))));
     }
 
     @Test
@@ -238,6 +264,16 @@ class GlobalExceptionHandlerTest {
         @GetMapping("/category-in-use")
         void categoryInUse() {
             throw new CategoryInUseException(7L);
+        }
+
+        @GetMapping("/insufficient-stock")
+        void insufficientStock() {
+            throw new InsufficientStockException(7L, 3, 5);
+        }
+
+        @GetMapping("/stock-limit")
+        void stockLimit() {
+            throw new StockLimitExceededException();
         }
 
         @PostMapping("/validation")

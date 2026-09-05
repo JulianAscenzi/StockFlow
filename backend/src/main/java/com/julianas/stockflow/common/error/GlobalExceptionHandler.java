@@ -3,6 +3,8 @@ package com.julianas.stockflow.common.error;
 import com.julianas.stockflow.category.CategoryInUseException;
 import com.julianas.stockflow.category.CategoryNotFoundException;
 import com.julianas.stockflow.category.DuplicateCategoryNameException;
+import com.julianas.stockflow.inventory.InsufficientStockException;
+import com.julianas.stockflow.inventory.StockLimitExceededException;
 import com.julianas.stockflow.product.DuplicateProductSkuException;
 import com.julianas.stockflow.product.ProductNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -98,6 +100,35 @@ public class GlobalExceptionHandler {
                 HttpStatus.CONFLICT,
                 "CATEGORY_IN_USE",
                 exception.getMessage(),
+                request,
+                Map.of()
+        );
+    }
+
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<ApiError> handleInsufficientStock(
+            InsufficientStockException exception,
+            HttpServletRequest request
+    ) {
+        return response(
+                HttpStatus.CONFLICT,
+                "INSUFFICIENT_STOCK",
+                "Insufficient stock: requested " + exception.getRequestedQuantity()
+                        + ", available " + exception.getAvailableStock() + ".",
+                request,
+                Map.of()
+        );
+    }
+
+    @ExceptionHandler(StockLimitExceededException.class)
+    public ResponseEntity<ApiError> handleStockLimitExceeded(
+            StockLimitExceededException exception,
+            HttpServletRequest request
+    ) {
+        return response(
+                HttpStatus.CONFLICT,
+                "STOCK_LIMIT_EXCEEDED",
+                "The stock cannot be increased further.",
                 request,
                 Map.of()
         );
