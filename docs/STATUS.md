@@ -6,11 +6,11 @@ El backend MVP está cerrado: `category`, `product`, `inventory`, `common`, `sal
 
 ## Current module
 
-Checkpoint de cierre del backend MVP completado: migraciones Flyway V1–V3, API, transacciones y pruebas revisadas.
+`frontend`: cliente React + TypeScript + Vite construido con los flujos de resumen, catálogo de productos/categorías, inventario y venta.
 
 ## Next task
 
-Definir el stack y los flujos MVP del frontend antes de iniciar su construcción.
+Integrar frontend y backend en un flujo de desarrollo y E2E real.
 
 ## Last general test result
 
@@ -18,8 +18,8 @@ Suite completa con PostgreSQL/Testcontainers: **309 pruebas, 0 fallos, 0 errores
 
 ## Pending decisions
 
-Quedan decisiones de tecnología y flujos del frontend, además del alcance futuro de autenticación.
+Queda definir el alcance futuro de autenticación.
 
 ## Real blockers
 
-La elección de stack y flujos del frontend es necesaria para comenzar el bloque 18.
+No hay bloqueos reales conocidos; el proxy de desarrollo ya apunta a `localhost:8080`.

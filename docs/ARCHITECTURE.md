@@ -16,6 +16,7 @@ Java 21, Spring Boot 4.1.1, Maven, Spring Data JPA/Hibernate, PostgreSQL 17 y Fl
 - `sale`: migración V3, agregado histórico inmutable, repositorio paginado, servicio de confirmación transaccional, DTOs, mapper y controller de confirmación.
 - `common`: `PageResponse` y `GlobalExceptionHandler`/`ApiError` compartidos.
 - `dashboard`: consultas agregadas, servicio de lectura y `GET /api/dashboard`.
+- `frontend`: cliente React + TypeScript + Vite con resumen, catálogo de productos/categorías, ajustes de inventario y confirmación de ventas. Durante desarrollo, Vite redirige `/api` al backend local.
 
 ## Dashboard diario
 

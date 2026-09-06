@@ -26,3 +26,10 @@ replay_pid*
 # Local environment configuration
 .env
 !.env.example
+
+# Frontend dependencies and build output
+frontend/node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
