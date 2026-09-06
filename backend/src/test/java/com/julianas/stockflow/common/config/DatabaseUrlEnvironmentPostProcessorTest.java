@@ -24,6 +24,17 @@ class DatabaseUrlEnvironmentPostProcessorTest {
     }
 
     @Test
+    void usesDefaultPostgresqlPortWhenRenderUrlOmitsIt() {
+        MockEnvironment environment = new MockEnvironment()
+                .withProperty("DATABASE_URL", "postgresql://stockflow:secret@database.internal/stockflow");
+
+        postProcessor.postProcessEnvironment(environment, new SpringApplication());
+
+        assertThat(environment.getProperty("spring.datasource.url"))
+                .isEqualTo("jdbc:postgresql://database.internal:5432/stockflow");
+    }
+
+    @Test
     void leavesLocalConfigurationUntouchedWithoutRenderUrl() {
         MockEnvironment environment = new MockEnvironment();
 

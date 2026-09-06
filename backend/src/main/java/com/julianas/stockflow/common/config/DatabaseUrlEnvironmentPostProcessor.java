@@ -15,6 +15,7 @@ import org.springframework.core.env.MapPropertySource;
 public class DatabaseUrlEnvironmentPostProcessor implements EnvironmentPostProcessor {
 
     private static final String RENDER_DATABASE_URL_PREFIX = "postgresql://";
+    private static final int DEFAULT_POSTGRESQL_PORT = 5432;
 
     @Override
     public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {
@@ -29,7 +30,8 @@ public class DatabaseUrlEnvironmentPostProcessor implements EnvironmentPostProce
             throw new IllegalStateException("DATABASE_URL must include a PostgreSQL user and password");
         }
 
-        String jdbcUrl = "jdbc:postgresql://" + uri.getHost() + ":" + uri.getPort() + uri.getRawPath();
+        int port = uri.getPort() == -1 ? DEFAULT_POSTGRESQL_PORT : uri.getPort();
+        String jdbcUrl = "jdbc:postgresql://" + uri.getHost() + ":" + port + uri.getRawPath();
         if (uri.getRawQuery() != null) {
             jdbcUrl += "?" + uri.getRawQuery();
         }

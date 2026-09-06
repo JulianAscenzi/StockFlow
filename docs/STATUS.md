@@ -14,7 +14,7 @@ Publicar la demo gratuita en Render y Vercel, con datos ficticios, siguiendo `do
 
 ## Last general test result
 
-Suite completa con PostgreSQL/Testcontainers: **311 pruebas, 0 fallos, 0 errores y 0 omitidas**. La interfaz compila con Vite y la integración frontend–backend se verificó además en una base PostgreSQL temporal: categoría, producto, entrada de stock, venta y resumen diario.
+Suite completa con PostgreSQL/Testcontainers: **312 pruebas, 0 fallos, 0 errores y 0 omitidas**. La interfaz compila con Vite y la integración frontend–backend se verificó además en una base PostgreSQL temporal: categoría, producto, entrada de stock, venta y resumen diario.
 
 ## Pending decisions
 
