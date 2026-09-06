@@ -2,15 +2,15 @@
 
 ## Completed modules
 
-`category`, `product`, `inventory`, `common` y `sale` hasta su confirmación persistente están completados. El esquema incluye categorías, productos, movimientos de stock, ventas e ítems de venta.
+El backend MVP está cerrado: `category`, `product`, `inventory`, `common`, `sale` y `dashboard` están completados. El esquema incluye categorías, productos, movimientos de stock, ventas e ítems de venta.
 
 ## Current module
 
-`dashboard`: métricas diarias en zona Argentina con agregados independientes de ventas e ítems y consulta de bajo stock filtrada antes de paginar.
+Checkpoint de cierre del backend MVP completado: migraciones Flyway V1–V3, API, transacciones y pruebas revisadas.
 
 ## Next task
 
-Revisar y cerrar el backend MVP, verificando el alcance real de API, transacciones, migraciones y pruebas antes de avanzar al frontend.
+Definir el stack y los flujos MVP del frontend antes de iniciar su construcción.
 
 ## Last general test result
 
@@ -18,8 +18,8 @@ Suite completa con PostgreSQL/Testcontainers: **309 pruebas, 0 fallos, 0 errores
 
 ## Pending decisions
 
-Métricas del dashboard aprobadas e implementadas. Quedan decisiones de autenticación y frontend; no bloquean la revisión del backend.
+Quedan decisiones de tecnología y flujos del frontend, además del alcance futuro de autenticación.
 
 ## Real blockers
 
-No hay bloqueos reales conocidos.
+La elección de stack y flujos del frontend es necesaria para comenzar el bloque 18.
