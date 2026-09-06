@@ -6,15 +6,15 @@
 
 ## Current module
 
-`sale`: la confirmación valida ítems y total, bloquea productos en orden determinista, descuenta stock y registra movimientos `OUT` de forma atómica. Sus DTOs y mapper preservan snapshots históricos; falta definir los errores HTTP de ventas.
+`sale`: la confirmación valida ítems y total, bloquea productos en orden determinista, descuenta stock y registra movimientos `OUT` de forma atómica. Sus contratos y errores HTTP públicos están definidos; falta el controller.
 
 ## Next task
 
-Definir errores HTTP públicos y coherentes para ventas, productos y stock inválidos.
+Implementar el controller de ventas con confirmación y consultas necesarias.
 
 ## Last general test result
 
-Suite completa con PostgreSQL/Testcontainers: **298 pruebas, 0 fallos, 0 errores y 0 omitidas**.
+Suite completa con PostgreSQL/Testcontainers: **299 pruebas, 0 fallos, 0 errores y 0 omitidas**.
 
 ## Pending decisions
 

@@ -7,6 +7,7 @@ import com.julianas.stockflow.inventory.InsufficientStockException;
 import com.julianas.stockflow.inventory.StockLimitExceededException;
 import com.julianas.stockflow.product.DuplicateProductSkuException;
 import com.julianas.stockflow.product.ProductNotFoundException;
+import com.julianas.stockflow.sale.EmptySaleException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -129,6 +130,20 @@ public class GlobalExceptionHandler {
                 HttpStatus.CONFLICT,
                 "STOCK_LIMIT_EXCEEDED",
                 "The stock cannot be increased further.",
+                request,
+                Map.of()
+        );
+    }
+
+    @ExceptionHandler(EmptySaleException.class)
+    public ResponseEntity<ApiError> handleEmptySale(
+            EmptySaleException exception,
+            HttpServletRequest request
+    ) {
+        return response(
+                HttpStatus.BAD_REQUEST,
+                "EMPTY_SALE",
+                "A sale must contain at least one item.",
                 request,
                 Map.of()
         );

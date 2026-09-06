@@ -9,6 +9,7 @@ import com.julianas.stockflow.inventory.InsufficientStockException;
 import com.julianas.stockflow.inventory.StockLimitExceededException;
 import com.julianas.stockflow.product.DuplicateProductSkuException;
 import com.julianas.stockflow.product.ProductNotFoundException;
+import com.julianas.stockflow.sale.EmptySaleException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
@@ -134,6 +135,15 @@ class GlobalExceptionHandlerTest {
                 .andExpect(jsonPath("$.exception").doesNotExist())
                 .andExpect(content().string(not(containsString("Integer.MAX_VALUE"))))
                 .andExpect(content().string(not(containsString("StockLimitExceededException"))));
+    }
+
+    @Test
+    void handlesEmptySaleWithoutInternalDetails() throws Exception {
+        mockMvc.perform(get("/test/empty-sale"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("EMPTY_SALE"))
+                .andExpect(jsonPath("$.message").value("A sale must contain at least one item."))
+                .andExpect(content().string(not(containsString("EmptySaleException"))));
     }
 
     @Test
@@ -274,6 +284,11 @@ class GlobalExceptionHandlerTest {
         @GetMapping("/stock-limit")
         void stockLimit() {
             throw new StockLimitExceededException();
+        }
+
+        @GetMapping("/empty-sale")
+        void emptySale() {
+            throw new EmptySaleException();
         }
 
         @PostMapping("/validation")
