@@ -12,7 +12,7 @@ Estado reconstruido desde commits, código y pruebas. `[x]` significa entregado 
 8. [x] Registrar movimientos OUT — objetivo: un `StockMovement` OUT por línea vendida. Módulos: `sale`, `inventory`. Aceptación: balances/motivos/historial correctos. Pruebas: integración. Dependencias: bloque 6.
 9. [x] Rollback por stock insuficiente — objetivo: no dejar venta, stock ni movimientos parciales. Módulos: `sale`, `inventory`. Aceptación: rollback total. Pruebas: integración. Dependencias: bloques 6–8.
 10. [x] Ventas concurrentes — objetivo: impedir sobreventa. Módulos: `sale`, `product`. Aceptación: resultados deterministas sin sobrepasar stock. Pruebas: Futures con timeout. Dependencias: bloques 7–9.
-11. [ ] DTOs y mappers de ventas — objetivo: contratos HTTP sin exponer entidades. Módulo: `sale/api`. Aceptación: requests/responses y mapeo de detalle. Pruebas: validación/mappers. Dependencias: bloque 5.
+11. [x] DTOs y mappers de ventas — objetivo: contratos HTTP sin exponer entidades. Módulo: `sale/api`. Aceptación: requests/responses y mapeo de detalle. Pruebas: validación/mappers. Dependencias: bloque 5.
 12. [ ] Errores HTTP de ventas — objetivo: códigos públicos para venta/producto/stock inválidos. Módulos: `sale`, `common/error`. Aceptación: respuestas coherentes de conflicto/validación. Pruebas: advice/MVC. Dependencias: bloques 5–10.
 13. [ ] SaleController — objetivo: endpoint de confirmación y consultas necesarias. Módulo: `sale/api`. Aceptación: controller delgado y DTOs validados. Pruebas: MVC. Dependencias: bloques 11–12.
 14. [ ] Pruebas MVC de ventas — objetivo: contratos HTTP de ventas. Módulo: `sale/api`. Aceptación: estados, payloads y errores. Pruebas: `@WebMvcTest`. Dependencias: bloque 13.

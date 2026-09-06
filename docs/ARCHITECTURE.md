@@ -13,7 +13,7 @@ Java 21, Spring Boot 4.1.1, Maven, Spring Data JPA/Hibernate, PostgreSQL 17 y Fl
 - `category`: entidad, repositorio, servicio, API REST, DTOs, mapper y errores de categorías.
 - `product`: entidad, repositorio, servicio, API REST, DTOs, mapper y errores de productos.
 - `inventory`: movimientos históricos, repositorio, servicio transaccional, API REST y errores de stock.
-- `sale`: migración V3, agregado histórico inmutable, repositorio paginado y servicio de confirmación transaccional con descuento de stock. No hay API de ventas.
+- `sale`: migración V3, agregado histórico inmutable, repositorio paginado, servicio de confirmación transaccional, DTOs y mapper. No hay controller de ventas.
 - `common`: `PageResponse` y `GlobalExceptionHandler`/`ApiError` compartidos.
 
 ## Flujo por capas
@@ -48,4 +48,4 @@ Hay pruebas unitarias de entidades, servicios, validación, mappers y controller
 
 ## Decisiones y límites actuales
 
-`SaleService` confirma agregados con ítems, verifica que `sales.total` coincida con la suma de subtotales y ordena las líneas por `productId` antes de descontar cada una mediante `InventoryService` en la misma transacción. Así los bloqueos pesimistas de productos se adquieren en orden determinista y se evitan deadlocks entre ventas con líneas invertidas; las ventas concurrentes no pueden sobrepasar el stock disponible. Cada descuento registra un movimiento `OUT` con motivo `Sale`; una falta de stock revierte venta, stock y movimientos. Todavía no hay API/DTOs de ventas, dashboard, frontend, autenticación, clientes, pagos, facturación ni cancelaciones. La igualdad entre `sales.total` y la suma de ítems se garantiza en el servicio transaccional, no mediante un CHECK entre tablas. Las lecturas paginadas de ventas no deben usar `JOIN FETCH` sobre ítems: la lectura detallada se resolverá posteriormente dentro de una transacción.
+`SaleService` confirma agregados con ítems, verifica que `sales.total` coincida con la suma de subtotales y ordena las líneas por `productId` antes de descontar cada una mediante `InventoryService` en la misma transacción. Así los bloqueos pesimistas de productos se adquieren en orden determinista y se evitan deadlocks entre ventas con líneas invertidas; las ventas concurrentes no pueden sobrepasar el stock disponible. Cada descuento registra un movimiento `OUT` con motivo `Sale`; una falta de stock revierte venta, stock y movimientos. `sale/api` define contratos de creación y detalle, incluido cada snapshot histórico, mediante `SaleMapper`, pero todavía no hay controller. La igualdad entre `sales.total` y la suma de ítems se garantiza en el servicio transaccional, no mediante un CHECK entre tablas. Las lecturas paginadas de ventas no deben usar `JOIN FETCH` sobre ítems: la lectura detallada se resolverá posteriormente dentro de una transacción.

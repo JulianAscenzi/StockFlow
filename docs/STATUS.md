@@ -6,15 +6,15 @@
 
 ## Current module
 
-`sale`: la confirmación valida ítems y total, bloquea productos en orden determinista, descuenta stock y registra movimientos `OUT` de forma atómica. Las ventas concurrentes no pueden provocar sobreventa.
+`sale`: la confirmación valida ítems y total, bloquea productos en orden determinista, descuenta stock y registra movimientos `OUT` de forma atómica. Sus DTOs y mapper preservan snapshots históricos; falta definir los errores HTTP de ventas.
 
 ## Next task
 
-Definir DTOs y mappers de ventas, sin exponer entidades JPA.
+Definir errores HTTP públicos y coherentes para ventas, productos y stock inválidos.
 
 ## Last general test result
 
-Suite completa con PostgreSQL/Testcontainers: **292 pruebas, 0 fallos, 0 errores y 0 omitidas**.
+Suite completa con PostgreSQL/Testcontainers: **298 pruebas, 0 fallos, 0 errores y 0 omitidas**.
 
 ## Pending decisions
 
