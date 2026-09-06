@@ -16,6 +16,7 @@ import java.util.List;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -47,5 +48,26 @@ class SaleControllerTest {
 
         verify(saleService).confirm("Counter sale", List.of(new SaleService.SaleLine(8L, 2)));
         verify(saleMapper).toResponse(sale);
+    }
+
+    @Test
+    void rejectsInvalidPayloadWithoutCallingDependencies() throws Exception {
+        mockMvc.perform(post("/api/sales").contentType("application/json")
+                        .content("{\"items\":[{\"productId\":0,\"quantity\":0}]}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.fieldErrors").isNotEmpty());
+
+        verifyNoInteractions(saleService, saleMapper);
+    }
+
+    @Test
+    void rejectsEmptySaleRequestWithoutCallingDependencies() throws Exception {
+        mockMvc.perform(post("/api/sales").contentType("application/json")
+                        .content("{\"notes\":\"Counter sale\",\"items\":[]}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+
+        verifyNoInteractions(saleService, saleMapper);
     }
 }
