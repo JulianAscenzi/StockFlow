@@ -6,11 +6,11 @@ El backend MVP está cerrado: `category`, `product`, `inventory`, `common`, `sal
 
 ## Current module
 
-`deployment`: se preparó un piloto privado con Docker para la API, PostgreSQL 17 administrado en Render, interfaz Vite configurable para Vercel, CORS por origen explícito, health check y guía operativa. No contiene secretos ni crea recursos externos.
+`deployment`: se preparó una demo gratuita de portfolio con Docker para la API, PostgreSQL 17 Free en Render, interfaz Vite configurable para Vercel, CORS por origen explícito, health check y guía operativa. No contiene secretos ni crea recursos externos.
 
 ## Next task
 
-Crear las cuentas de infraestructura, definir el dominio y realizar el smoke test del piloto siguiendo `docs/DEPLOYMENT.md`.
+Publicar la demo gratuita en Render y Vercel, con datos ficticios, siguiendo `docs/DEPLOYMENT.md`.
 
 ## Last general test result
 
@@ -18,8 +18,8 @@ Suite completa con PostgreSQL/Testcontainers: **311 pruebas, 0 fallos, 0 errores
 
 ## Pending decisions
 
-Queda definir e implementar el alcance de autenticación propio antes de usar datos comerciales. Cloudflare Access sólo será una barrera temporal del piloto.
+Queda definir e implementar el alcance de autenticación propio antes de usar datos comerciales. La demo de portfolio no debe contener datos reales.
 
 ## Real blockers
 
-No hay bloqueos técnicos en el repositorio. El siguiente paso requiere cuentas en Render, Vercel y Cloudflare, además de un dominio; son credenciales/permisos que debe proporcionar quien opera el comercio.
+No hay bloqueos técnicos en el repositorio. El siguiente paso requiere cuentas gratuitas en Render y Vercel; los cambios deben estar disponibles en GitHub antes de crear el Blueprint.

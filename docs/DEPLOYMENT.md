@@ -1,58 +1,38 @@
-# Despliegue de piloto privado
+# Demo gratuita para portfolio
 
-Esta guía prepara un piloto privado en Vercel (interfaz), Render (API y PostgreSQL) y Cloudflare Access (control temporal de acceso). No reemplaza la autenticación propia de la aplicación: no se debe abrir a público ni usar con personal no autorizado hasta implementar el bloque de autenticación del roadmap.
+Esta guía publica una demo técnica gratuita: Vercel para la interfaz y Render Free para API y PostgreSQL. No es un despliegue de producción ni debe contener datos reales, porque la aplicación todavía no tiene autenticación propia.
 
-## Límites de seguridad
+## Límites intencionales
 
-- No se suben contraseñas ni URLs de conexión al repositorio. Render crea `DATABASE_URL` desde la base asociada.
-- La API acepta CORS únicamente desde `APP_CORS_ALLOWED_ORIGINS`. CORS no es autenticación: bloquea navegadores ajenos, no solicitudes directas.
-- Protegé tanto `app.tudominio.com` como `api.tudominio.com` con Cloudflare Access. La protección de la interfaz por sí sola no protege la API.
-- Antes de cargar datos reales, configurá y probá recuperación de PostgreSQL. No se considera listo un despliegue sin una restauración de prueba.
+- Render Free detiene la API tras 15 minutos sin tráfico; la primera visita posterior puede demorar aproximadamente un minuto.
+- PostgreSQL Free en Render tiene 1 GB, no tiene backups y expira 30 días después de crearse. Se puede recrear con datos ficticios cuando haga falta.
+- No se compra dominio ni se configura Cloudflare. Se usan los subdominios gratuitos de Vercel y Render.
+- La API restringe CORS al dominio de Vercel, pero eso no es autenticación. Cualquiera podría modificar la demo haciendo llamadas directas a la API: usá sólo información inventada.
 
-## 1. Dominio y Cloudflare
+## 1. API y base en Render
 
-1. Registrá un dominio y agregalo a Cloudflare. Usaremos `app.tudominio.com` para la interfaz y `api.tudominio.com` para la API.
-2. En Cloudflare Zero Trust, creá una aplicación **Self-hosted** para cada hostname.
-3. Creá una política **Allow** limitada inicialmente a los correos de las personas autorizadas. Usá un proveedor de identidad o códigos de un solo uso por correo.
-4. No habilites los DNS definitivos todavía: primero necesitás las URLs de Vercel y Render.
+1. En Render, abrí **New** → **Blueprint** y elegí este repositorio cuando el cambio a `plan: free` ya esté visible en GitHub.
+2. Confirmá que el plan de `stockflow-api` y `stockflow-postgres` sea **Free**; no aceptes una opción paga.
+3. Render pedirá `APP_CORS_ALLOWED_ORIGINS`. Ingresá temporalmente `https://example.com`; se reemplaza después de crear la interfaz.
+4. Aplicá el Blueprint. Render crea la base PostgreSQL 17, inyecta internamente `DATABASE_URL` y despliega la API.
+5. Guardá la URL `https://stockflow-api-<identificador>.onrender.com` y comprobá `<esa-url>/actuator/health`: debe responder `200`.
 
-Cloudflare Access deniega por defecto; verificá con una ventana privada que un correo no autorizado no pueda entrar a ambos hostnames.
+## 2. Interfaz en Vercel
 
-## 2. Base y API en Render
+1. En Vercel, hacé **Add New** → **Project** e importá el mismo repositorio.
+2. Configurá **Root Directory** como `frontend`. Vercel detectará Vite.
+3. Antes de desplegar, agregá la variable de producción `VITE_API_BASE_URL` con la URL de Render, sin barra final.
+4. Desplegá y guardá la URL `https://<proyecto>.vercel.app`.
+5. Volvé a Render, editá `APP_CORS_ALLOWED_ORIGINS` y reemplazá el valor temporal por esa URL de Vercel. Guardá y redeployá la API.
 
-1. Conectá este repositorio a Render y creá un Blueprint desde `render.yaml`.
-2. Conservá PostgreSQL 17 y la región `virginia` que declara el archivo, salvo que se acuerde otra región antes de crear la base. La elección no se puede cambiar después.
-3. Elegí los planes indicados como mínimo inicial y revisá el costo mostrado por Render antes de confirmar. No uses una base efímera o sin recuperación para datos comerciales.
-4. Al crear el Blueprint, Render pedirá `APP_CORS_ALLOWED_ORIGINS`. Cargá exactamente `https://app.tudominio.com`, sin barra final. Si se usa temporalmente el dominio de Vercel, agregalo separado por coma.
-5. Dejá `autoDeploy` desactivado hasta aprobar el smoke test. Render obtiene `DATABASE_URL` internamente; la aplicación lo adapta al formato JDBC y Flyway aplica/valida el esquema al arrancar.
-6. Tras el primer despliegue, comprobá `https://<url-de-render>/actuator/health`: debe responder `200` y no mostrar detalles internos.
-7. Añadí `api.tudominio.com` como dominio personalizado en Render y configurá en Cloudflare el DNS que Render indique. Aplicá Access a ese hostname.
+`VITE_API_BASE_URL` es pública y puede estar en la configuración de Vercel; nunca cargues contraseñas en una variable que empiece con `VITE_`.
 
-La base no requiere ni debe exponer un puerto público. El Blueprint incluye una lista de IP pública vacía para que no se creen reglas de acceso externo.
+## Smoke test de la demo
 
-## 3. Interfaz en Vercel
+1. Abrí la URL de Vercel y esperá el arranque de Render si corresponde.
+2. Creá una categoría y un producto ficticios.
+3. Registrá una entrada de stock, confirmá una venta y verificá el resumen diario.
+4. Recargá la página y verificá que los datos de demostración persistan.
+5. Incluí ambas URLs y una captura de pantalla en tu CV o portfolio.
 
-1. Importá el mismo repositorio en Vercel.
-2. Configurá **Root Directory** como `frontend`; Vercel detectará Vite y ejecutará `npm ci`/`npm run build`.
-3. En las variables de entorno de producción, definí `VITE_API_BASE_URL=https://api.tudominio.com`. Es una URL pública, no un secreto. Nunca uses una variable `VITE_*` para contraseñas.
-4. Creá un preview y probá la interfaz. Sólo después promovelo a producción.
-5. Asociá `app.tudominio.com` en Vercel, aplicá el DNS indicado por Vercel en Cloudflare y protegelo con su aplicación de Access.
-
-## 4. Backups y comprobación de recuperación
-
-1. Habilitá las copias y la recuperación puntual disponibles en el plan de PostgreSQL elegido.
-2. Exportá una copia lógica inicial y guardala en un lugar cifrado con acceso limitado.
-3. Una vez por trimestre, restaurá una copia en una base temporal y verificá categorías, productos, una venta y sus movimientos. Eliminá esa base temporal al terminar.
-
-## Smoke test de aceptación
-
-Con una cuenta autorizada y sobre el dominio final:
-
-1. Abrí `app.tudominio.com`; un visitante no autorizado debe ser rechazado.
-2. Creá una categoría y un producto.
-3. Registrá una entrada de stock, confirmá una venta y comprobá el resumen diario.
-4. Confirmá que la venta redujo el stock y dejó su movimiento histórico.
-5. Intentá abrir directamente `api.tudominio.com/api/dashboard` sin autorización: Access debe rechazarlo.
-6. Revisá logs de Render y Vercel: no deben contener contraseñas ni errores.
-
-No cargues operación real hasta completar cada punto y guardar fecha, responsable y resultado del test.
+Si la base vence, recreá el Blueprint y repetí el smoke test con nuevos datos ficticios. Para una operación comercial futura, se necesita un plan con persistencia/respaldos y autenticación de aplicación.

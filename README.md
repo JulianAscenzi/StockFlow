@@ -94,4 +94,4 @@ No ejecutes `docker compose down -v` salvo que quieras eliminar deliberadamente 
 
 ## Despliegue
 
-La preparación para un piloto privado usa Vercel (interfaz), Render (API y PostgreSQL) y Cloudflare Access. Consultá la [guía de despliegue](docs/DEPLOYMENT.md) antes de crear servicios o cargar datos reales. No expongas la instancia local a Internet.
+Para una demo gratuita de portfolio se usa Vercel (interfaz) y Render Free (API y PostgreSQL). Consultá la [guía de despliegue](docs/DEPLOYMENT.md). No cargues datos reales: Render Free suspende la API inactiva y elimina la base después de 30 días.

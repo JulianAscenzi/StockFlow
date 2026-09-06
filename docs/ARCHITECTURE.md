@@ -18,11 +18,11 @@ Java 21, Spring Boot 4.1.1, Maven, Spring Data JPA/Hibernate, PostgreSQL 17 y Fl
 - `dashboard`: consultas agregadas, servicio de lectura y `GET /api/dashboard`.
 - `frontend`: cliente React + TypeScript + Vite con resumen, catálogo de productos/categorías, ajustes de inventario y confirmación de ventas. Durante desarrollo, Vite redirige `/api` al backend local.
 
-## Despliegue de piloto
+## Despliegue de demo
 
-El piloto previsto usa Vercel para la interfaz estática y Render para la API Dockerizada y PostgreSQL 17 administrado. En producción, la interfaz recibe `VITE_API_BASE_URL` en compilación y la API sólo habilita CORS para los orígenes explícitos de `APP_CORS_ALLOWED_ORIGINS`; ninguna de esas variables es un secreto. Render provee su cadena interna `DATABASE_URL`; un `EnvironmentPostProcessor` la adapta a propiedades JDBC antes de iniciar JPA/Flyway. El endpoint operativo `GET /actuator/health` no revela detalles y se usa como health check.
+La demo pública de portfolio usa Vercel para la interfaz estática y Render Free para la API Dockerizada y PostgreSQL 17. La interfaz recibe `VITE_API_BASE_URL` en compilación y la API sólo habilita CORS para los orígenes explícitos de `APP_CORS_ALLOWED_ORIGINS`; ninguna de esas variables es un secreto. Render provee su cadena interna `DATABASE_URL`; un `EnvironmentPostProcessor` la adapta a propiedades JDBC antes de iniciar JPA/Flyway. El endpoint operativo `GET /actuator/health` no revela detalles y se usa como health check.
 
-La infraestructura de piloto se declara en `render.yaml`, sin credenciales, y la guía `docs/DEPLOYMENT.md` exige controles de acceso, backups y un smoke test. Cloudflare Access es una capa temporal perimetral, no sustituye la autenticación del producto: no se cargan datos reales hasta definir e implementar el acceso de aplicación del bloque 20.
+La infraestructura de demo se declara en `render.yaml`, sin credenciales, y la guía `docs/DEPLOYMENT.md` especifica sus límites y smoke test. Render Free suspende la API inactiva y elimina la base a los 30 días; es adecuado sólo para información ficticia. La demo no incluye autenticación ni controles de acceso de producción.
 
 ## Dashboard diario
 

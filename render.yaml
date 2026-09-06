@@ -4,7 +4,7 @@ services:
     runtime: docker
     rootDir: backend
     dockerfilePath: ./Dockerfile
-    plan: 0.5c-512mb
+    plan: free
     healthCheckPath: /actuator/health
     autoDeploy: false
     envVars:
@@ -20,6 +20,6 @@ databases:
     databaseName: stockflow
     user: stockflow
     region: virginia
-    plan: 0.5c-1g
+    plan: free
     postgresMajorVersion: "17"
     ipAllowList: []
