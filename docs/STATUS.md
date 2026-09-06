@@ -6,15 +6,15 @@
 
 ## Current module
 
-`sale`: la confirmación valida ítems y total, bloquea productos en orden determinista, descuenta stock y registra movimientos `OUT` de forma atómica. Falta verificar la sobreventa en ventas concurrentes.
+`sale`: la confirmación valida ítems y total, bloquea productos en orden determinista, descuenta stock y registra movimientos `OUT` de forma atómica. Las ventas concurrentes no pueden provocar sobreventa.
 
 ## Next task
 
-Impedir sobreventa cuando se confirman ventas concurrentes, sin crear todavía DTOs ni endpoints.
+Definir DTOs y mappers de ventas, sin exponer entidades JPA.
 
 ## Last general test result
 
-Suite completa con PostgreSQL/Testcontainers: **291 pruebas, 0 fallos, 0 errores y 0 omitidas**.
+Suite completa con PostgreSQL/Testcontainers: **292 pruebas, 0 fallos, 0 errores y 0 omitidas**.
 
 ## Pending decisions
 

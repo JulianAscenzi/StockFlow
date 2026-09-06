@@ -19,13 +19,16 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -132,6 +135,49 @@ class SaleServiceIntegrationTest {
             executor.shutdownNow();
             assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS));
         }
+    }
+
+    @Test
+    void concurrentSalesCannotOversellStock() throws Exception {
+        Product product = saveProduct("Monitor", "MON-01", 3);
+        Sale firstSale = new Sale(null);
+        firstSale.addItem(product, 2);
+        Sale secondSale = new Sale(null);
+        secondSale.addItem(product, 2);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        CountDownLatch ready = new CountDownLatch(2);
+        CountDownLatch start = new CountDownLatch(1);
+        try {
+            Future<Sale> firstConfirmation = executor.submit(() -> confirmWhenStarted(firstSale, ready, start));
+            Future<Sale> secondConfirmation = executor.submit(() -> confirmWhenStarted(secondSale, ready, start));
+            assertTrue(ready.await(5, TimeUnit.SECONDS));
+            start.countDown();
+
+            int successfulSales = completedSales(List.of(firstConfirmation, secondConfirmation));
+            assertEquals(1, successfulSales);
+            assertEquals(1, productRepository.findById(product.getId()).orElseThrow().getStock());
+            assertEquals(1, saleRepository.count());
+            assertEquals(1, stockMovementRepository.count());
+        } finally {
+            executor.shutdownNow();
+            assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS));
+        }
+    }
+
+    private int completedSales(List<Future<Sale>> confirmations) throws Exception {
+        int successfulSales = 0;
+        int insufficientStock = 0;
+        for (Future<Sale> confirmation : confirmations) {
+            try {
+                assertNotNull(confirmation.get(10, TimeUnit.SECONDS).getId());
+                successfulSales++;
+            } catch (ExecutionException exception) {
+                assertInstanceOf(com.julianas.stockflow.inventory.InsufficientStockException.class, exception.getCause());
+                insufficientStock++;
+            }
+        }
+        assertEquals(1, insufficientStock);
+        return successfulSales;
     }
 
     private Sale confirmWhenStarted(Sale sale, CountDownLatch ready, CountDownLatch start) {
