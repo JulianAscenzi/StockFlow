@@ -1,5 +1,6 @@
 package com.julianas.stockflow.sale;
 
+import com.julianas.stockflow.inventory.InventoryService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,9 +13,11 @@ public class SaleService {
     private static final BigDecimal ZERO = new BigDecimal("0.00");
 
     private final SaleRepository saleRepository;
+    private final InventoryService inventoryService;
 
-    public SaleService(SaleRepository saleRepository) {
+    public SaleService(SaleRepository saleRepository, InventoryService inventoryService) {
         this.saleRepository = Objects.requireNonNull(saleRepository, "saleRepository");
+        this.inventoryService = Objects.requireNonNull(inventoryService, "inventoryService");
     }
 
     @Transactional
@@ -29,6 +32,10 @@ public class SaleService {
                 .reduce(ZERO, BigDecimal::add);
         if (requiredSale.getTotal().compareTo(expectedTotal) != 0) {
             throw new IllegalArgumentException("sale total must equal the sum of item subtotals");
+        }
+
+        for (SaleItem item : requiredSale.getItems()) {
+            inventoryService.decreaseStock(item.getProduct().getId(), item.getQuantity(), "Sale");
         }
 
         return saleRepository.save(requiredSale);

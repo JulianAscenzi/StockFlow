@@ -2,6 +2,8 @@ package com.julianas.stockflow.sale;
 
 import com.julianas.stockflow.category.Category;
 import com.julianas.stockflow.category.CategoryRepository;
+import com.julianas.stockflow.inventory.StockMovementRepository;
+import com.julianas.stockflow.inventory.StockMovementType;
 import com.julianas.stockflow.product.Product;
 import com.julianas.stockflow.product.ProductRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -41,6 +43,7 @@ class SaleServiceIntegrationTest {
     @Autowired private SaleRepository saleRepository;
     @Autowired private ProductRepository productRepository;
     @Autowired private CategoryRepository categoryRepository;
+    @Autowired private StockMovementRepository stockMovementRepository;
     @Autowired private JdbcTemplate jdbcTemplate;
 
     @AfterEach
@@ -49,7 +52,7 @@ class SaleServiceIntegrationTest {
     }
 
     @Test
-    void persistsConfirmedSaleWithItsConsistentTotal() {
+    void confirmsSaleAndDecreasesStockInTheSameTransaction() {
         Product product = saveProduct();
         Sale sale = new Sale("Counter sale");
         sale.addItem(product, 2);
@@ -59,7 +62,16 @@ class SaleServiceIntegrationTest {
         assertNotNull(confirmed.getId());
         assertEquals(new BigDecimal("25.00"), confirmed.getTotal());
         assertEquals(1, saleRepository.count());
-        assertEquals(2, productRepository.findById(product.getId()).orElseThrow().getStock());
+        assertEquals(0, productRepository.findById(product.getId()).orElseThrow().getStock());
+        var movement = stockMovementRepository
+                .findByProductIdOrderByCreatedAtDescIdDesc(product.getId(), org.springframework.data.domain.PageRequest.of(0, 1))
+                .getContent().getFirst();
+        assertEquals(1, stockMovementRepository.count());
+        assertEquals(StockMovementType.OUT, movement.getMovementType());
+        assertEquals(2, movement.getQuantity());
+        assertEquals(2, movement.getStockBefore());
+        assertEquals(0, movement.getStockAfter());
+        assertEquals("Sale", movement.getReason());
     }
 
     @Test
@@ -69,10 +81,30 @@ class SaleServiceIntegrationTest {
         assertEquals(0, saleRepository.count());
     }
 
+    @Test
+    void rollsBackTheSaleAndPreviousStockChangesWhenAnyItemHasInsufficientStock() {
+        Product available = saveProduct("Available", "AVL-01", 2);
+        Product insufficient = saveProduct("Insufficient", "INS-01", 1);
+        Sale sale = new Sale(null);
+        sale.addItem(available, 1);
+        sale.addItem(insufficient, 2);
+
+        assertThrows(com.julianas.stockflow.inventory.InsufficientStockException.class, () -> saleService.confirm(sale));
+
+        assertEquals(0, saleRepository.count());
+        assertEquals(2, productRepository.findById(available.getId()).orElseThrow().getStock());
+        assertEquals(1, productRepository.findById(insufficient.getId()).orElseThrow().getStock());
+        assertEquals(0, stockMovementRepository.count());
+    }
+
     private Product saveProduct() {
-        Category category = categoryRepository.saveAndFlush(new Category("Peripherals", null));
+        return saveProduct("Mouse", "MOU-01", 2);
+    }
+
+    private Product saveProduct(String name, String sku, int stock) {
+        Category category = categoryRepository.saveAndFlush(new Category("Peripherals " + sku, null));
         return productRepository.saveAndFlush(new Product(
-                "Mouse", "MOU-01", null, new BigDecimal("12.50"), new BigDecimal("7.25"), 2, 0, true, category
+                name, sku, null, new BigDecimal("12.50"), new BigDecimal("7.25"), stock, 0, true, category
         ));
     }
 }

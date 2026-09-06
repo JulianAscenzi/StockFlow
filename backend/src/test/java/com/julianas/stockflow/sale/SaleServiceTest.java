@@ -1,5 +1,7 @@
 package com.julianas.stockflow.sale;
 
+import com.julianas.stockflow.inventory.InventoryService;
+import com.julianas.stockflow.product.Product;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,21 +24,33 @@ class SaleServiceTest {
     @Mock
     private SaleRepository saleRepository;
 
+    @Mock
+    private InventoryService inventoryService;
+
     private SaleService saleService;
 
     @BeforeEach
     void setUp() {
-        saleService = new SaleService(saleRepository);
+        saleService = new SaleService(saleRepository, inventoryService);
     }
 
     @Test
     void confirmsSaleWithItemsAndConsistentTotal() {
         Sale sale = saleWithTotal("25.00", "10.00", "15.00");
+        long productId = 1;
+        for (SaleItem item : sale.getItems()) {
+            Product product = mock(Product.class);
+            when(product.getId()).thenReturn(productId++);
+            when(item.getProduct()).thenReturn(product);
+            when(item.getQuantity()).thenReturn(1);
+        }
         when(saleRepository.save(sale)).thenReturn(sale);
 
         Sale confirmed = saleService.confirm(sale);
 
         assertSame(sale, confirmed);
+        verify(inventoryService).decreaseStock(1L, 1, "Sale");
+        verify(inventoryService).decreaseStock(2L, 1, "Sale");
         verify(saleRepository).save(sale);
     }
 

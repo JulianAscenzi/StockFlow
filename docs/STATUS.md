@@ -6,15 +6,15 @@
 
 ## Current module
 
-`sale`: la confirmación persistente valida que la venta tenga ítems y que el total sea consistente. Falta integrarla con el descuento transaccional de stock.
+`sale`: la confirmación valida ítems y total, descuenta stock y registra movimientos `OUT` de forma atómica. Falta el bloqueo de múltiples productos en orden determinista.
 
 ## Next task
 
-Integrar la venta confirmada con el descuento transaccional de stock, manteniendo ambas operaciones atómicas y sin crear todavía DTOs ni endpoints.
+Evitar deadlocks al confirmar ventas con múltiples productos mediante bloqueo pesimista en orden determinista, sin crear todavía DTOs ni endpoints.
 
 ## Last general test result
 
-Suite completa con PostgreSQL/Testcontainers: **288 pruebas, 0 fallos, 0 errores y 0 omitidas**.
+Suite completa con PostgreSQL/Testcontainers: **289 pruebas, 0 fallos, 0 errores y 0 omitidas**.
 
 ## Pending decisions
 
