@@ -10,11 +10,11 @@
 
 ## Next task
 
-Verificar el flujo E2E de ventas por HTTP con PostgreSQL/Testcontainers.
+Definir las métricas operativas mínimas del dashboard antes de implementar sus consultas.
 
 ## Last general test result
 
-Suite completa con PostgreSQL/Testcontainers: **302 pruebas, 0 fallos, 0 errores y 0 omitidas**.
+Suite completa con PostgreSQL/Testcontainers: **304 pruebas, 0 fallos, 0 errores y 0 omitidas**.
 
 ## Pending decisions
 
