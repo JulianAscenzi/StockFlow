@@ -10,7 +10,7 @@ El backend MVP está cerrado: `category`, `product`, `inventory`, `common`, `sal
 
 ## Next task
 
-Documentar ejecución y despliegue local reproducible.
+Preparar el despliegue de producción.
 
 ## Last general test result
 
@@ -22,4 +22,4 @@ Queda definir el alcance futuro de autenticación.
 
 ## Real blockers
 
-No hay bloqueos reales conocidos. El proxy de Vite apunta a `localhost:8080` por defecto y puede redirigirse con `VITE_API_PROXY_TARGET` para pruebas aisladas.
+No hay bloqueos técnicos reales conocidos. El despliegue de producción requiere decisiones de infraestructura y operación antes del bloque 22.
