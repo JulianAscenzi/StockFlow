@@ -19,10 +19,16 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import java.math.BigDecimal;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @Testcontainers
@@ -95,6 +101,48 @@ class SaleServiceIntegrationTest {
         assertEquals(2, productRepository.findById(available.getId()).orElseThrow().getStock());
         assertEquals(1, productRepository.findById(insufficient.getId()).orElseThrow().getStock());
         assertEquals(0, stockMovementRepository.count());
+    }
+
+    @Test
+    void concurrentSalesWithOppositeLineOrdersCompleteWithoutDeadlocking() throws Exception {
+        Product firstProduct = saveProduct("Keyboard", "KEY-01", 2);
+        Product secondProduct = saveProduct("Mouse", "MOU-02", 2);
+        Sale firstSale = new Sale(null);
+        firstSale.addItem(secondProduct, 1);
+        firstSale.addItem(firstProduct, 1);
+        Sale secondSale = new Sale(null);
+        secondSale.addItem(firstProduct, 1);
+        secondSale.addItem(secondProduct, 1);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        CountDownLatch ready = new CountDownLatch(2);
+        CountDownLatch start = new CountDownLatch(1);
+        try {
+            Future<Sale> firstConfirmation = executor.submit(() -> confirmWhenStarted(firstSale, ready, start));
+            Future<Sale> secondConfirmation = executor.submit(() -> confirmWhenStarted(secondSale, ready, start));
+            assertTrue(ready.await(5, TimeUnit.SECONDS));
+            start.countDown();
+
+            assertNotNull(firstConfirmation.get(10, TimeUnit.SECONDS).getId());
+            assertNotNull(secondConfirmation.get(10, TimeUnit.SECONDS).getId());
+            assertEquals(0, productRepository.findById(firstProduct.getId()).orElseThrow().getStock());
+            assertEquals(0, productRepository.findById(secondProduct.getId()).orElseThrow().getStock());
+            assertEquals(2, saleRepository.count());
+            assertEquals(4, stockMovementRepository.count());
+        } finally {
+            executor.shutdownNow();
+            assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS));
+        }
+    }
+
+    private Sale confirmWhenStarted(Sale sale, CountDownLatch ready, CountDownLatch start) {
+        ready.countDown();
+        try {
+            start.await();
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(exception);
+        }
+        return saleService.confirm(sale);
     }
 
     private Product saveProduct() {

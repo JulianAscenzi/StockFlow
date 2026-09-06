@@ -6,15 +6,15 @@
 
 ## Current module
 
-`sale`: la confirmación valida ítems y total, descuenta stock y registra movimientos `OUT` de forma atómica. Falta el bloqueo de múltiples productos en orden determinista.
+`sale`: la confirmación valida ítems y total, bloquea productos en orden determinista, descuenta stock y registra movimientos `OUT` de forma atómica. Falta verificar la sobreventa en ventas concurrentes.
 
 ## Next task
 
-Evitar deadlocks al confirmar ventas con múltiples productos mediante bloqueo pesimista en orden determinista, sin crear todavía DTOs ni endpoints.
+Impedir sobreventa cuando se confirman ventas concurrentes, sin crear todavía DTOs ni endpoints.
 
 ## Last general test result
 
-Suite completa con PostgreSQL/Testcontainers: **289 pruebas, 0 fallos, 0 errores y 0 omitidas**.
+Suite completa con PostgreSQL/Testcontainers: **291 pruebas, 0 fallos, 0 errores y 0 omitidas**.
 
 ## Pending decisions
 

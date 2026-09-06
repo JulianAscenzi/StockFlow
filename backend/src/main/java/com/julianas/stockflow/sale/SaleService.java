@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -34,7 +36,10 @@ public class SaleService {
             throw new IllegalArgumentException("sale total must equal the sum of item subtotals");
         }
 
-        for (SaleItem item : requiredSale.getItems()) {
+        List<SaleItem> itemsByProductId = requiredSale.getItems().stream()
+                .sorted(Comparator.comparing(item -> item.getProduct().getId()))
+                .toList();
+        for (SaleItem item : itemsByProductId) {
             inventoryService.decreaseStock(item.getProduct().getId(), item.getQuantity(), "Sale");
         }
 
