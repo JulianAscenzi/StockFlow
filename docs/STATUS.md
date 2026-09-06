@@ -6,20 +6,20 @@ El backend MVP está cerrado: `category`, `product`, `inventory`, `common`, `sal
 
 ## Current module
 
-`frontend`: cliente React + TypeScript + Vite integrado con la API mediante el proxy de desarrollo. El catálogo usa el listado general hasta que se ingresa una búsqueda, y los formularios conservan su referencia durante la operación asíncrona para reflejar correctamente altas y movimientos.
+`deployment`: se preparó un piloto privado con Docker para la API, PostgreSQL 17 administrado en Render, interfaz Vite configurable para Vercel, CORS por origen explícito, health check y guía operativa. No contiene secretos ni crea recursos externos.
 
 ## Next task
 
-Preparar el despliegue de producción.
+Crear las cuentas de infraestructura, definir el dominio y realizar el smoke test del piloto siguiendo `docs/DEPLOYMENT.md`.
 
 ## Last general test result
 
-Suite completa con PostgreSQL/Testcontainers: **309 pruebas, 0 fallos, 0 errores y 0 omitidas**. La integración frontend–backend se verificó además en una base PostgreSQL temporal: categoría, producto, entrada de stock, venta y resumen diario.
+Suite completa con PostgreSQL/Testcontainers: **311 pruebas, 0 fallos, 0 errores y 0 omitidas**. La interfaz compila con Vite y la integración frontend–backend se verificó además en una base PostgreSQL temporal: categoría, producto, entrada de stock, venta y resumen diario.
 
 ## Pending decisions
 
-Queda definir el alcance futuro de autenticación.
+Queda definir e implementar el alcance de autenticación propio antes de usar datos comerciales. Cloudflare Access sólo será una barrera temporal del piloto.
 
 ## Real blockers
 
-No hay bloqueos técnicos reales conocidos. El despliegue de producción requiere decisiones de infraestructura y operación antes del bloque 22.
+No hay bloqueos técnicos en el repositorio. El siguiente paso requiere cuentas en Render, Vercel y Cloudflare, además de un dominio; son credenciales/permisos que debe proporcionar quien opera el comercio.

@@ -94,4 +94,4 @@ No ejecutes `docker compose down -v` salvo que quieras eliminar deliberadamente 
 
 ## Despliegue
 
-El despliegue de producción aún no está preparado: falta definir la configuración segura, el hosting y el checklist operativo del bloque 22 del roadmap. No expongas esta instancia de desarrollo a Internet ni la uses con datos de producción.
+La preparación para un piloto privado usa Vercel (interfaz), Render (API y PostgreSQL) y Cloudflare Access. Consultá la [guía de despliegue](docs/DEPLOYMENT.md) antes de crear servicios o cargar datos reales. No expongas la instancia local a Internet.

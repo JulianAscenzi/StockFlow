@@ -1,0 +1,1 @@
+org.springframework.boot.env.EnvironmentPostProcessor=com.julianas.stockflow.common.config.DatabaseUrlEnvironmentPostProcessor
