@@ -2,6 +2,7 @@ package com.julianas.stockflow.sale;
 
 import com.julianas.stockflow.inventory.InventoryService;
 import com.julianas.stockflow.product.Product;
+import com.julianas.stockflow.product.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,11 +30,14 @@ class SaleServiceTest {
     @Mock
     private InventoryService inventoryService;
 
+    @Mock
+    private ProductRepository productRepository;
+
     private SaleService saleService;
 
     @BeforeEach
     void setUp() {
-        saleService = new SaleService(saleRepository, inventoryService);
+        saleService = new SaleService(saleRepository, inventoryService, productRepository);
     }
 
     @Test

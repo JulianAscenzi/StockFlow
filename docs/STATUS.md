@@ -6,15 +6,15 @@
 
 ## Current module
 
-`sale`: la confirmación valida ítems y total, bloquea productos en orden determinista, descuenta stock y registra movimientos `OUT` de forma atómica. Sus contratos y errores HTTP públicos están definidos; falta el controller.
+`sale`: la confirmación HTTP valida contratos, crea la venta desde productos, bloquea en orden determinista, descuenta stock y registra movimientos `OUT` de forma atómica.
 
 ## Next task
 
-Implementar el controller de ventas con confirmación y consultas necesarias.
+Completar las pruebas MVC de ventas para sus contratos HTTP.
 
 ## Last general test result
 
-Suite completa con PostgreSQL/Testcontainers: **299 pruebas, 0 fallos, 0 errores y 0 omitidas**.
+Suite completa con PostgreSQL/Testcontainers: **300 pruebas, 0 fallos, 0 errores y 0 omitidas**.
 
 ## Pending decisions
 

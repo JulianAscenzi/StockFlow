@@ -1,6 +1,9 @@
 package com.julianas.stockflow.sale;
 
 import com.julianas.stockflow.inventory.InventoryService;
+import com.julianas.stockflow.product.Product;
+import com.julianas.stockflow.product.ProductNotFoundException;
+import com.julianas.stockflow.product.ProductRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,10 +19,29 @@ public class SaleService {
 
     private final SaleRepository saleRepository;
     private final InventoryService inventoryService;
+    private final ProductRepository productRepository;
 
-    public SaleService(SaleRepository saleRepository, InventoryService inventoryService) {
+    public SaleService(
+            SaleRepository saleRepository,
+            InventoryService inventoryService,
+            ProductRepository productRepository
+    ) {
         this.saleRepository = Objects.requireNonNull(saleRepository, "saleRepository");
         this.inventoryService = Objects.requireNonNull(inventoryService, "inventoryService");
+        this.productRepository = Objects.requireNonNull(productRepository, "productRepository");
+    }
+
+    @Transactional
+    public Sale confirm(String notes, List<SaleLine> lines) {
+        List<SaleLine> requiredLines = List.copyOf(Objects.requireNonNull(lines, "lines"));
+        Sale sale = new Sale(notes);
+        for (SaleLine line : requiredLines) {
+            SaleLine requiredLine = Objects.requireNonNull(line, "sale line");
+            Product product = productRepository.findById(requiredLine.productId())
+                    .orElseThrow(() -> new ProductNotFoundException(requiredLine.productId()));
+            sale.addItem(product, requiredLine.quantity());
+        }
+        return confirm(sale);
     }
 
     @Transactional
@@ -44,5 +66,8 @@ public class SaleService {
         }
 
         return saleRepository.save(requiredSale);
+    }
+
+    public record SaleLine(Long productId, Integer quantity) {
     }
 }
