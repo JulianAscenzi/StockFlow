@@ -12,12 +12,12 @@ export function ProductsView({ notify }: { notify: (message: string, kind?: 'err
   useEffect(() => { void refresh(); }, []);
   const search = (event: React.FormEvent) => { event.preventDefault(); void refresh(); };
   const create = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault(); const values = new FormData(event.currentTarget);
-    try { await api.createProduct({ name: String(values.get('name')), sku: String(values.get('sku')), description: String(values.get('description')), price: Number(values.get('price')), cost: Number(values.get('cost')), minimumStock: Number(values.get('minimumStock')), categoryId: Number(values.get('categoryId')) }); event.currentTarget.reset(); setShowForm(false); notify('Producto creado.', 'success'); await refresh(); } catch (error) { notify((error as Error).message, 'error'); }
+    event.preventDefault(); const form = event.currentTarget; const values = new FormData(form);
+    try { await api.createProduct({ name: String(values.get('name')), sku: String(values.get('sku')), description: String(values.get('description')), price: Number(values.get('price')), cost: Number(values.get('cost')), minimumStock: Number(values.get('minimumStock')), categoryId: Number(values.get('categoryId')) }); form.reset(); setShowForm(false); notify('Producto creado.', 'success'); await refresh(); } catch (error) { notify((error as Error).message, 'error'); }
   };
   const createCategory = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault(); const values = new FormData(event.currentTarget);
-    try { await api.createCategory({ name: String(values.get('categoryName')), description: String(values.get('categoryDescription')) }); event.currentTarget.reset(); setShowCategoryForm(false); notify('Categoría creada.', 'success'); await refresh(); } catch (error) { notify((error as Error).message, 'error'); }
+    event.preventDefault(); const form = event.currentTarget; const values = new FormData(form);
+    try { await api.createCategory({ name: String(values.get('categoryName')), description: String(values.get('categoryDescription')) }); form.reset(); setShowCategoryForm(false); notify('Categoría creada.', 'success'); await refresh(); } catch (error) { notify((error as Error).message, 'error'); }
   };
   return <section><header className="page-header actions"><div><p className="eyebrow">Catálogo</p><h1>Productos</h1><p>Precios, costos y niveles mínimos en un solo lugar.</p></div><button className="primary" onClick={() => setShowForm(!showForm)}>+ Agregar producto</button></header>
     <section className="category-strip"><div><strong>Categorías</strong><span>{categories.length === 0 ? 'Todavía no hay categorías.' : categories.map((category) => category.name).join(' · ')}</span></div><button className="text-button" onClick={() => setShowCategoryForm(!showCategoryForm)}>+ Nueva categoría</button></section>

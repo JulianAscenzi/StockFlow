@@ -14,7 +14,13 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
 export const api = {
   dashboard: () => request<Dashboard>('/api/dashboard?size=8'),
-  products: (name = '') => request<PageResponse<Product>>(`/api/products/search?name=${encodeURIComponent(name)}&size=100`),
+  products: (name = '') => {
+    const trimmedName = name.trim();
+    const path = trimmedName
+      ? `/api/products/search?name=${encodeURIComponent(trimmedName)}&size=100`
+      : '/api/products?size=100';
+    return request<PageResponse<Product>>(path);
+  },
   activeProducts: () => request<PageResponse<Product>>('/api/products/active?size=100'),
   categories: () => request<PageResponse<Category>>('/api/categories?size=100'),
   createCategory: (body: { name: string; description: string }) =>
