@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-StockFlow es un backend para inventario y ventas de pequeños comercios. Hoy expone operaciones HTTP para categorías, productos e inventario; el dominio y esquema inicial de ventas están preparados, pero su flujo de servicio y API todavía no existen.
+StockFlow es un backend para inventario y ventas de pequeños comercios. Expone operaciones HTTP para categorías, productos, inventario, confirmación de ventas y dashboard diario.
 
 ## Stack
 
@@ -15,6 +15,15 @@ Java 21, Spring Boot 4.1.1, Maven, Spring Data JPA/Hibernate, PostgreSQL 17 y Fl
 - `inventory`: movimientos históricos, repositorio, servicio transaccional, API REST y errores de stock.
 - `sale`: migración V3, agregado histórico inmutable, repositorio paginado, servicio de confirmación transaccional, DTOs, mapper y controller de confirmación.
 - `common`: `PageResponse` y `GlobalExceptionHandler`/`ApiError` compartidos.
+- `dashboard`: consultas agregadas, servicio de lectura y `GET /api/dashboard`.
+
+## Dashboard diario
+
+`GET /api/dashboard?page=0&size=20` devuelve fecha y zona `America/Argentina/Buenos_Aires`, cantidad de ventas, facturación, unidades vendidas, margen bruto estimado y productos con bajo stock paginados. El día usa inicio inclusivo y medianoche siguiente exclusiva.
+
+La facturación y cantidad se agregan sobre ventas; unidades y margen se agregan por separado sobre los snapshots de las líneas. Esto evita multiplicar totales al unir ventas con ítems, incluso si varias ventas tienen el mismo total. El margen es subtotal menos costo histórico por cantidad, admite pérdidas y no representa ganancia neta ni cobros.
+
+Bajo stock significa `stock <= minimumStock` para todos los productos, incluidos inactivos. Se filtra en PostgreSQL antes de paginar, con orden fijo por stock, nombre e ID y metadatos de página. Los agregados diarios no dependen de esa página. Las lecturas del servicio comparten una transacción read-only `REPEATABLE_READ`. No se modifican esquemas ni se cargan colecciones de ítems para calcular métricas.
 
 ## Flujo por capas
 

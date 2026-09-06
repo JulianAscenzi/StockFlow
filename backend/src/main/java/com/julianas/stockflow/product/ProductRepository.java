@@ -27,4 +27,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Page<Product> findByNameContainingIgnoreCase(String name, Pageable pageable);
 
     Page<Product> findByActiveTrue(Pageable pageable);
+
+    @Query("select p from Product p where p.stock <= p.minimumStock order by p.stock, p.name, p.id")
+    Page<Product> findLowStock(Pageable pageable);
 }

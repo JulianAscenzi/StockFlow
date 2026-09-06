@@ -6,19 +6,19 @@
 
 ## Current module
 
-`sale`: la confirmación HTTP valida contratos, crea la venta desde productos, bloquea en orden determinista, descuenta stock y registra movimientos `OUT` de forma atómica.
+`dashboard`: métricas diarias en zona Argentina con agregados independientes de ventas e ítems y consulta de bajo stock filtrada antes de paginar.
 
 ## Next task
 
-Definir las métricas operativas mínimas del dashboard antes de implementar sus consultas.
+Revisar y cerrar el backend MVP, verificando el alcance real de API, transacciones, migraciones y pruebas antes de avanzar al frontend.
 
 ## Last general test result
 
-Suite completa con PostgreSQL/Testcontainers: **304 pruebas, 0 fallos, 0 errores y 0 omitidas**.
+Suite completa con PostgreSQL/Testcontainers: **309 pruebas, 0 fallos, 0 errores y 0 omitidas**.
 
 ## Pending decisions
 
-Las métricas del dashboard, el alcance de autenticación y el frontend se definirán después del backend MVP. No bloquean la próxima tarea.
+Métricas del dashboard aprobadas e implementadas. Quedan decisiones de autenticación y frontend; no bloquean la revisión del backend.
 
 ## Real blockers
 
