@@ -5,6 +5,7 @@ services:
     rootDir: backend
     dockerfilePath: ./Dockerfile
     plan: free
+    region: virginia
     healthCheckPath: /actuator/health
     autoDeploy: false
     envVars:
