@@ -14,15 +14,16 @@ Java 21, Spring Boot 4.1.1, Maven, Spring Data JPA/Hibernate, PostgreSQL 17 y Fl
 - `product`: entidad, repositorio, servicio, API REST, DTOs, mapper y errores de productos.
 - `inventory`: movimientos históricos, repositorio, servicio transaccional, API REST y errores de stock.
 - `sale`: migración V3, agregado histórico inmutable, repositorio paginado, servicio de confirmación transaccional, DTOs, mapper y controller de confirmación.
+- `auth`: administrador inicial, BCrypt, JWT HS256 y filtro de seguridad stateless.
 - `common`: `PageResponse` y `GlobalExceptionHandler`/`ApiError` compartidos.
 - `dashboard`: consultas agregadas, servicio de lectura y `GET /api/dashboard`.
 - `frontend`: cliente React + TypeScript + Vite con resumen, catálogo de productos/categorías, ajustes de inventario y confirmación de ventas. Durante desarrollo, Vite redirige `/api` al backend local.
 
 ## Despliegue de demo
 
-La demo pública de portfolio usa Vercel para la interfaz estática y Render Free para la API Dockerizada y PostgreSQL 17. La interfaz recibe `VITE_API_BASE_URL` en compilación y la API sólo habilita CORS para los orígenes explícitos de `APP_CORS_ALLOWED_ORIGINS`; ninguna de esas variables es un secreto. Render provee su cadena interna `DATABASE_URL`; un `EnvironmentPostProcessor` la adapta a propiedades JDBC antes de iniciar JPA/Flyway. El endpoint operativo `GET /actuator/health` no revela detalles y se usa como health check.
+La demo pública de portfolio usa Vercel para la interfaz estática y Render Free para la API Dockerizada y PostgreSQL 17. La interfaz recibe `VITE_API_BASE_URL` en compilación y la API sólo habilita CORS para los orígenes explícitos de `APP_CORS_ALLOWED_ORIGINS`; ninguna de esas variables es un secreto. Render provee su cadena interna `DATABASE_URL`; un `EnvironmentPostProcessor` la adapta a propiedades JDBC antes de iniciar JPA/Flyway. El endpoint operativo `GET /actuator/health` no revela detalles y se usa como health check. La demo fija `APP_AUTH_ENABLED=false` y sólo contiene datos ficticios.
 
-La infraestructura de demo se declara en `render.yaml`, sin credenciales, y la guía `docs/DEPLOYMENT.md` especifica sus límites y smoke test. Render Free suspende la API inactiva y elimina la base a los 30 días; es adecuado sólo para información ficticia. La demo no incluye autenticación ni controles de acceso de producción.
+La infraestructura de demo se declara en `render.yaml`, sin credenciales, y la guía `docs/DEPLOYMENT.md` especifica sus límites y smoke test. Render Free suspende la API inactiva y elimina la base a los 30 días; es adecuado sólo para información ficticia. La aplicación sí incluye autenticación, pero la demo la desactiva y no representa controles de acceso de producción.
 
 ## Dashboard diario
 
@@ -43,12 +44,13 @@ Las rutas HTTP reciben DTOs validados, los controllers coordinan servicios y map
 - `stock_movements`: registro inmutable de entradas/salidas, cantidad, balances, motivo y timestamp; referencia a producto.
 - `sales`: total `NUMERIC(14,2)`, notas opcionales y timestamp de creación.
 - `sale_items`: producto, snapshots de nombre/SKU/precio/costo, cantidad y subtotal; la migración impide productos repetidos en una venta.
+- `application_users`: una cuenta administradora inicial con email único sin distinción de mayúsculas y hash BCrypt.
 
 Relaciones: categoría 1–N productos; producto 1–N movimientos; venta 1–N ítems; ítem N–1 producto. Las FKs usan `ON DELETE RESTRICT`; no hay borrado en cascada de historial.
 
 ## Migraciones
 
-Flyway es la única vía de cambio de esquema y Hibernate usa `ddl-auto=validate`. Existen V1 (categorías/productos), V2 (movimientos de stock) y V3 (ventas/ítems). Las migraciones aplicadas no se editan; todo cambio requiere una V nueva con constraints e índices explícitos.
+Flyway es la única vía de cambio de esquema y Hibernate usa `ddl-auto=validate`. Existen V1 (categorías/productos), V2 (movimientos de stock), V3 (ventas/ítems) y V4 (usuarios de aplicación). Las migraciones aplicadas no se editan; todo cambio requiere una V nueva con constraints e índices explícitos.
 
 ## Dinero
 
@@ -57,6 +59,10 @@ El dinero usa `BigDecimal`, nunca tipos binarios. Producto y precios/costos de l
 ## Inventario y concurrencia
 
 `InventoryService` ejecuta entradas y salidas dentro de transacciones. Obtiene el producto con `PESSIMISTIC_WRITE`, valida límites/suficiencia, actualiza el stock mediante métodos de dominio y guarda `StockMovement` en la misma transacción. `StockMovement` es `@Immutable`; el historial se pagina por `created_at DESC, id DESC`.
+
+## Autenticación
+
+Con autenticación habilitada (valor por defecto), el primer arranque crea una única cuenta desde `APP_ADMIN_EMAIL` y `APP_ADMIN_PASSWORD`. La contraseña se guarda con BCrypt. `POST /api/auth/login` entrega un JWT HS256 de ocho horas firmado con `APP_JWT_SECRET`; sólo login y `GET /actuator/health` son públicos, y el resto de la API exige un bearer token. No hay registro público, recuperación de contraseña ni múltiples roles.
 
 ## Pruebas
 

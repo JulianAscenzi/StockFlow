@@ -82,7 +82,7 @@ Docker debe estar disponible para las pruebas de integración. Para una comproba
 
 ## Configuración
 
-`.env` define `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` y `POSTGRES_PORT`; consultá `.env.example` para sus valores de desarrollo. Cambiá la contraseña antes de usar una base fuera de tu equipo y nunca publiques `.env`.
+`.env` define `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_PORT`, `APP_ADMIN_EMAIL`, `APP_ADMIN_PASSWORD` y `APP_JWT_SECRET`; consultá `.env.example` para valores locales. La primera ejecución crea un único administrador con email y contraseña hasheada con BCrypt. Cambiá las contraseñas y el secreto antes de usar una base fuera de tu equipo y nunca publiques `.env`.
 
 El proxy de Vite usa `http://localhost:8080` por defecto. Para apuntar temporalmente a otra instancia local, por ejemplo en una prueba aislada, ejecutá:
 
@@ -103,4 +103,4 @@ No ejecutes `docker compose down -v` salvo que quieras eliminar deliberadamente 
 
 ## Despliegue
 
-Para una demo gratuita de portfolio se usa Vercel (interfaz) y Render Free (API y PostgreSQL). Consultá la [guía de despliegue](docs/DEPLOYMENT.md). No cargues datos reales: Render Free suspende la API inactiva y elimina la base después de 30 días.
+Para una demo gratuita de portfolio se usa Vercel (interfaz) y Render Free (API y PostgreSQL). Consultá la [guía de despliegue](docs/DEPLOYMENT.md). No cargues datos reales: Render Free suspende la API inactiva y elimina la base después de 30 días. La demo pública deja la autenticación desactivada intencionalmente; para un uso comercial debe habilitarse con secretos propios.

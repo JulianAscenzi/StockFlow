@@ -1,11 +1,28 @@
 import type { Category, Dashboard, PageResponse, Product } from './types';
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
+const tokenStorageKey = 'stockflow.access-token';
+
+export function accessToken() {
+  return localStorage.getItem(tokenStorageKey);
+}
+
+export function saveAccessToken(token: string) {
+  localStorage.setItem(tokenStorageKey, token);
+}
+
+export function clearAccessToken() {
+  localStorage.removeItem(tokenStorageKey);
+}
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${apiBaseUrl}${path}`, {
     ...options,
-    headers: { 'Content-Type': 'application/json', ...options?.headers }
+    headers: {
+      'Content-Type': 'application/json',
+      ...(accessToken() ? { Authorization: `Bearer ${accessToken()}` } : {}),
+      ...options?.headers
+    }
   });
   if (response.ok) {
     return response.status === 204 ? (undefined as T) : response.json() as Promise<T>;
@@ -15,6 +32,10 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  login: (body: { email: string; password: string }) =>
+    request<{ accessToken: string; tokenType: string }>('/api/auth/login', {
+      method: 'POST', body: JSON.stringify(body)
+    }),
   dashboard: () => request<Dashboard>('/api/dashboard?size=8'),
   products: (name = '') => {
     const trimmedName = name.trim();

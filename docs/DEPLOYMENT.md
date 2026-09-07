@@ -1,13 +1,13 @@
 # Demo gratuita para portfolio
 
-Esta guía publica una demo técnica gratuita: Vercel para la interfaz y Render Free para API y PostgreSQL. No es un despliegue de producción ni debe contener datos reales, porque la aplicación todavía no tiene autenticación propia.
+Esta guía publica una demo técnica gratuita: Vercel para la interfaz y Render Free para API y PostgreSQL. No es un despliegue de producción ni debe contener datos reales. La demo desactiva intencionalmente la autenticación para que sea navegable desde un CV.
 
 ## Límites intencionales
 
 - Render Free detiene la API tras 15 minutos sin tráfico; la primera visita posterior puede demorar aproximadamente un minuto.
 - PostgreSQL Free en Render tiene 1 GB, no tiene backups y expira 30 días después de crearse. Se puede recrear con datos ficticios cuando haga falta.
 - No se compra dominio ni se configura Cloudflare. Se usan los subdominios gratuitos de Vercel y Render.
-- La API restringe CORS al dominio de Vercel, pero eso no es autenticación. Cualquiera podría modificar la demo haciendo llamadas directas a la API: usá sólo información inventada.
+- La API restringe CORS al dominio de Vercel, pero eso no es autenticación. `render.yaml` fija `APP_AUTH_ENABLED=false`; cualquiera podría modificar la demo haciendo llamadas directas a la API. Usá sólo información inventada.
 
 ## 1. API y base en Render
 
@@ -21,7 +21,7 @@ Esta guía publica una demo técnica gratuita: Vercel para la interfaz y Render 
 
 1. En Vercel, hacé **Add New** → **Project** e importá el mismo repositorio.
 2. Configurá **Root Directory** como `frontend`. Vercel detectará Vite.
-3. Antes de desplegar, agregá la variable de producción `VITE_API_BASE_URL` con la URL de Render, sin barra final.
+3. Antes de desplegar, agregá la variable de producción `VITE_API_BASE_URL` con la URL de Render, sin barra final, y `VITE_AUTH_ENABLED=false` para esta demo abierta.
 4. Desplegá y guardá la URL `https://<proyecto>.vercel.app`.
 5. Volvé a Render, editá `APP_CORS_ALLOWED_ORIGINS` y reemplazá el valor temporal por esa URL de Vercel. Guardá y redeployá la API.
 
@@ -36,3 +36,7 @@ Esta guía publica una demo técnica gratuita: Vercel para la interfaz y Render 
 5. Incluí ambas URLs y una captura de pantalla en tu CV o portfolio.
 
 Si la base vence, recreá el Blueprint y repetí el smoke test con nuevos datos ficticios. Para una operación comercial futura, se necesita un plan con persistencia/respaldos y autenticación de aplicación.
+
+## Configuración comercial futura
+
+Para un entorno con datos comerciales, eliminá `APP_AUTH_ENABLED=false` y configurá en el proveedor, como secretos no versionados, `APP_ADMIN_EMAIL`, `APP_ADMIN_PASSWORD` y `APP_JWT_SECRET` (al menos 32 caracteres aleatorios). En el primer inicio se crea una sola cuenta administradora y la contraseña queda almacenada con BCrypt. `POST /api/auth/login` devuelve un JWT de ocho horas; el resto de `/api/**` requiere `Authorization: Bearer <token>`. Planificá también una base persistente, backups verificables y rotación del secreto antes de aprobar el despliegue.

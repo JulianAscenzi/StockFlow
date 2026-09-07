@@ -6,20 +6,20 @@ El backend MVP está cerrado: `category`, `product`, `inventory`, `common`, `sal
 
 ## Current module
 
-`deployment`: la demo gratuita de portfolio está publicada en [Vercel](https://frontend-beta-plum-15.vercel.app/) y la API en [Render](https://stockflow-api-0fan.onrender.com/actuator/health). Usa Docker para la API, PostgreSQL 17 Free, CORS por origen explícito y health check. No contiene secretos ni debe usar datos reales.
+`auth`: existe un único administrador inicial configurable por entorno, contraseñas BCrypt, JWT HS256 de ocho horas y una pantalla de inicio de sesión. La demo gratuita de portfolio permanece pública con autenticación desactivada intencionalmente y datos ficticios.
 
 ## Next task
 
-Definir el alcance de autenticación y la infraestructura persistente antes de habilitar uso comercial. La demo pública actual sólo sirve como muestra de portfolio.
+Preparar el despliegue de producción: elegir infraestructura persistente con backups y cargar secretos de administrador/JWT. La demo pública actual sólo sirve como muestra de portfolio.
 
 ## Last general test result
 
-Suite completa con PostgreSQL/Testcontainers: **312 pruebas, 0 fallos, 0 errores y 0 omitidas**. La interfaz compila con Vite y la integración frontend–backend se verificó además en una base PostgreSQL temporal: categoría, producto, entrada de stock, venta y resumen diario.
+Suite completa con PostgreSQL/Testcontainers: **314 pruebas, 0 fallos, 0 errores y 0 omitidas**. La interfaz compila con Vite y la integración frontend–backend se verificó además en una base PostgreSQL temporal: categoría, producto, entrada, venta y resumen diario.
 
 ## Pending decisions
 
-Queda definir e implementar el alcance de autenticación propio antes de usar datos comerciales. La demo de portfolio no debe contener datos reales.
+Queda elegir proveedor, política de backups y operación para datos comerciales. La demo de portfolio no debe contener datos reales.
 
 ## Real blockers
 
-No hay bloqueos técnicos para la demo pública. El avance hacia uso comercial requiere una decisión de producto sobre autenticación y una infraestructura con persistencia y respaldos.
+No hay bloqueos técnicos para la demo pública. El avance hacia uso comercial requiere infraestructura con persistencia, respaldos y secretos configurados por el operador.

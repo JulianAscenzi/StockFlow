@@ -8,6 +8,7 @@ import com.julianas.stockflow.inventory.StockLimitExceededException;
 import com.julianas.stockflow.product.DuplicateProductSkuException;
 import com.julianas.stockflow.product.ProductNotFoundException;
 import com.julianas.stockflow.sale.EmptySaleException;
+import com.julianas.stockflow.auth.InvalidCredentialsException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -35,6 +36,14 @@ public class GlobalExceptionHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
     private static final String VALIDATION_MESSAGE = "Request validation failed.";
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ApiError> handleInvalidCredentials(
+            InvalidCredentialsException exception,
+            HttpServletRequest request
+    ) {
+        return response(HttpStatus.UNAUTHORIZED, "INVALID_CREDENTIALS", "Invalid email or password.", request, Map.of());
+    }
 
     @ExceptionHandler(CategoryNotFoundException.class)
     public ResponseEntity<ApiError> handleCategoryNotFound(
