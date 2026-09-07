@@ -2,6 +2,15 @@
 
 StockFlow es una aplicación web de inventario y ventas para pequeños comercios. Permite administrar categorías y productos, registrar entradas o salidas de stock y confirmar ventas. El resumen muestra las métricas del día en la zona horaria de Argentina.
 
+## Demo pública
+
+- [Abrir la aplicación](https://frontend-beta-plum-15.vercel.app/)
+- [Estado de la API](https://stockflow-api-0fan.onrender.com/actuator/health)
+
+La demo usa datos ficticios y está publicada con servicios gratuitos. La API puede tardar aproximadamente un minuto en responder después de un período de inactividad.
+
+![Resumen diario de StockFlow](docs/images/dashboard-demo.png)
+
 ## Requisitos
 
 - Java 21

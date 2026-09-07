@@ -6,11 +6,11 @@ El backend MVP está cerrado: `category`, `product`, `inventory`, `common`, `sal
 
 ## Current module
 
-`deployment`: se preparó una demo gratuita de portfolio con Docker para la API, PostgreSQL 17 Free en Render, interfaz Vite configurable para Vercel, CORS por origen explícito, health check y guía operativa. No contiene secretos ni crea recursos externos.
+`deployment`: la demo gratuita de portfolio está publicada en [Vercel](https://frontend-beta-plum-15.vercel.app/) y la API en [Render](https://stockflow-api-0fan.onrender.com/actuator/health). Usa Docker para la API, PostgreSQL 17 Free, CORS por origen explícito y health check. No contiene secretos ni debe usar datos reales.
 
 ## Next task
 
-Publicar la demo gratuita en Render y Vercel, con datos ficticios, siguiendo `docs/DEPLOYMENT.md`.
+Definir el alcance de autenticación y la infraestructura persistente antes de habilitar uso comercial. La demo pública actual sólo sirve como muestra de portfolio.
 
 ## Last general test result
 
@@ -22,4 +22,4 @@ Queda definir e implementar el alcance de autenticación propio antes de usar da
 
 ## Real blockers
 
-No hay bloqueos técnicos en el repositorio. El siguiente paso requiere cuentas gratuitas en Render y Vercel; los cambios deben estar disponibles en GitHub antes de crear el Blueprint.
+No hay bloqueos técnicos para la demo pública. El avance hacia uso comercial requiere una decisión de producto sobre autenticación y una infraestructura con persistencia y respaldos.
