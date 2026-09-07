@@ -6,11 +6,11 @@ El backend MVP está cerrado: `category`, `product`, `inventory`, `common`, `sal
 
 ## Current module
 
-`auth`: existe un único administrador inicial configurable por entorno, contraseñas BCrypt, JWT HS256 de ocho horas y una pantalla de inicio de sesión. La demo gratuita de portfolio permanece pública con autenticación desactivada intencionalmente y datos ficticios.
+MVP de portfolio terminado. `auth` conserva un único administrador inicial configurable por entorno, contraseñas BCrypt, JWT HS256 de ocho horas y una pantalla de inicio de sesión para instalaciones privadas. La demo gratuita de portfolio permanece pública con autenticación desactivada intencionalmente y datos ficticios.
 
-## Next task
+## Deployment decision
 
-Preparar el despliegue de producción: elegir infraestructura persistente con backups y cargar secretos de administrador/JWT. La demo pública actual sólo sirve como muestra de portfolio.
+El alcance aprobado es una demostración pública para CV: Vercel sirve la interfaz y Render Free la API con PostgreSQL. No se autorizan datos comerciales ni se contrata infraestructura de producción. La guía de despliegue explica la persistencia limitada, falta de backups y el smoke test de la demo.
 
 ## Last general test result
 
@@ -18,8 +18,8 @@ Suite completa con PostgreSQL/Testcontainers: **314 pruebas, 0 fallos, 0 errores
 
 ## Pending decisions
 
-Queda elegir proveedor, política de backups y operación para datos comerciales. La demo de portfolio no debe contener datos reales.
+Ninguna para el MVP de portfolio. Un uso comercial futuro requerirá decidir proveedor, backups, operación y secretos propios antes de cargar información real.
 
 ## Real blockers
 
-No hay bloqueos técnicos para la demo pública. El avance hacia uso comercial requiere infraestructura con persistencia, respaldos y secretos configurados por el operador.
+Ninguno dentro del alcance de portfolio.
