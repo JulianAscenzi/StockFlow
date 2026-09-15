@@ -6,7 +6,7 @@ export function InventoryView({ notify }: { notify: (message: string, kind?: 'er
   const [products, setProducts] = useState<Product[]>([]);
   const [productId, setProductId] = useState('');
   const [direction, setDirection] = useState<'in' | 'out'>('in');
-  useEffect(() => { api.products().then((page) => setProducts(page.content)).catch((error: Error) => notify(error.message, 'error')); }, []);
+  useEffect(() => { api.allProducts().then(setProducts).catch((error: Error) => notify(error.message, 'error')); }, []);
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault(); const form = event.currentTarget; const values = new FormData(form);
     try { await api.moveStock(Number(productId), direction, { quantity: Number(values.get('quantity')), reason: String(values.get('reason')) }); form.reset(); notify(direction === 'in' ? 'Entrada registrada.' : 'Salida registrada.', 'success'); } catch (error) { notify((error as Error).message, 'error'); }

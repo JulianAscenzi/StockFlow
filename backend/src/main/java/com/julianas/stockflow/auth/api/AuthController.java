@@ -4,6 +4,7 @@ import com.julianas.stockflow.auth.AuthService;
 import com.julianas.stockflow.auth.JwtService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/auth")
+@ConditionalOnProperty(name = "app.auth.enabled", havingValue = "true", matchIfMissing = true)
 public class AuthController {
 
     private final AuthService authService;

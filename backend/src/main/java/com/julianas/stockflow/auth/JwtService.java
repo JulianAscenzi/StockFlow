@@ -1,6 +1,7 @@
 package com.julianas.stockflow.auth;
 
 import org.springframework.stereotype.Service;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -16,6 +17,7 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
 @Service
+@ConditionalOnProperty(name = "app.auth.enabled", havingValue = "true", matchIfMissing = true)
 public class JwtService {
 
     private static final Base64.Encoder ENCODER = Base64.getUrlEncoder().withoutPadding();

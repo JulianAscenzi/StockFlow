@@ -37,15 +37,16 @@ export const api = {
       method: 'POST', body: JSON.stringify(body)
     }),
   dashboard: () => request<Dashboard>('/api/dashboard?size=8'),
-  products: (name = '') => {
+  products: (name = '', page = 0) => {
     const trimmedName = name.trim();
     const path = trimmedName
-      ? `/api/products/search?name=${encodeURIComponent(trimmedName)}&size=100`
-      : '/api/products?size=100';
+      ? `/api/products/search?name=${encodeURIComponent(trimmedName)}&page=${page}&size=20`
+      : `/api/products?page=${page}&size=20`;
     return request<PageResponse<Product>>(path);
   },
-  activeProducts: () => request<PageResponse<Product>>('/api/products/active?size=100'),
-  categories: () => request<PageResponse<Category>>('/api/categories?size=100'),
+  allProducts: () => loadAllPages<Product>((page) => request<PageResponse<Product>>(`/api/products?page=${page}&size=100`)),
+  activeProducts: () => loadAllPages<Product>((page) => request<PageResponse<Product>>(`/api/products/active?page=${page}&size=100`)),
+  categories: () => loadAllPages<Category>((page) => request<PageResponse<Category>>(`/api/categories?page=${page}&size=100`)),
   createCategory: (body: { name: string; description: string }) =>
     request<Category>('/api/categories', { method: 'POST', body: JSON.stringify(body) }),
   createProduct: (body: Omit<Product, 'id' | 'stock' | 'active'>) =>
@@ -55,3 +56,14 @@ export const api = {
   createSale: (body: { notes?: string; items: Array<{ productId: number; quantity: number }> }) =>
     request('/api/sales', { method: 'POST', body: JSON.stringify(body) })
 };
+
+async function loadAllPages<T>(loadPage: (page: number) => Promise<PageResponse<T>>): Promise<T[]> {
+  const firstPage = await loadPage(0);
+  const pages = await Promise.all(
+    Array.from({ length: Math.max(0, firstPage.totalPages - 1) }, (_, index) => loadPage(index + 1))
+  );
+  return [
+    ...firstPage.content,
+    ...pages.flatMap((page) => page.content)
+  ];
+}

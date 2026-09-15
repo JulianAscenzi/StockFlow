@@ -11,6 +11,23 @@ La demo usa datos ficticios y está publicada con servicios gratuitos. La API pu
 
 ![Resumen diario de StockFlow](docs/images/dashboard-demo.png)
 
+## Decisiones técnicas destacadas
+
+- PostgreSQL y Flyway son la fuente de verdad del esquema; Hibernate valida, no genera tablas en ejecución.
+- Las ventas conservan snapshots de nombre, SKU, precio y costo, para que el historial no cambie al editar el catálogo.
+- Las salidas de inventario usan bloqueo pesimista y cada variación registra su movimiento histórico en la misma transacción.
+- Las líneas de una venta se bloquean por ID en orden determinista para reducir conflictos entre ventas concurrentes.
+- La suite de integración usa PostgreSQL real mediante Testcontainers; no depende de una base H2 distinta del entorno operativo.
+
+## Recorrido de evaluación (1 minuto)
+
+1. Abrí la demo y entrá a **Productos**. Creá una categoría y un producto con precio, costo y stock mínimo.
+2. En **Inventario**, registrá una entrada para ese producto.
+3. En **Nueva venta**, agregalo, elegí una cantidad y confirmá. Mientras la operación está en curso, los controles quedan bloqueados para evitar un doble envío.
+4. Volvé a **Resumen**: se reflejan la venta, facturación, unidades, margen bruto estimado y, si corresponde, el aviso de stock bajo.
+
+El catálogo de productos se navega por páginas y los selectores de categorías y productos activos cargan todas sus páginas, por lo que el flujo sigue disponible aunque haya más de 100 registros.
+
 ## Requisitos
 
 - Java 21
@@ -61,6 +78,19 @@ La demo usa datos ficticios y está publicada con servicios gratuitos. La API pu
 5. Volvé al **Resumen** para consultar ventas, facturación, margen bruto estimado y productos a reponer.
 
 Las ventas y movimientos de stock quedan registrados como historial. Una venta descuenta el stock en la misma operación.
+
+## API en breve
+
+Todas las rutas devuelven DTOs JSON; las rutas de catálogo paginadas incluyen `content`, `page`, `size`, `totalElements` y `totalPages`.
+
+| Operación | Ruta | Ejemplo mínimo |
+| --- | --- | --- |
+| Consultar resumen diario | `GET /api/dashboard` | `GET /api/dashboard?size=8` |
+| Listar productos | `GET /api/products` | `GET /api/products?page=0&size=20` |
+| Registrar entrada | `POST /api/products/{id}/stock/in` | `{"quantity": 10, "reason": "Recepción"}` |
+| Confirmar venta | `POST /api/sales` | `{"items":[{"productId":1,"quantity":2}]}` |
+
+Con autenticación habilitada, las rutas de negocio requieren `Authorization: Bearer <token>` y el token se obtiene con `POST /api/auth/login`. La demo pública la desactiva intencionalmente.
 
 ## Verificación
 

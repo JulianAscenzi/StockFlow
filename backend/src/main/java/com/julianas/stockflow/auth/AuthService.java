@@ -1,6 +1,7 @@
 package com.julianas.stockflow.auth;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -9,6 +10,7 @@ import java.time.Instant;
 import java.util.Locale;
 
 @Service
+@ConditionalOnProperty(name = "app.auth.enabled", havingValue = "true", matchIfMissing = true)
 public class AuthService {
 
     private final ApplicationUserRepository users;

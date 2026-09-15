@@ -6,7 +6,7 @@ El backend MVP está cerrado: `category`, `product`, `inventory`, `common`, `sal
 
 ## Current module
 
-MVP de portfolio terminado. `auth` conserva un único administrador inicial configurable por entorno, contraseñas BCrypt, JWT HS256 de ocho horas y una pantalla de inicio de sesión para instalaciones privadas. La demo gratuita de portfolio permanece pública con autenticación desactivada intencionalmente y datos ficticios.
+MVP de portfolio terminado. `auth` conserva un único administrador inicial configurable por entorno, contraseñas BCrypt, JWT HS256 de ocho horas y una pantalla de inicio de sesión para instalaciones privadas. La demo gratuita de portfolio permanece pública con autenticación desactivada intencionalmente y datos ficticios; en ese modo no se crean los componentes ni la ruta JWT y no se requiere `APP_JWT_SECRET`. El catálogo de productos se pagina en la interfaz y los selectores de categorías, ventas e inventario cargan todas las páginas para superar el límite de 100 registros. La confirmación de venta bloquea sus controles mientras la solicitud está en curso.
 
 ## Deployment decision
 
