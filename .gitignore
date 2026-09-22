@@ -27,6 +27,9 @@ replay_pid*
 .env
 !.env.example
 
+# Personal Obsidian vault settings
+/docs/.obsidian/
+
 # Frontend dependencies and build output
 frontend/node_modules/
 frontend/dist/
