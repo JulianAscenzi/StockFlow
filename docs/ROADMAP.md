@@ -34,4 +34,4 @@ El MVP permanece cerrado. Orden aprobado: pruebas de navegador → CI → histor
 25. [x] Integración continua — jobs backend, compilación frontend y navegador; sin despliegues.
 26. [x] Historial y detalle de ventas — consultas paginadas y snapshots históricos en la interfaz.
 27. [x] Búsqueda paginada compartida — nombre/SKU, filtros de venta e inventario y selección conservada.
-28. [ ] Confirmación idempotente — clave UUID persistida transaccionalmente y recuperación en la misma pestaña mediante sessionStorage.
+28. [x] Confirmación idempotente — clave UUID persistida transaccionalmente y recuperación en la misma pestaña mediante sessionStorage. La recuperación ignora respuestas tardías de operaciones anteriores.

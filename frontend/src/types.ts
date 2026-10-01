@@ -47,3 +47,5 @@ export interface Sale extends SaleSummary {
   notes: string | null;
   items: Array<{ id: number; productId: number; productName: string; productSku: string; quantity: number; unitPrice: number; unitCost: number; subtotal: number }>;
 }
+
+export interface SaleRequest { notes?: string; items: Array<{ productId: number; quantity: number }>; }

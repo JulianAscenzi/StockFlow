@@ -43,6 +43,7 @@ Las rutas HTTP reciben DTOs validados, los controllers coordinan servicios y map
 - `products`: producto con SKU único, precio/costo `NUMERIC(12,2)`, stock y stock mínimo no negativos, estado activo y categoría obligatoria.
 - `stock_movements`: registro inmutable de entradas/salidas, cantidad, balances, motivo y timestamp; referencia a producto.
 - `sales`: total `NUMERIC(14,2)`, notas opcionales y timestamp de creación.
+- `sale_confirmations`: clave UUID de idempotencia, hash de la solicitud, venta confirmada y timestamp; impide reutilizar una clave para otra operación.
 - `sale_items`: producto, snapshots de nombre/SKU/precio/costo, cantidad y subtotal; la migración impide productos repetidos en una venta.
 - `application_users`: una cuenta administradora inicial con email único sin distinción de mayúsculas y hash BCrypt.
 
@@ -51,6 +52,8 @@ Relaciones: categoría 1–N productos; producto 1–N movimientos; venta 1–N 
 ## Migraciones
 
 Flyway es la única vía de cambio de esquema y Hibernate usa `ddl-auto=validate`. Existen V1 (categorías/productos), V2 (movimientos de stock), V3 (ventas/ítems) y V4 (usuarios de aplicación). Las migraciones aplicadas no se editan; todo cambio requiere una V nueva con constraints e índices explícitos.
+
+La migración V5 agrega `sale_confirmations` con una clave primaria UUID, hash de solicitud, relación única con `sales` y FK restrictiva.
 
 ## Dinero
 

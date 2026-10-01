@@ -11,7 +11,9 @@ import type { Dashboard } from './types';
 
 export default function App() {
   const [section, setSection] = useState<Section>('dashboard'); const [dashboard, setDashboard] = useState<Dashboard | null>(null); const [loading, setLoading] = useState(true); const [notice, setNotice] = useState<{ message: string; kind: 'error' | 'success' } | null>(null);
-  const authenticationRequired = import.meta.env.VITE_AUTH_ENABLED !== 'false';
+  // The published portfolio demo is public by default. Private installations
+  // must opt in explicitly with VITE_AUTH_ENABLED=true.
+  const authenticationRequired = import.meta.env.VITE_AUTH_ENABLED === 'true';
   const [authenticated, setAuthenticated] = useState(() => !authenticationRequired || Boolean(accessToken()));
   const notify = useCallback((message: string, kind: 'error' | 'success' = 'success') => setNotice({ message, kind }), []);
   useEffect(() => {
@@ -25,6 +27,6 @@ export default function App() {
     return () => { current = false; };
   }, [authenticated, section, notify]);
   if (!authenticated) return <LoginView onLogin={() => { setLoading(true); setAuthenticated(true); }} />;
-  const content = section === 'dashboard' ? <DashboardView data={dashboard} loading={loading} /> : section === 'products' ? <ProductsView notify={notify} /> : section === 'inventory' ? <InventoryView notify={notify} /> : section === 'history' ? <SalesHistoryView /> : <SaleView notify={notify} />;
+  const content = section === 'dashboard' ? <DashboardView data={dashboard} loading={loading} /> : section === 'products' ? <ProductsView notify={notify} /> : section === 'inventory' ? <InventoryView notify={notify} /> : section === 'history' ? <SalesHistoryView /> : <SaleView notify={notify} onHistory={() => setSection('history')} onLoginRequired={() => { clearAccessToken(); setAuthenticated(false); }} />;
   return <div className="app-shell"><Navigation section={section} onChange={setSection} showLogout={authenticationRequired} onLogout={() => { clearAccessToken(); setDashboard(null); setAuthenticated(false); }} /><main>{notice && <div className={`notice ${notice.kind}`} role="status">{notice.message}<button aria-label="Cerrar aviso" onClick={() => setNotice(null)}>×</button></div>}{content}</main></div>;
 }

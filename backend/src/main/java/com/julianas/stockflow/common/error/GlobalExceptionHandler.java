@@ -1,6 +1,7 @@
 package com.julianas.stockflow.common.error;
 
 import com.julianas.stockflow.sale.SaleNotFoundException;
+import com.julianas.stockflow.sale.IdempotencyConflictException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import com.julianas.stockflow.category.CategoryInUseException;
 import com.julianas.stockflow.category.CategoryNotFoundException;
@@ -59,6 +60,12 @@ public class GlobalExceptionHandler {
                 request,
                 Map.of()
         );
+    }
+
+    @ExceptionHandler(IdempotencyConflictException.class)
+    public ResponseEntity<ApiError> handleIdempotencyConflict(
+            IdempotencyConflictException exception, HttpServletRequest request) {
+        return response(HttpStatus.CONFLICT, exception.getCode(), exception.getMessage(), request, Map.of());
     }
 
     @ExceptionHandler(SaleNotFoundException.class)

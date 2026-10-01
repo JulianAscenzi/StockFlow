@@ -21,7 +21,7 @@ Esta guía publica una demo técnica gratuita: Vercel para la interfaz y Render 
 
 1. En Vercel, hacé **Add New** → **Project** e importá el mismo repositorio.
 2. Configurá **Root Directory** como `frontend`. Vercel detectará Vite.
-3. Antes de desplegar, agregá la variable de producción `VITE_API_BASE_URL` con la URL de Render, sin barra final, y `VITE_AUTH_ENABLED=false` para esta demo abierta.
+3. Antes de desplegar, agregá la variable de producción `VITE_API_BASE_URL` con la URL de Render, sin barra final. La demo queda pública por defecto; sólo agregá `VITE_AUTH_ENABLED=true` para una instalación privada con autenticación.
 4. Desplegá y guardá la URL `https://<proyecto>.vercel.app`.
 5. Volvé a Render, editá `APP_CORS_ALLOWED_ORIGINS` y reemplazá el valor temporal por esa URL de Vercel. Guardá y redeployá la API.
 

@@ -5,6 +5,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PathVariable;
 import com.julianas.stockflow.common.api.PageResponse;
 import com.julianas.stockflow.sale.Sale;
+import com.julianas.stockflow.sale.IdempotentSaleService;
+import org.springframework.web.bind.annotation.RequestHeader;
 import com.julianas.stockflow.sale.SaleService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -22,10 +24,12 @@ public class SaleController {
 
     private final SaleService saleService;
     private final SaleMapper saleMapper;
+    private final IdempotentSaleService idempotentSales;
 
-    public SaleController(SaleService saleService, SaleMapper saleMapper) {
+    public SaleController(SaleService saleService, SaleMapper saleMapper, IdempotentSaleService idempotentSales) {
         this.saleService = saleService;
         this.saleMapper = saleMapper;
+        this.idempotentSales = idempotentSales;
     }
 
     @GetMapping
@@ -42,11 +46,12 @@ public class SaleController {
     }
 
     @PostMapping
-    public ResponseEntity<SaleResponse> confirm(@Valid @RequestBody SaleCreateRequest request) {
-        Sale sale = saleService.confirm(
-                request.notes(),
-                request.items().stream().map(item -> new SaleService.SaleLine(item.productId(), item.quantity())).toList()
-        );
+    public ResponseEntity<SaleResponse> confirm(@Valid @RequestBody SaleCreateRequest request,
+            @RequestHeader(value = "Idempotency-Key", required = false) String key) {
+        var lines = request.items().stream()
+                .map(item -> new SaleService.SaleLine(item.productId(), item.quantity())).toList();
+        Sale sale = key == null ? saleService.confirm(request.notes(), lines)
+                : idempotentSales.confirm(key, request.notes(), lines);
         SaleResponse response = saleMapper.toResponse(sale);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")

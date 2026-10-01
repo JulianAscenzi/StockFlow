@@ -80,7 +80,7 @@ public class Sale {
         return item;
     }
 
-    private static String normalizeNotes(String notes) {
+    static String normalizeNotes(String notes) {
         if (notes == null) {
             return null;
         }

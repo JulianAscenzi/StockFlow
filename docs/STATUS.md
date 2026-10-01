@@ -41,3 +41,5 @@ Bloque 25: workflow CI con jobs backend, frontend y navegador dependiente de amb
 Bloque 26 completado: historial paginado y detalle histórico, sin alterar inventario. Pruebas específicas: 13; suite completa: 319; navegador: seis escenarios; compilación y whitespace aprobados. Próximo bloque: búsqueda paginada.
 
 Bloque 27 completado: búsqueda paginada compartida, filtros PostgreSQL y selección conservada. Pruebas específicas: 66; suite completa: 322; navegador: ocho escenarios; compilación y whitespace aprobados. Próximo bloque: confirmación idempotente.
+
+Bloque 28: confirmación idempotente implementada. La recuperación usa una clave UUID persistida en `sessionStorage`; las respuestas tardías sólo pueden limpiar la operación que las originó, evitando borrar una recuperación nueva tras navegar. La compilación frontend pasa; las pruebas de integración requieren Docker/Testcontainers.

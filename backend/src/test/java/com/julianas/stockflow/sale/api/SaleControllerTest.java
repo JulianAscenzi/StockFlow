@@ -30,6 +30,7 @@ class SaleControllerTest {
     @Autowired private MockMvc mockMvc;
     @MockitoBean private SaleService saleService;
     @MockitoBean private SaleMapper saleMapper;
+    @MockitoBean private com.julianas.stockflow.sale.IdempotentSaleService idempotentSales;
 
     @Test
     void confirmsSaleWithValidatedContract() throws Exception {
