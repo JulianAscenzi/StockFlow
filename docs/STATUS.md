@@ -14,7 +14,7 @@ El alcance aprobado es una demostración pública para CV: Vercel sirve la inter
 
 ## Last general test result
 
-Suite completa con PostgreSQL/Testcontainers: **314 pruebas, 0 fallos, 0 errores y 0 omitidas**. La interfaz compila con Vite y la integración frontend–backend se verificó además en una base PostgreSQL temporal: categoría, producto, entrada, venta y resumen diario.
+Suite completa con PostgreSQL/Testcontainers: **315 pruebas, 0 fallos, 0 errores y 0 omitidas**. La interfaz compila con Vite y la integración frontend–backend se verificó además en una base PostgreSQL temporal: categoría, producto, entrada, venta y resumen diario.
 
 ## Cuaderno del proyecto
 
@@ -27,3 +27,9 @@ Ninguna para el MVP de portfolio. Un uso comercial futuro requerirá decidir pro
 ## Real blockers
 
 Ninguno dentro del alcance de portfolio.
+
+## Ampliaciones en curso
+
+Docker es accesible con ejecución fuera del sandbox. La verificación inicial detectó una regresión previa: el advice convertía rutas inexistentes en 500; se corrige a 404 `RESOURCE_NOT_FOUND`, con regresión para login deshabilitado.
+
+Verificación del 2026-10-01: regresión específica y suite backend completa aprobadas (315 pruebas).

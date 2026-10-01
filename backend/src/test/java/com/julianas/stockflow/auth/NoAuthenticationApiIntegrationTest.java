@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @SpringBootTest(properties = {"app.auth.enabled=false", "app.auth.jwt.secret="})
 @AutoConfigureMockMvc
@@ -46,7 +47,8 @@ class NoAuthenticationApiIntegrationTest {
         mockMvc.perform(get("/api/dashboard"))
                 .andExpect(status().isOk());
         mockMvc.perform(post("/api/auth/login"))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("RESOURCE_NOT_FOUND"));
     }
 
     private static PostgreSQLContainer startPostgresql() {
