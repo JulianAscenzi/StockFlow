@@ -134,3 +134,15 @@ No ejecutes `docker compose down -v` salvo que quieras eliminar deliberadamente 
 ## Despliegue
 
 Para una demo gratuita de portfolio se usa Vercel (interfaz) y Render Free (API y PostgreSQL). Consultá la [guía de despliegue](docs/DEPLOYMENT.md). No cargues datos reales: Render Free suspende la API inactiva y elimina la base después de 30 días. La demo pública deja la autenticación desactivada intencionalmente; para un uso comercial debe habilitarse con secretos propios.
+
+### Pruebas de navegador aisladas
+
+Requieren Java 21, Node 24+, npm y Docker accesible. Desde la raíz:
+
+```bash
+npm --prefix frontend ci
+npm --prefix frontend exec -- playwright install chromium
+npm --prefix frontend run test:e2e
+```
+
+El comando público invoca Maven y `BrowserE2EIT`, que crea PostgreSQL 17 y Spring Boot en un puerto aleatorio con credenciales exclusivas de pruebas. Playwright inicia Vite en otro puerto libre, con proxy a ese backend. No se reutilizan la demo ni servicios locales. El script interno `test:e2e:browser` requiere el entorno provisto por Java. Chromium usa un worker y cero reintentos; una suite vacía, omitida, fallida o sin informe falla la ejecución. Los diagnósticos quedan en `backend/target/browser-e2e.log` y `frontend/test-results/` (trazas y capturas de los fallos).

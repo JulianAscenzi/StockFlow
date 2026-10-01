@@ -25,3 +25,13 @@ Estado reconstruido desde commits, código y pruebas. `[x]` significa entregado 
 21. [x] Documentar ejecución y despliegue — objetivo: operación reproducible. Archivos: README/docs/compose. Aceptación: guía local verificada, límites de producción documentados. Pruebas: arranque limpio. Dependencias: bloque 17.
 22. [x] Publicar demo de portfolio — objetivo: una demostración pública, reproducible y segura para datos ficticios. Módulos: infraestructura/documentación. Aceptación: interfaz Vercel, API y PostgreSQL Render Free, CORS explícito, health check, sin secretos versionados y límites de la demo documentados. Pruebas: smoke manual de categoría, producto, entrada, venta y dashboard. Dependencias: bloques 19 y 21. Decisión: el producto se presenta como portfolio; no se autorizan datos comerciales ni infraestructura de producción.
 23. [x] Revisión final del MVP de portfolio — objetivo: aceptación final del alcance acordado. Módulos: todos. Aceptación: flujo público verificable, autenticación disponible para una futura instalación privada, documentación de límites, compilación de interfaz y suite backend aprobadas. Pruebas: suite total y E2E. Dependencias: bloque 22.
+
+## Ampliaciones posteriores al MVP
+
+El MVP permanece cerrado. Orden aprobado: pruebas de navegador → CI → historial → búsqueda → idempotencia.
+
+24. [x] Pruebas de navegador aisladas — Chromium, Spring Boot con autenticación y PostgreSQL 17 temporal; recorrido comercial, controles bloqueados, conflictos de stock y resumen actualizado.
+25. [ ] Integración continua — jobs backend, compilación frontend y navegador; sin despliegues.
+26. [ ] Historial y detalle de ventas — consultas paginadas y snapshots históricos en la interfaz.
+27. [ ] Búsqueda paginada compartida — nombre/SKU, filtros de venta e inventario y selección conservada.
+28. [ ] Confirmación idempotente — clave UUID persistida transaccionalmente y recuperación en la misma pestaña mediante sessionStorage.

@@ -13,7 +13,16 @@ export default function App() {
   const authenticationRequired = import.meta.env.VITE_AUTH_ENABLED !== 'false';
   const [authenticated, setAuthenticated] = useState(() => !authenticationRequired || Boolean(accessToken()));
   const notify = useCallback((message: string, kind: 'error' | 'success' = 'success') => setNotice({ message, kind }), []);
-  useEffect(() => { if (authenticated) api.dashboard().then(setDashboard).catch((error: Error) => notify(error.message, 'error')).finally(() => setLoading(false)); }, [authenticated, notify]);
+  useEffect(() => {
+    if (!authenticated || section !== 'dashboard') return;
+    let current = true;
+    setLoading(true);
+    setDashboard(null);
+    api.dashboard().then((data) => { if (current) setDashboard(data); })
+      .catch((error: Error) => { if (current) notify(error.message, 'error'); })
+      .finally(() => { if (current) setLoading(false); });
+    return () => { current = false; };
+  }, [authenticated, section, notify]);
   if (!authenticated) return <LoginView onLogin={() => { setLoading(true); setAuthenticated(true); }} />;
   const content = section === 'dashboard' ? <DashboardView data={dashboard} loading={loading} /> : section === 'products' ? <ProductsView notify={notify} /> : section === 'inventory' ? <InventoryView notify={notify} /> : <SaleView notify={notify} />;
   return <div className="app-shell"><Navigation section={section} onChange={setSection} showLogout={authenticationRequired} onLogout={() => { clearAccessToken(); setDashboard(null); setAuthenticated(false); }} /><main>{notice && <div className={`notice ${notice.kind}`} role="status">{notice.message}<button aria-label="Cerrar aviso" onClick={() => setNotice(null)}>×</button></div>}{content}</main></div>;

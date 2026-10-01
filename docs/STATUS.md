@@ -33,3 +33,5 @@ Ninguno dentro del alcance de portfolio.
 Docker es accesible con ejecución fuera del sandbox. La verificación inicial detectó una regresión previa: el advice convertía rutas inexistentes en 500; se corrige a 404 `RESOURCE_NOT_FOUND`, con regresión para login deshabilitado.
 
 Verificación del 2026-10-01: regresión específica y suite backend completa aprobadas (315 pruebas).
+
+Bloque 24 completado: Playwright aislado, cinco escenarios aprobados, compilación frontend aprobada y 315 pruebas backend aprobadas. El resumen vuelve a consultar al navegar y descarta respuestas obsoletas. Próximo bloque: CI.

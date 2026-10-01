@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:e2e": "cd ../backend && ./mvnw -Dtest=BrowserE2EIT test",
+    "test:e2e:browser": "playwright test"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
@@ -16,6 +18,7 @@
     "vite": "latest"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@types/node": "^26.4.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7"
