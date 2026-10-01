@@ -47,6 +47,15 @@ class ProductServiceTest {
     }
 
     @Test
+    void lookupNormalizesQueryCapsSizeAndUsesStableOrder() {
+        productService.lookup("  SKU_%  ", true, 2, 500);
+        verify(productRepository).lookup("SKU_%", true,
+                PageRequest.of(2, 100, org.springframework.data.domain.Sort.by("name", "id")));
+        assertThrows(IllegalArgumentException.class, () -> productService.lookup("", false, -1, 20));
+        assertThrows(IllegalArgumentException.class, () -> productService.lookup("", false, 0, 0));
+    }
+
+    @Test
     void createsValidProductWithZeroStockAndActiveState() {
         Category category = configureValidCreation();
 

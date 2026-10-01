@@ -184,3 +184,75 @@ test('history preserves page and historical detail with retry', async ({ page })
   await page.getByRole('button', { name: 'Reintentar' }).click();
   await expect(page.getByRole('cell', { name: 'Product HISTORY', exact: true })).toBeVisible();
 });
+
+test('lookup keeps cart across pages and distinguishes refresh failure', async ({ page }) => {
+  await login(page);
+  const fixture = await seed(page, 'LOOKUP');
+  for (let i = 0; i < 21; i++) {
+    const response = await page.request.post('/api/products', { headers: fixture.headers, data: {
+      name: `Lookup ${String(i).padStart(2, '0')}`, sku: `LOOKUP_${i}`, categoryId: fixture.categoryId, price: 10, cost: 4, minimumStock: 0
+    } });
+    expect(response.ok()).toBeTruthy();
+    const product = await response.json();
+    expect((await page.request.post(`/api/products/${product.id}/stock/in`, { headers: fixture.headers, data: { quantity: 2, reason: 'Fixture' } })).ok()).toBeTruthy();
+  }
+  await page.getByRole('button', { name: 'Nueva venta', exact: true }).click();
+  await page.getByLabel('Buscar por nombre o SKU').fill('LOOKUP');
+  await page.getByRole('button', { name: 'Buscar productos', exact: true }).click();
+  await expect(page.getByText('Página 1 de 2')).toBeVisible();
+  await page.getByLabel('Agregar producto').selectOption({ index: 1 });
+  await page.getByRole('button', { name: 'Agregar a la venta' }).click();
+  let nextPageRequests = 0;
+  page.on('request', (request) => { if (request.url().includes('/lookup?') && request.url().includes('page=1')) nextPageRequests++; });
+  await page.getByRole('button', { name: 'Siguiente', exact: true }).click();
+  await expect(page.getByText('Página 2 de 2')).toBeVisible();
+  expect(nextPageRequests).toBe(1);
+  await page.getByLabel('Agregar producto').selectOption({ index: 1 });
+  await page.getByRole('button', { name: 'Agregar a la venta' }).click();
+  await expect(page.locator('.sale-lines article')).toHaveCount(2);
+  await page.route('**/api/products/lookup?*', (route) => route.fulfill({ status: 503, json: { message: 'Refresh unavailable' } }), { times: 1 });
+  await page.getByRole('button', { name: 'Confirmar venta', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Venta confirmada');
+  await expect(page.getByRole('alert')).toContainText('La operación fue confirmada');
+  await expect(page.locator('.sale-lines article')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Reintentar búsqueda' }).click();
+  await expect(page.getByText('Página 2 de 2')).toBeVisible();
+});
+
+test('lookup discards late searches and preserves inventory selection', async ({ page }) => {
+  await login(page);
+  const product = await seed(page, 'LATE_%');
+  await page.getByRole('button', { name: 'Inventario', exact: true }).click();
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => { release = resolve; });
+  let captured!: () => void;
+  const capture = new Promise<void>((resolve) => { captured = resolve; });
+  let finished!: () => void;
+  const finish = new Promise<void>((resolve) => { finished = resolve; });
+  await page.route('**/api/products/lookup?*', async (route) => {
+    if (new URL(route.request().url()).searchParams.get('q') === 'LOOKUP') {
+      const response = await route.fetch();
+      captured(); await gate;
+      try { await route.fulfill({ response }); } finally { finished(); }
+    } else await route.continue();
+  });
+  try {
+    await page.getByLabel('Buscar por nombre o SKU').fill('LOOKUP');
+    await page.getByRole('button', { name: 'Buscar productos', exact: true }).click();
+    await capture;
+    await page.getByLabel('Buscar por nombre o SKU').fill('LATE_%');
+    await page.getByRole('button', { name: 'Buscar productos', exact: true }).click();
+    await expect(page.getByRole('combobox', { name: /^Producto/ }).locator('option')).toHaveCount(2);
+    release(); await finish;
+    await expect(page.getByRole('combobox', { name: /^Producto/ }).locator('option')).toHaveCount(2);
+    await page.getByRole('combobox', { name: /^Producto/ }).selectOption(String(product.id));
+    await page.getByLabel('Buscar por nombre o SKU').fill('not-present');
+    await page.getByRole('button', { name: 'Buscar productos', exact: true }).click();
+    await expect(page.getByText('No hay productos para esta búsqueda.')).toBeVisible();
+    await expect(page.getByText('Seleccionado: Product LATE_% · disponible 5')).toBeVisible();
+    await page.getByLabel('Cantidad', { exact: true }).fill('1');
+    await page.getByLabel('Motivo').fill('Selection retained');
+    await page.getByRole('button', { name: 'Registrar entrada' }).click();
+    await expect(page.getByText('Seleccionado: Product LATE_% · disponible 6')).toBeVisible();
+  } finally { release(); }
+});

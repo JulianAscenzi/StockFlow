@@ -88,6 +88,13 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
+    public Page<Product> lookup(String query, boolean sellable, int page, int size) {
+        return productRepository.lookup(Objects.requireNonNull(query, "query").trim(), sellable,
+                org.springframework.data.domain.PageRequest.of(page, Math.min(size, 100),
+                        org.springframework.data.domain.Sort.by("name", "id")));
+    }
+
+    @Transactional(readOnly = true)
     public Page<Product> findActive(Pageable pageable) {
         return productRepository.findByActiveTrue(Objects.requireNonNull(pageable, "pageable"));
     }

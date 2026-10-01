@@ -66,6 +66,15 @@ public class ProductController {
         return productMapper.toPageResponse(productService.findAll(pageable));
     }
 
+    @GetMapping("/lookup")
+    public PageResponse<ProductResponse> lookup(
+            @RequestParam(defaultValue = "") String q,
+            @RequestParam(defaultValue = "false") boolean sellable,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return productMapper.toPageResponse(productService.lookup(q, sellable, page, size));
+    }
+
     @GetMapping("/search")
     public PageResponse<ProductResponse> searchByName(
             @RequestParam(defaultValue = "") String name,

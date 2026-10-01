@@ -83,6 +83,14 @@ class ProductControllerTest {
     }
 
     @Test
+    void lookupPassesExplicitFiltersAndPagination() throws Exception {
+        mockMvc.perform(get("/api/products/lookup").param("q", "SKU_%").param("sellable", "true")
+                        .param("page", "2").param("size", "10"))
+                .andExpect(status().isOk());
+        verify(productService).lookup("SKU_%", true, 2, 10);
+    }
+
+    @Test
     void validPostReturnsCreatedWithLocationAndAllResponseFields() throws Exception {
         configureCreate();
 

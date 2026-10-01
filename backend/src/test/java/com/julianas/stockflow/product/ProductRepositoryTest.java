@@ -47,6 +47,28 @@ class ProductRepositoryTest {
     private EntityManager entityManager;
 
     @Test
+    void lookupFiltersBeforePaginationAndTreatsWildcardsLiterally() {
+        Category category = saveCategory("Lookup");
+        Product first = productRepository.save(new Product("Same", "MATCH_%", null,
+                new BigDecimal("10"), new BigDecimal("5"), 2, 0, true, category));
+        Product second = productRepository.save(new Product("Same", "MATCH_TWO", null,
+                new BigDecimal("10"), new BigDecimal("5"), 2, 0, true, category));
+        productRepository.save(new Product("A inactive", "MATCH_INACTIVE", null,
+                new BigDecimal("10"), new BigDecimal("5"), 2, 0, false, category));
+        productRepository.saveAndFlush(new Product("A empty", "MATCH_EMPTY", null,
+                new BigDecimal("10"), new BigDecimal("5"), 0, 0, true, category));
+        var firstPage = PageRequest.of(0, 1, org.springframework.data.domain.Sort.by("name", "id"));
+        var secondPage = PageRequest.of(1, 1, org.springframework.data.domain.Sort.by("name", "id"));
+        assertEquals(4, productRepository.lookup("", false, firstPage).getTotalElements());
+        assertEquals(2, productRepository.lookup("mAtCh", true, firstPage).getTotalElements());
+        assertEquals(first.getId(), productRepository.lookup("same", true, firstPage).getContent().getFirst().getId());
+        assertEquals(second.getId(), productRepository.lookup("same", true, secondPage).getContent().getFirst().getId());
+        assertEquals(1, productRepository.lookup("_%", false, firstPage).getTotalElements());
+        assertEquals(1, productRepository.lookup("%", false, firstPage).getTotalElements());
+        assertEquals(0, productRepository.lookup("missing", false, firstPage).getTotalElements());
+    }
+
+    @Test
     void savesProductWithCategoryAndAssignsId() {
         Category category = saveCategory("Electronics");
 

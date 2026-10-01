@@ -28,6 +28,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Page<Product> findByActiveTrue(Pageable pageable);
 
+    @Query("select p from Product p where (:sellable = false or (p.active = true and p.stock > 0)) "
+            + "and (locate(lower(:query), lower(p.name)) > 0 or locate(lower(:query), lower(p.sku)) > 0)")
+    Page<Product> lookup(@Param("query") String query, @Param("sellable") boolean sellable, Pageable pageable);
+
     @Query("select p from Product p where p.stock <= p.minimumStock order by p.stock, p.name, p.id")
     Page<Product> findLowStock(Pageable pageable);
 }

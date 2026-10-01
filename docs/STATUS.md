@@ -6,7 +6,7 @@ El backend MVP está cerrado: `category`, `product`, `inventory`, `common`, `sal
 
 ## Current module
 
-MVP de portfolio terminado. `auth` conserva un único administrador inicial configurable por entorno, contraseñas BCrypt, JWT HS256 de ocho horas y una pantalla de inicio de sesión para instalaciones privadas. La demo gratuita de portfolio permanece pública con autenticación desactivada intencionalmente y datos ficticios; en ese modo no se crean los componentes ni la ruta JWT y no se requiere `APP_JWT_SECRET`. El catálogo de productos se pagina en la interfaz y los selectores de categorías, ventas e inventario cargan todas las páginas para superar el límite de 100 registros. La confirmación de venta bloquea sus controles mientras la solicitud está en curso.
+MVP de portfolio terminado. `auth` conserva un único administrador inicial configurable por entorno, contraseñas BCrypt, JWT HS256 de ocho horas y una pantalla de inicio de sesión para instalaciones privadas. La demo gratuita de portfolio permanece pública con autenticación desactivada intencionalmente y datos ficticios; en ese modo no se crean los componentes ni la ruta JWT y no se requiere `APP_JWT_SECRET`. El catálogo de productos se pagina en la interfaz y el selector de categorías carga todas sus páginas; ventas e inventario consultan una página por vez mediante búsqueda por nombre/SKU. La confirmación de venta bloquea sus controles mientras la solicitud está en curso.
 
 ## Deployment decision
 
@@ -14,7 +14,7 @@ El alcance aprobado es una demostración pública para CV: Vercel sirve la inter
 
 ## Last general test result
 
-Suite completa con PostgreSQL/Testcontainers: **319 pruebas, 0 fallos, 0 errores y 0 omitidas**. La interfaz compila con Vite y la integración frontend–backend se verificó además en una base PostgreSQL temporal: categoría, producto, entrada, venta y resumen diario.
+Suite completa con PostgreSQL/Testcontainers: **322 pruebas, 0 fallos, 0 errores y 0 omitidas**. La interfaz compila con Vite y la integración frontend–backend se verificó además en una base PostgreSQL temporal: categoría, producto, entrada, venta y resumen diario.
 
 ## Cuaderno del proyecto
 
@@ -39,3 +39,5 @@ Bloque 24 completado: Playwright aislado, cinco escenarios aprobados, compilaci�
 Bloque 25: workflow CI con jobs backend, frontend y navegador dependiente de ambos. Ubuntu 24.04, Java 21, Node 24, Docker obligatorio, comprobación de pruebas ejecutadas sin omisiones e informes por siete días. La primera ejecución remota queda pendiente de que el usuario publique la rama; no se hizo push.
 
 Bloque 26 completado: historial paginado y detalle histórico, sin alterar inventario. Pruebas específicas: 13; suite completa: 319; navegador: seis escenarios; compilación y whitespace aprobados. Próximo bloque: búsqueda paginada.
+
+Bloque 27 completado: búsqueda paginada compartida, filtros PostgreSQL y selección conservada. Pruebas específicas: 66; suite completa: 322; navegador: ocho escenarios; compilación y whitespace aprobados. Próximo bloque: confirmación idempotente.

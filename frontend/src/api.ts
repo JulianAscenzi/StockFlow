@@ -46,8 +46,9 @@ export const api = {
       : `/api/products?page=${page}&size=20`;
     return request<PageResponse<Product>>(path);
   },
-  allProducts: () => loadAllPages<Product>((page) => request<PageResponse<Product>>(`/api/products?page=${page}&size=100`)),
-  activeProducts: () => loadAllPages<Product>((page) => request<PageResponse<Product>>(`/api/products/active?page=${page}&size=100`)),
+  product: (id: number) => request<Product>(`/api/products/${id}`),
+  lookup: (q: string, sellable: boolean, page: number, signal?: AbortSignal) =>
+    request<PageResponse<Product>>(`/api/products/lookup?q=${encodeURIComponent(q)}&sellable=${sellable}&page=${page}&size=20`, { signal }),
   categories: () => loadAllPages<Category>((page) => request<PageResponse<Category>>(`/api/categories?page=${page}&size=100`)),
   createCategory: (body: { name: string; description: string }) =>
     request<Category>('/api/categories', { method: 'POST', body: JSON.stringify(body) }),
