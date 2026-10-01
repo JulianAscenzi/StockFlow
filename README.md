@@ -146,3 +146,5 @@ npm --prefix frontend run test:e2e
 ```
 
 El comando público invoca Maven y `BrowserE2EIT`, que crea PostgreSQL 17 y Spring Boot en un puerto aleatorio con credenciales exclusivas de pruebas. Playwright inicia Vite en otro puerto libre, con proxy a ese backend. No se reutilizan la demo ni servicios locales. El script interno `test:e2e:browser` requiere el entorno provisto por Java. Chromium usa un worker y cero reintentos; una suite vacía, omitida, fallida o sin informe falla la ejecución. Los diagnósticos quedan en `backend/target/browser-e2e.log` y `frontend/test-results/` (trazas y capturas de los fallos).
+
+CI ejecuta backend y compilación frontend en paralelo; navegador requiere ambos aprobados. Se activa en pull requests, push a main y manualmente, sin desplegar. Los informes se conservan siete días. Referencias de configuración: [servidor de Playwright](https://playwright.dev/docs/test-webserver), [setup-java](https://github.com/actions/setup-java), [setup-node](https://github.com/actions/setup-node) y [artefactos](https://github.com/actions/upload-artifact).

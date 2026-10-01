@@ -1,0 +1,127 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check whitespace
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -n "$BASE_SHA" ] && [ "$BASE_SHA" != "0000000000000000000000000000000000000000" ]; then
+            git diff --check "$BASE_SHA" HEAD
+          else
+            git show --format= --check HEAD
+          fi
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: |
+            backend/pom.xml
+            backend/.mvn/wrapper/maven-wrapper.properties
+      - run: docker info
+      - name: Backend tests
+        working-directory: backend
+        run: ./mvnw --batch-mode --no-transfer-progress -DfailIfNoTests=true clean test
+      - name: Require executed tests without omissions
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          reports = list(Path('backend/target/surefire-reports').glob('TEST-*.xml'))
+          assert reports, 'Missing test reports'
+          totals = {key: 0 for key in ('tests', 'failures', 'errors', 'skipped')}
+          for report in reports:
+              root = ET.parse(report).getroot()
+              for key in totals:
+                  totals[key] += int(root.attrib.get(key, 0))
+          assert totals['tests'] > 0 and all(totals[k] == 0 for k in ('failures', 'errors', 'skipped')), totals
+          print(totals)
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: backend-reports
+          path: backend/target/surefire-reports/
+          retention-days: 7
+          if-no-files-found: error
+
+  frontend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm --prefix frontend ci
+      - name: Compile frontend
+        run: |
+          set -o pipefail
+          npm --prefix frontend run build 2>&1 | tee frontend-build.log
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: frontend-diagnostics
+          path: frontend-build.log
+          retention-days: 7
+
+  browser:
+    needs: [backend, frontend]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: |
+            backend/pom.xml
+            backend/.mvn/wrapper/maven-wrapper.properties
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: docker info
+      - run: npm --prefix frontend ci
+      - run: npm --prefix frontend exec -- playwright install --with-deps chromium
+      - run: npm --prefix frontend run test:e2e
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: browser-reports
+          path: |
+            backend/target/surefire-reports/
+            backend/target/browser-e2e.log
+            frontend/test-results/
+          retention-days: 7
+          if-no-files-found: error
