@@ -19,6 +19,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@org.springframework.boot.test.context.SpringBootTest(properties = "spring.jpa.open-in-view=false")
 class SaleApiIntegrationTest extends ApiIntegrationTestSupport {
 
     @Autowired private MockMvc mockMvc;
@@ -57,6 +58,51 @@ class SaleApiIntegrationTest extends ApiIntegrationTestSupport {
                 .andExpect(status().isOk()).andExpect(jsonPath("$.stock").value(1));
         mockMvc.perform(get("/api/products/{id}/stock-movements", productId))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    void readsLocationAndHistoryWithoutChangingStockAndKeepsSnapshots() throws Exception {
+        long productId = createProduct(5);
+        MvcResult created = mockMvc.perform(post("/api/sales").contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("notes", "Historical note", "items", java.util.List.of(Map.of("productId", productId, "quantity", 2))))))
+                .andExpect(status().isCreated()).andReturn();
+        String location = created.getResponse().getHeader("Location");
+        JsonNode product = response(mockMvc.perform(get("/api/products/{id}", productId)).andReturn());
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/products/{id}", productId)
+                        .contentType(MediaType.APPLICATION_JSON).content(json(Map.of(
+                                "name", "Renamed", "sku", "NEW-SKU", "price", 99, "cost", 88,
+                                "minimumStock", 0, "categoryId", product.get("categoryId").asLong()))))
+                .andExpect(status().isOk());
+        mockMvc.perform(get(location)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.notes").value("Historical note"))
+                .andExpect(jsonPath("$.total").value(25))
+                .andExpect(jsonPath("$.items[0].productName").value("Mouse"))
+                .andExpect(jsonPath("$.items[0].unitPrice").value(12.5))
+                .andExpect(jsonPath("$.items[0].unitCost").value(7.25));
+        mockMvc.perform(get("/api/sales?size=1000&sort=id,asc")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.size").value(100))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(response(created).get("id").asLong()))
+                .andExpect(jsonPath("$.content[0].items").doesNotExist());
+        mockMvc.perform(get("/api/products/{id}", productId)).andExpect(jsonPath("$.stock").value(3));
+        mockMvc.perform(get("/api/products/{id}/stock-movements", productId)).andExpect(jsonPath("$.totalElements").value(2));
+    }
+
+    @Test
+    void pagesNewestSalesFirstAndHandlesEmptyAndMissingSales() throws Exception {
+        mockMvc.perform(get("/api/sales")).andExpect(status().isOk()).andExpect(jsonPath("$.content").isEmpty());
+        mockMvc.perform(get("/api/sales/999")).andExpect(status().isNotFound()).andExpect(jsonPath("$.code").value("SALE_NOT_FOUND"));
+        long productId = createProduct(5);
+        long latest = 0;
+        for (int i = 0; i < 2; i++) {
+            latest = response(mockMvc.perform(post("/api/sales").contentType(MediaType.APPLICATION_JSON)
+                    .content(json(Map.of("items", java.util.List.of(Map.of("productId", productId, "quantity", 1))))))
+                    .andExpect(status().isCreated()).andReturn()).get("id").asLong();
+        }
+        mockMvc.perform(get("/api/sales?size=1")).andExpect(jsonPath("$.content[0].id").value(latest))
+                .andExpect(jsonPath("$.totalPages").value(2));
+        mockMvc.perform(get("/api/sales?size=1&page=1")).andExpect(jsonPath("$.content[0].id").value(latest - 1));
+        mockMvc.perform(get("/api/sales?size=0")).andExpect(status().isBadRequest());
     }
 
     private long createProduct(int stock) throws Exception {

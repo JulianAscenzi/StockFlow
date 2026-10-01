@@ -9,6 +9,10 @@ import java.util.Objects;
 @Component
 public class SaleMapper {
 
+    public SaleSummaryResponse toSummary(Sale sale) {
+        return new SaleSummaryResponse(sale.getId(), sale.getTotal(), sale.getCreatedAt());
+    }
+
     public SaleResponse toResponse(Sale sale) {
         Sale requiredSale = Objects.requireNonNull(sale, "sale must not be null");
 

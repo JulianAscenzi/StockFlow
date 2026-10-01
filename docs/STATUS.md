@@ -14,7 +14,7 @@ El alcance aprobado es una demostración pública para CV: Vercel sirve la inter
 
 ## Last general test result
 
-Suite completa con PostgreSQL/Testcontainers: **315 pruebas, 0 fallos, 0 errores y 0 omitidas**. La interfaz compila con Vite y la integración frontend–backend se verificó además en una base PostgreSQL temporal: categoría, producto, entrada, venta y resumen diario.
+Suite completa con PostgreSQL/Testcontainers: **319 pruebas, 0 fallos, 0 errores y 0 omitidas**. La interfaz compila con Vite y la integración frontend–backend se verificó además en una base PostgreSQL temporal: categoría, producto, entrada, venta y resumen diario.
 
 ## Cuaderno del proyecto
 
@@ -37,3 +37,5 @@ Verificación del 2026-10-01: regresión específica y suite backend completa ap
 Bloque 24 completado: Playwright aislado, cinco escenarios aprobados, compilación frontend aprobada y 315 pruebas backend aprobadas. El resumen vuelve a consultar al navegar y descarta respuestas obsoletas. Próximo bloque: CI.
 
 Bloque 25: workflow CI con jobs backend, frontend y navegador dependiente de ambos. Ubuntu 24.04, Java 21, Node 24, Docker obligatorio, comprobación de pruebas ejecutadas sin omisiones e informes por siete días. La primera ejecución remota queda pendiente de que el usuario publique la rama; no se hizo push.
+
+Bloque 26 completado: historial paginado y detalle histórico, sin alterar inventario. Pruebas específicas: 13; suite completa: 319; navegador: seis escenarios; compilación y whitespace aprobados. Próximo bloque: búsqueda paginada.

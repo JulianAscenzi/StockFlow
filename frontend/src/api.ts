@@ -1,4 +1,4 @@
-import type { Category, Dashboard, PageResponse, Product } from './types';
+import type { Category, Dashboard, PageResponse, Product, Sale, SaleSummary } from './types';
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
 const tokenStorageKey = 'stockflow.access-token';
@@ -32,6 +32,8 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  sales: (page = 0, signal?: AbortSignal) => request<PageResponse<SaleSummary>>(`/api/sales?page=${page}&size=20`, { signal }),
+  sale: (id: number, signal?: AbortSignal) => request<Sale>(`/api/sales/${id}`, { signal }),
   login: (body: { email: string; password: string }) =>
     request<{ accessToken: string; tokenType: string }>('/api/auth/login', {
       method: 'POST', body: JSON.stringify(body)

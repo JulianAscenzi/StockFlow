@@ -51,6 +51,13 @@ class SaleControllerTest {
     }
 
     @Test
+    void missingSaleReturnsDomainError() throws Exception {
+        when(saleService.detail(99L)).thenThrow(new com.julianas.stockflow.sale.SaleNotFoundException(99L));
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/sales/99"))
+                .andExpect(status().isNotFound()).andExpect(jsonPath("$.code").value("SALE_NOT_FOUND"));
+    }
+
+    @Test
     void rejectsInvalidPayloadWithoutCallingDependencies() throws Exception {
         mockMvc.perform(post("/api/sales").contentType("application/json")
                         .content("{\"items\":[{\"productId\":0,\"quantity\":0}]}"))

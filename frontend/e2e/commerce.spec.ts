@@ -153,3 +153,34 @@ test('dashboard discards a response from an earlier visit', async ({ page }) => 
     await expect(page.locator('.metric').filter({ hasText: 'Ventas de hoy' }).locator('strong')).not.toHaveText('99999');
   } finally { release(); }
 });
+
+test('history preserves page and historical detail with retry', async ({ page }) => {
+  await login(page);
+  const product = await seed(page, 'HISTORY');
+  const topUp = await page.request.post(`/api/products/${product.id}/stock/in`, {
+    headers: product.headers, data: { quantity: 25, reason: 'History fixture' }
+  });
+  expect(topUp.ok()).toBeTruthy();
+  for (let i = 0; i < 21; i++) {
+    const sale = await page.request.post('/api/sales', { headers: product.headers,
+      data: { notes: 'Historical note', items: [{ productId: product.id, quantity: 1 }] } });
+    expect(sale.status()).toBe(201);
+    expect((await page.request.get(sale.headers().location, { headers: product.headers })).ok()).toBeTruthy();
+  }
+  const changed = await page.request.put(`/api/products/${product.id}`, { headers: product.headers,
+    data: { name: 'Renamed history', sku: 'RENAMED', price: 999, cost: 888, minimumStock: 0, categoryId: product.categoryId } });
+  expect(changed.ok()).toBeTruthy();
+  await page.getByRole('button', { name: 'Historial de ventas', exact: true }).click();
+  await page.getByRole('button', { name: 'Siguiente', exact: true }).click();
+  await expect(page.getByText('Página 2 de 2')).toBeVisible();
+  await page.getByRole('button', { name: /^Ver venta/ }).first().click();
+  await expect(page.getByRole('cell', { name: 'Product HISTORY', exact: true })).toBeVisible();
+  await expect(page.getByText('Notas: Historical note')).toBeVisible();
+  await page.getByRole('button', { name: 'Volver al historial' }).click();
+  await expect(page.getByText('Página 2 de 2')).toBeVisible();
+  await page.route('**/api/sales/*', (route) => route.fulfill({ status: 503, json: { message: 'Temporary history failure' } }), { times: 1 });
+  await page.getByRole('button', { name: /^Ver venta/ }).first().click();
+  await expect(page.getByRole('alert')).toContainText('Temporary history failure');
+  await page.getByRole('button', { name: 'Reintentar' }).click();
+  await expect(page.getByRole('cell', { name: 'Product HISTORY', exact: true })).toBeVisible();
+});

@@ -1,5 +1,9 @@
 package com.julianas.stockflow.sale.api;
 
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PathVariable;
+import com.julianas.stockflow.common.api.PageResponse;
 import com.julianas.stockflow.sale.Sale;
 import com.julianas.stockflow.sale.SaleService;
 import jakarta.validation.Valid;
@@ -22,6 +26,19 @@ public class SaleController {
     public SaleController(SaleService saleService, SaleMapper saleMapper) {
         this.saleService = saleService;
         this.saleMapper = saleMapper;
+    }
+
+    @GetMapping
+    public PageResponse<SaleSummaryResponse> history(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return PageResponse.from(
+                saleService.history(page, size).map(saleMapper::toSummary));
+    }
+
+    @GetMapping("/{id}")
+    public SaleResponse detail(@PathVariable Long id) {
+        return saleMapper.toResponse(saleService.detail(id));
     }
 
     @PostMapping

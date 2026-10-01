@@ -1,5 +1,7 @@
 package com.julianas.stockflow.common.error;
 
+import com.julianas.stockflow.sale.SaleNotFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import com.julianas.stockflow.category.CategoryInUseException;
 import com.julianas.stockflow.category.CategoryNotFoundException;
 import com.julianas.stockflow.category.DuplicateCategoryNameException;
@@ -57,6 +59,12 @@ public class GlobalExceptionHandler {
                 request,
                 Map.of()
         );
+    }
+
+    @ExceptionHandler(SaleNotFoundException.class)
+    public ResponseEntity<ApiError> handleSaleNotFound(
+            SaleNotFoundException exception, HttpServletRequest request) {
+        return response(HttpStatus.NOT_FOUND, "SALE_NOT_FOUND", exception.getMessage(), request, Map.of());
     }
 
     @ExceptionHandler(ProductNotFoundException.class)
@@ -261,9 +269,9 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ApiError> handleMissingResource(
-            org.springframework.web.servlet.resource.NoResourceFoundException exception,
+            NoResourceFoundException exception,
             HttpServletRequest request
     ) {
         return response(HttpStatus.NOT_FOUND, "RESOURCE_NOT_FOUND", "Resource not found.", request, Map.of());

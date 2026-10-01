@@ -98,6 +98,14 @@ class SaleServiceTest {
         order.verify(inventoryService).decreaseStock(2L, 1, "Sale");
     }
 
+    @Test
+    void historyCapsPageSizeAndDetailRejectsMissingSale() {
+        saleService.history(2, 200);
+        verify(saleRepository).findAllByOrderByCreatedAtDescIdDesc(org.springframework.data.domain.PageRequest.of(2, 100));
+        assertThrows(SaleNotFoundException.class, () -> saleService.detail(999L));
+        org.mockito.Mockito.verifyNoInteractions(inventoryService, productRepository);
+    }
+
     private Sale saleWithTotal(String total, String... subtotals) {
         Sale sale = mock(Sale.class);
         List<SaleItem> items = java.util.Arrays.stream(subtotals)

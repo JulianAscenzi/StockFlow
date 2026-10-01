@@ -1,5 +1,7 @@
 package com.julianas.stockflow.sale;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import com.julianas.stockflow.inventory.InventoryService;
 import com.julianas.stockflow.product.Product;
 import com.julianas.stockflow.product.ProductNotFoundException;
@@ -29,6 +31,17 @@ public class SaleService {
         this.saleRepository = Objects.requireNonNull(saleRepository, "saleRepository");
         this.inventoryService = Objects.requireNonNull(inventoryService, "inventoryService");
         this.productRepository = Objects.requireNonNull(productRepository, "productRepository");
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Sale> history(int page, int size) {
+        return saleRepository.findAllByOrderByCreatedAtDescIdDesc(
+                PageRequest.of(page, Math.min(size, 100)));
+    }
+
+    @Transactional(readOnly = true)
+    public Sale detail(Long id) {
+        return saleRepository.findDetailById(id).orElseThrow(() -> new SaleNotFoundException(id));
     }
 
     @Transactional

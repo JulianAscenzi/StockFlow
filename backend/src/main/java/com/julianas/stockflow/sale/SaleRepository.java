@@ -1,5 +1,6 @@
 package com.julianas.stockflow.sale;
 
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,6 +12,9 @@ import java.time.Instant;
 public interface SaleRepository extends JpaRepository<Sale, Long> {
 
     Page<Sale> findAllByOrderByCreatedAtDescIdDesc(Pageable pageable);
+
+    @Query("select s from Sale s left join fetch s.items where s.id = :id")
+    Optional<Sale> findDetailById(@Param("id") Long id);
 
     @Query("select count(s) as saleCount, coalesce(sum(s.total), 0) as revenue from Sale s where s.createdAt >= :start and s.createdAt < :end")
     SaleTotals dailySales(@Param("start") Instant start, @Param("end") Instant end);

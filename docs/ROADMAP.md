@@ -32,6 +32,6 @@ El MVP permanece cerrado. Orden aprobado: pruebas de navegador → CI → histor
 
 24. [x] Pruebas de navegador aisladas — Chromium, Spring Boot con autenticación y PostgreSQL 17 temporal; recorrido comercial, controles bloqueados, conflictos de stock y resumen actualizado.
 25. [x] Integración continua — jobs backend, compilación frontend y navegador; sin despliegues.
-26. [ ] Historial y detalle de ventas — consultas paginadas y snapshots históricos en la interfaz.
+26. [x] Historial y detalle de ventas — consultas paginadas y snapshots históricos en la interfaz.
 27. [ ] Búsqueda paginada compartida — nombre/SKU, filtros de venta e inventario y selección conservada.
 28. [ ] Confirmación idempotente — clave UUID persistida transaccionalmente y recuperación en la misma pestaña mediante sessionStorage.

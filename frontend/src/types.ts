@@ -41,3 +41,9 @@ export interface ApiError {
   message?: string;
   fieldErrors?: Record<string, string[]>;
 }
+
+export interface SaleSummary { id: number; total: number; createdAt: string; }
+export interface Sale extends SaleSummary {
+  notes: string | null;
+  items: Array<{ id: number; productId: number; productName: string; productSku: string; quantity: number; unitPrice: number; unitCost: number; subtotal: number }>;
+}

@@ -5,6 +5,7 @@ import { InventoryView } from './components/InventoryView';
 import { Navigation, type Section } from './components/Navigation';
 import { ProductsView } from './components/ProductsView';
 import { SaleView } from './components/SaleView';
+import { SalesHistoryView } from './components/SalesHistoryView';
 import { LoginView } from './components/LoginView';
 import type { Dashboard } from './types';
 
@@ -24,6 +25,6 @@ export default function App() {
     return () => { current = false; };
   }, [authenticated, section, notify]);
   if (!authenticated) return <LoginView onLogin={() => { setLoading(true); setAuthenticated(true); }} />;
-  const content = section === 'dashboard' ? <DashboardView data={dashboard} loading={loading} /> : section === 'products' ? <ProductsView notify={notify} /> : section === 'inventory' ? <InventoryView notify={notify} /> : <SaleView notify={notify} />;
+  const content = section === 'dashboard' ? <DashboardView data={dashboard} loading={loading} /> : section === 'products' ? <ProductsView notify={notify} /> : section === 'inventory' ? <InventoryView notify={notify} /> : section === 'history' ? <SalesHistoryView /> : <SaleView notify={notify} />;
   return <div className="app-shell"><Navigation section={section} onChange={setSection} showLogout={authenticationRequired} onLogout={() => { clearAccessToken(); setDashboard(null); setAuthenticated(false); }} /><main>{notice && <div className={`notice ${notice.kind}`} role="status">{notice.message}<button aria-label="Cerrar aviso" onClick={() => setNotice(null)}>×</button></div>}{content}</main></div>;
 }

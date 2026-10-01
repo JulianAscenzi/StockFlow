@@ -1,10 +1,11 @@
-export type Section = 'dashboard' | 'products' | 'inventory' | 'sale';
+export type Section = 'dashboard' | 'products' | 'inventory' | 'sale' | 'history';
 
 const items: Array<{ id: Section; label: string; icon: string }> = [
   { id: 'dashboard', label: 'Resumen', icon: '◈' },
   { id: 'products', label: 'Productos', icon: '□' },
   { id: 'inventory', label: 'Inventario', icon: '↕' },
-  { id: 'sale', label: 'Nueva venta', icon: '+' }
+  { id: 'sale', label: 'Nueva venta', icon: '+' },
+  { id: 'history', label: 'Historial de ventas', icon: '≡' }
 ];
 
 export function Navigation({ section, onChange, showLogout, onLogout }: { section: Section; onChange: (section: Section) => void; showLogout: boolean; onLogout: () => void }) {
