@@ -17,7 +17,7 @@ Java 21, Spring Boot 4.1.1, Maven, Spring Data JPA/Hibernate, PostgreSQL 17 y Fl
 - `auth`: administrador inicial, BCrypt, JWT HS256 y filtro de seguridad stateless.
 - `common`: `PageResponse` y `GlobalExceptionHandler`/`ApiError` compartidos.
 - `dashboard`: consultas agregadas, servicio de lectura y `GET /api/dashboard`.
-- `frontend`: cliente React + TypeScript + Vite con resumen, catálogo de productos/categorías, ajustes de inventario y confirmación de ventas. Durante desarrollo, Vite redirige `/api` al backend local.
+- `frontend`: cliente React + TypeScript + Vite con resumen, catálogo de productos/categorías, ajustes de inventario y confirmación de ventas. Durante desarrollo, Vite redirige `/api` al backend local. Las creaciones de productos y categorías bloquean su propio formulario mientras se envían; conservan los valores si se rechazan y distinguen una creación confirmada de un fallo posterior de actualización del catálogo.
 
 ## Despliegue de demo
 

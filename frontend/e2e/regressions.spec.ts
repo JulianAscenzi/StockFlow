@@ -225,3 +225,76 @@ test('sale recovery replays its original payload despite the displayed stock', a
   expect((await (await page.request.get(`/api/products/${product.id}`, { headers: product.headers })).json()).stock).toBe(3);
   expect(await page.evaluate(() => sessionStorage.getItem('stockflow.pending-sale.v1'))).toBeNull();
 });
+
+for (const kind of ['product', 'category'] as const) {
+  test(`${kind} creation blocks duplicate submissions and preserves rejected values`, async ({ page }) => {
+    await login(page);
+    const product = await fixture(page, `WRITE_${kind}`);
+    await page.getByRole('button', { name: 'Productos', exact: true }).click();
+    await expect(page.getByText('Cargando catálogo…')).toHaveCount(0);
+    await page.getByRole('button', { name: kind === 'product' ? '+ Agregar producto' : '+ Nueva categoría', exact: true }).click();
+    const form = page.locator('form.catalog-form');
+    const name = form.getByLabel('Nombre', { exact: true });
+    await name.fill(`Created ${kind}`);
+    if (kind === 'product') {
+      await form.getByLabel('SKU', { exact: true }).fill('CREATED_WRITE');
+      await form.getByRole('combobox', { name: 'Categoría', exact: true }).selectOption(String(product.category.id));
+      await form.getByLabel('Precio de venta').fill('12');
+      await form.getByLabel('Costo', { exact: true }).fill('6');
+    }
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    let requests = 0;
+    await page.route(`**/api/${kind === 'product' ? 'products' : 'categories'}`, async (route) => {
+      if (route.request().method() !== 'POST') { await route.continue(); return; }
+      requests++;
+      if (requests === 1) {
+        await gate;
+        await route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ message: 'Creación rechazada', code: 'CONFLICT' }) });
+      } else await route.continue();
+    });
+    await form.getByRole('button', { name: kind === 'product' ? 'Guardar producto' : 'Guardar categoría', exact: true }).click();
+    await expect(name).toBeDisabled();
+    await expect(form.getByRole('button', { name: 'Cancelar', exact: true })).toBeDisabled();
+    await form.evaluate((element: HTMLFormElement) => { element.requestSubmit(); element.requestSubmit(); });
+    expect(requests).toBe(1);
+    release();
+    await expect(name).toBeEnabled();
+    await expect(name).toHaveValue(`Created ${kind}`);
+    await form.getByRole('button', { name: kind === 'product' ? 'Guardar producto' : 'Guardar categoría', exact: true }).click();
+    await expect(form).toHaveCount(0);
+    await expect(page.getByRole('status')).toContainText(kind === 'product' ? 'Producto creado.' : 'Categoría creada.');
+    expect(requests).toBe(2);
+  });
+
+  test(`${kind} creation reports persistence when catalog refresh fails`, async ({ page }) => {
+    await login(page);
+    const product = await fixture(page, `REFRESH_${kind}`);
+    await page.getByRole('button', { name: 'Productos', exact: true }).click();
+    await expect(page.getByText('Cargando catálogo…')).toHaveCount(0);
+    await page.getByRole('button', { name: kind === 'product' ? '+ Agregar producto' : '+ Nueva categoría', exact: true }).click();
+    const form = page.locator('form.catalog-form');
+    await form.getByLabel('Nombre', { exact: true }).fill(`Refresh ${kind}`);
+    if (kind === 'product') {
+      await form.getByLabel('SKU', { exact: true }).fill('REFRESH_CREATED');
+      await form.getByRole('combobox', { name: 'Categoría', exact: true }).selectOption(String(product.category.id));
+      await form.getByLabel('Precio de venta').fill('12');
+      await form.getByLabel('Costo', { exact: true }).fill('6');
+    }
+    let created = false;
+    await page.route('**/api/categories**', async (route) => {
+      if (route.request().method() === 'GET' && created) await route.fulfill({ status: 500, contentType: 'application/json', body: '{}' });
+      else if (kind === 'category' && route.request().method() === 'POST') {
+        const response = await route.fetch(); expect(response.status()).toBe(201); created = true; await route.fulfill({ response });
+      } else await route.continue();
+    });
+    if (kind === 'product') await page.route('**/api/products', async (route) => {
+      if (route.request().method() !== 'POST') { await route.continue(); return; }
+      const response = await route.fetch(); expect(response.status()).toBe(201); created = true; await route.fulfill({ response });
+    });
+    await form.getByRole('button', { name: kind === 'product' ? 'Guardar producto' : 'Guardar categoría', exact: true }).click();
+    await expect(form).toHaveCount(0);
+    await expect(page.getByRole('status')).toContainText(`${kind === 'product' ? 'Producto creado.' : 'Categoría creada.'} No se pudo actualizar el catálogo.`);
+    expect(created).toBe(true);
+  });
+}
