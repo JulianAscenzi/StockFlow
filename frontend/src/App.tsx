@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { accessToken, api, clearAccessToken } from './api';
+import { accessToken, api, clearAccessToken, onSessionExpired } from './api';
 import { DashboardView } from './components/DashboardView';
 import { InventoryView } from './components/InventoryView';
 import { Navigation, type Section } from './components/Navigation';
@@ -15,6 +15,14 @@ export default function App() {
   // must opt in explicitly with VITE_AUTH_ENABLED=true.
   const authenticationRequired = import.meta.env.VITE_AUTH_ENABLED === 'true';
   const [authenticated, setAuthenticated] = useState(() => !authenticationRequired || Boolean(accessToken()));
+  const [loginMessage, setLoginMessage] = useState('');
+  const expireSession = useCallback(() => {
+    clearAccessToken(); setDashboard(null); setNotice(null); setLoading(true);
+    setLoginMessage('Tu sesión venció. Volvé a ingresar'); setAuthenticated(false);
+  }, []);
+  useEffect(() => {
+    if (authenticationRequired) return onSessionExpired(expireSession);
+  }, [authenticationRequired, expireSession]);
   const notify = useCallback((message: string, kind: 'error' | 'success' = 'success') => setNotice({ message, kind }), []);
   useEffect(() => {
     if (!authenticated || section !== 'dashboard') return;
@@ -26,7 +34,7 @@ export default function App() {
       .finally(() => { if (current) setLoading(false); });
     return () => { current = false; };
   }, [authenticated, section, notify]);
-  if (!authenticated) return <LoginView onLogin={() => { setLoading(true); setAuthenticated(true); }} />;
-  const content = section === 'dashboard' ? <DashboardView data={dashboard} loading={loading} /> : section === 'products' ? <ProductsView notify={notify} /> : section === 'inventory' ? <InventoryView notify={notify} /> : section === 'history' ? <SalesHistoryView /> : <SaleView notify={notify} onHistory={() => setSection('history')} onLoginRequired={() => { clearAccessToken(); setAuthenticated(false); }} />;
-  return <div className="app-shell"><Navigation section={section} onChange={setSection} showLogout={authenticationRequired} onLogout={() => { clearAccessToken(); setDashboard(null); setAuthenticated(false); }} /><main>{notice && <div className={`notice ${notice.kind}`} role="status">{notice.message}<button aria-label="Cerrar aviso" onClick={() => setNotice(null)}>×</button></div>}{content}</main></div>;
+  if (!authenticated) return <LoginView message={loginMessage} onLogin={() => { setNotice(null); setLoginMessage(''); setLoading(true); setAuthenticated(true); }} />;
+  const content = section === 'dashboard' ? <DashboardView data={dashboard} loading={loading} /> : section === 'products' ? <ProductsView notify={notify} /> : section === 'inventory' ? <InventoryView notify={notify} /> : section === 'history' ? <SalesHistoryView /> : <SaleView notify={notify} onHistory={() => setSection('history')} onLoginRequired={expireSession} />;
+  return <div className="app-shell"><Navigation section={section} onChange={setSection} showLogout={authenticationRequired} onLogout={() => { clearAccessToken(); setDashboard(null); setNotice(null); setLoginMessage(''); setAuthenticated(false); }} /><main>{notice && <div className={`notice ${notice.kind}`} role="status">{notice.message}<button aria-label="Cerrar aviso" onClick={() => setNotice(null)}>×</button></div>}{content}</main></div>;
 }

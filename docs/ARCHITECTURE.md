@@ -65,7 +65,7 @@ El dinero usa `BigDecimal`, nunca tipos binarios. Producto y precios/costos de l
 
 ## Autenticación
 
-Con autenticación habilitada (valor por defecto), el primer arranque crea una única cuenta desde `APP_ADMIN_EMAIL` y `APP_ADMIN_PASSWORD`. La contraseña se guarda con BCrypt. `POST /api/auth/login` entrega un JWT HS256 de ocho horas firmado con `APP_JWT_SECRET`; sólo login y `GET /actuator/health` son públicos, y el resto de la API exige un bearer token. No hay registro público, recuperación de contraseña ni múltiples roles.
+Con autenticación habilitada (valor por defecto), el primer arranque crea una única cuenta desde `APP_ADMIN_EMAIL` y `APP_ADMIN_PASSWORD`. La contraseña se guarda con BCrypt. `POST /api/auth/login` entrega un JWT HS256 de ocho horas firmado con `APP_JWT_SECRET`; sólo login y `GET /actuator/health` son públicos, y el resto de la API exige un bearer token. No hay registro público, recuperación de contraseña ni múltiples roles. En instalaciones privadas, el cliente trata centralmente los 401 de solicitudes protegidas: vuelve al login y, tras ingresar, restaura la sección anterior. Conserva la recuperación idempotente en sessionStorage y no reintenta escrituras automáticamente. El token y una versión de sesión capturados al enviar impiden que un 401 tardío cierre una sesión nueva; el 401 del login se mantiene como error de credenciales.
 
 ## Pruebas
 

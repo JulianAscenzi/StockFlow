@@ -2,6 +2,13 @@ import type { Category, Dashboard, PageResponse, Product, Sale, SaleSummary, Sal
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
 const tokenStorageKey = 'stockflow.access-token';
+let sessionVersion = 0;
+const expiredListeners = new Set<() => void>();
+
+export function onSessionExpired(listener: () => void) {
+  expiredListeners.add(listener);
+  return () => { expiredListeners.delete(listener); };
+}
 
 export function accessToken() {
   return localStorage.getItem(tokenStorageKey);
@@ -9,10 +16,12 @@ export function accessToken() {
 
 export function saveAccessToken(token: string) {
   localStorage.setItem(tokenStorageKey, token);
+  sessionVersion++;
 }
 
 export function clearAccessToken() {
   localStorage.removeItem(tokenStorageKey);
+  sessionVersion++;
 }
 
 export class HttpError extends Error {
@@ -23,18 +32,24 @@ export class HttpError extends Error {
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const token = accessToken();
+  const version = sessionVersion;
   let response: Response;
   try {
     response = await fetch(`${apiBaseUrl}${path}`, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
-        ...(accessToken() ? { Authorization: `Bearer ${accessToken()}` } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...options?.headers
       }
     });
   } catch {
     throw new HttpError('No se pudo conectar con el backend. Verificá que la API esté activa y que VITE_API_BASE_URL apunte a su URL.', 0, 'BACKEND_UNAVAILABLE');
+  }
+  if (response.status === 401 && path !== '/api/auth/login' && token
+    && !options?.signal?.aborted && version === sessionVersion && token === accessToken()) {
+    expiredListeners.forEach((listener) => listener());
   }
   if (response.ok) {
     if (response.status === 204) return undefined as T;

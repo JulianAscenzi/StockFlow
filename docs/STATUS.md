@@ -14,7 +14,7 @@ El alcance aprobado es una demostración pública para CV: Vercel sirve la inter
 
 ## Last general test result
 
-Verificación del 2026-10-02: **351 pruebas backend sin fallos, errores ni omisiones**, compilación frontend y **12 escenarios de navegador aislado** aprobados. Los checkpoints de auditoría se registran abajo.
+Verificación del 2026-10-02: **351 pruebas backend sin fallos, errores ni omisiones**, compilación frontend y **18 escenarios de navegador aislado** aprobados. Los checkpoints de auditoría se registran abajo.
 
 ## Cuaderno del proyecto
 
@@ -75,3 +75,9 @@ Verificación: pruebas específicas, suite completa (351), compilación frontend
 El catálogo cancela solicitudes previas y aplica datos, paginación, carga y errores sólo si pertenecen a la solicitud vigente. El texto editado no cambia el filtro aplicado hasta buscar; las señales alcanzan todas las páginas de categorías. Chromium controla respuestas y errores tardíos y una página obsoleta.
 
 Verificación: pruebas específicas, suite completa (351), compilación frontend y navegador aislado (12) aprobados; diff completo revisado y `git diff --check` aprobado. Sin cambios de esquema ni dependencias nuevas; commit local, sin push.
+
+## Sesión vencida — 2026-10-02
+
+El cliente centraliza los 401 de solicitudes protegidas en instalaciones privadas, limpia la sesión visible y vuelve al login. Tras ingresar restaura la sección anterior y conserva la recuperación de ventas sin reintentar escrituras. Un token y una versión de sesión capturados por solicitud evitan que respuestas tardías cierren una sesión nueva, incluso con el mismo token. Chromium verifica las cinco secciones y el reintento con la misma clave.
+
+Verificación: pruebas específicas, suite completa (351), compilación frontend y navegador aislado (18) aprobados; diff completo revisado y `git diff --check` aprobado. Sin cambios de esquema ni dependencias nuevas; commit local, sin push.

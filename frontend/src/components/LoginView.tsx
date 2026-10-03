@@ -1,7 +1,7 @@
 import { FormEvent, useState } from 'react';
 import { api, saveAccessToken } from '../api';
 
-export function LoginView({ onLogin }: { onLogin: () => void }) {
+export function LoginView({ onLogin, message }: { onLogin: () => void; message?: string }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -27,6 +27,7 @@ export function LoginView({ onLogin }: { onLogin: () => void }) {
     <p className="eyebrow">Acceso de administrador</p>
     <h1>Bienvenido</h1>
     <p>Ingresá tus credenciales para administrar el comercio.</p>
+    {message && <p aria-live="polite">{message}</p>}
     <label>Correo electrónico<input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label>
     <label>Contraseña<input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required /></label>
     {error && <p className="login-error" role="alert">{error}</p>}
