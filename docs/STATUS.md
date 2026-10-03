@@ -14,7 +14,7 @@ El alcance aprobado es una demostración pública para CV: Vercel sirve la inter
 
 ## Last general test result
 
-Verificación del 2026-10-02: **351 pruebas backend sin fallos, errores ni omisiones**, compilación frontend y **9 escenarios de navegador aislado** aprobados. Los checkpoints de auditoría se registran abajo.
+Verificación del 2026-10-02: **351 pruebas backend sin fallos, errores ni omisiones**, compilación frontend y **12 escenarios de navegador aislado** aprobados. Los checkpoints de auditoría se registran abajo.
 
 ## Cuaderno del proyecto
 
@@ -69,3 +69,9 @@ Verificación final de la revisión: 45 pruebas específicas, 345 pruebas backen
 Precio y costo validan NUMERIC(12,2) en DTO, servicio y entidad; se rechaza exceso de escala o rango sin redondear ni modificar parcialmente el producto. Regresiones cubren ambos campos, creación/actualización, límites y lectura PostgreSQL.
 
 Verificación: pruebas específicas, suite completa (351), compilación frontend y navegador aislado (9) aprobados; diff completo revisado y `git diff --check` aprobado. Sin cambios de esquema ni dependencias nuevas; commit local, sin push.
+
+## Respuestas atrasadas — 2026-10-02
+
+El catálogo cancela solicitudes previas y aplica datos, paginación, carga y errores sólo si pertenecen a la solicitud vigente. El texto editado no cambia el filtro aplicado hasta buscar; las señales alcanzan todas las páginas de categorías. Chromium controla respuestas y errores tardíos y una página obsoleta.
+
+Verificación: pruebas específicas, suite completa (351), compilación frontend y navegador aislado (12) aprobados; diff completo revisado y `git diff --check` aprobado. Sin cambios de esquema ni dependencias nuevas; commit local, sin push.

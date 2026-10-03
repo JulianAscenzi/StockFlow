@@ -53,17 +53,17 @@ export const api = {
       method: 'POST', body: JSON.stringify(body)
     }),
   dashboard: () => request<Dashboard>('/api/dashboard?size=8'),
-  products: (name = '', page = 0) => {
+  products: (name = '', page = 0, signal?: AbortSignal) => {
     const trimmedName = name.trim();
     const path = trimmedName
       ? `/api/products/search?name=${encodeURIComponent(trimmedName)}&page=${page}&size=20`
       : `/api/products?page=${page}&size=20`;
-    return request<PageResponse<Product>>(path);
+    return request<PageResponse<Product>>(path, { signal });
   },
   product: (id: number) => request<Product>(`/api/products/${id}`),
   lookup: (q: string, sellable: boolean, page: number, signal?: AbortSignal) =>
     request<PageResponse<Product>>(`/api/products/lookup?q=${encodeURIComponent(q)}&sellable=${sellable}&page=${page}&size=20`, { signal }),
-  categories: () => loadAllPages<Category>((page) => request<PageResponse<Category>>(`/api/categories?page=${page}&size=100`)),
+  categories: (signal?: AbortSignal) => loadAllPages<Category>((page) => request<PageResponse<Category>>(`/api/categories?page=${page}&size=100`, { signal })),
   createCategory: (body: { name: string; description: string }) =>
     request<Category>('/api/categories', { method: 'POST', body: JSON.stringify(body) }),
   createProduct: (body: Omit<Product, 'id' | 'stock' | 'active'>) =>
