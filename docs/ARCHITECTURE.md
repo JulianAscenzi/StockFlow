@@ -6,7 +6,7 @@ StockFlow es un backend para inventario y ventas de pequeños comercios. Expone 
 
 ## Stack
 
-Java 21, Spring Boot 4.1.1, Maven, Spring Data JPA/Hibernate, PostgreSQL 17 y Flyway. Las pruebas usan JUnit, Mockito, MockMvc y Testcontainers con PostgreSQL real. No se usa Lombok ni H2.
+Java 21, Spring Boot 4.1.1, Maven, Spring Data JPA/Hibernate, PostgreSQL 17 y Flyway. Las pruebas usan JUnit, Mockito, MockMvc y Testcontainers con PostgreSQL real. No se usa Lombok ni H2. El frontend usa versiones exactas de sus dependencias directas y `npm ci` con el lockfile; las actualizaciones de versiones se realizan deliberadamente.
 
 ## Módulos
 

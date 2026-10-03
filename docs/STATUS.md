@@ -93,3 +93,9 @@ Verificación: pruebas específicas, suite completa (351), compilación frontend
 Los formularios de productos y categorías tienen estados y guardas de envío independientes, bloquean sus controles, conservan valores ante rechazo y distinguen creación confirmada de fallo de refresco. Chromium verifica envíos repetidos, corrección y reintento en ambos formularios.
 
 Verificación: pruebas específicas, suite completa (351), compilación frontend y navegador aislado (24) aprobados; diff completo revisado y `git diff --check` aprobado. Sin cambios de esquema ni dependencias nuevas; commit local, sin push.
+
+## Versiones `latest` — 2026-10-02
+
+Las nueve dependencias directas del frontend quedan fijadas a las versiones ya resueltas en el lockfile. Se verificó instalación limpia con npm ci --offline y que el grafo transitivo, versiones e integridades no cambiaron.
+
+Verificación: pruebas específicas, suite completa (351), compilación frontend y navegador aislado (24) aprobados; diff completo revisado y `git diff --check` aprobado. Sin cambios de esquema ni dependencias nuevas; commit local, sin push.

@@ -6,6 +6,7 @@ Revisión del backend, frontend, migraciones, autenticación, configuración y C
 
 | Prioridad | Problema | Evidencia y solución |
 | --- | --- | --- |
+| Baja | Versiones `latest` | Las nueve dependencias directas del frontend quedan fijadas a las versiones ya resueltas en el lockfile. Se verificó instalación limpia con npm ci --offline y que el grafo transitivo, versiones e integridades no cambiaron. |
 | Baja | Escrituras duplicadas | Los formularios de productos y categorías tienen estados y guardas de envío independientes, bloquean sus controles, conservan valores ante rechazo y distinguen creación confirmada de fallo de refresco. Chromium verifica envíos repetidos, corrección y reintento en ambos formularios. |
 | Baja | Cantidades en ventas | Las cantidades se conservan como texto editable y se validan antes de generar una clave o enviar una venta nueva; las recuperaciones mantienen su payload histórico. |
 | Media | Sesión vencida | El cliente centraliza los 401 de solicitudes protegidas en instalaciones privadas, limpia la sesión visible y vuelve al login. Tras ingresar restaura la sección anterior y conserva la recuperación de ventas sin reintentar escrituras. Un token y una versión de sesión capturados por solicitud evitan que respuestas tardías cierren una sesión nueva, incluso con el mismo token. Chromium verifica las cinco secciones y el reintento con la misma clave. |
@@ -22,7 +23,7 @@ Las regresiones concurrentes coordinan transacciones mediante latches y observan
 
 ## Hallazgos pendientes y mejoras
 
-1. **Baja — Versiones `latest`.** `frontend/package.json` usa `latest` para dependencias principales. El lockfile y `npm ci` mantienen instalaciones reproducibles; regenerar el lockfile puede incorporar saltos mayores. Fijar versiones y actualizar de manera deliberada.
+Los seis hallazgos pendientes quedaron corregidos y verificados.
 
 ## Fortalezas verificadas en código
 
@@ -36,4 +37,4 @@ Las regresiones concurrentes coordinan transacciones mediante latches y observan
 
 ## Alcance de validación
 
-Los resultados finales de esta ejecución se registran en [STATUS](STATUS.md). La revisión no equivale a un pentest ni valida el rendimiento con un volumen comercial. Los hallazgos pendientes provienen de inspección de código; no se presentan como reproducciones ejecutadas.
+Los resultados finales de esta ejecución se registran en [STATUS](STATUS.md). La revisión no equivale a un pentest ni valida el rendimiento con un volumen comercial. Los seis hallazgos restantes se corrigieron con las verificaciones específicas registradas arriba y en STATUS.
