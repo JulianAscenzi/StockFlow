@@ -50,6 +50,7 @@ class SaleServiceIntegrationTest {
 
     @Autowired private org.springframework.transaction.PlatformTransactionManager transactions;
     @Autowired private com.julianas.stockflow.product.ProductService products;
+    @Autowired private com.julianas.stockflow.inventory.InventoryService inventory;
     @Autowired private SaleService saleService;
     @Autowired private SaleRepository saleRepository;
     @Autowired private ProductRepository productRepository;
@@ -217,6 +218,60 @@ class SaleServiceIntegrationTest {
             executor.shutdownNow();
             assertTrue(executor.awaitTermination(10, TimeUnit.SECONDS));
         }
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = {true, false})
+    void rejectsInactiveProductAlreadyLoadedInTheTransaction(boolean preparedSale) throws Exception {
+        Product product = saveProduct();
+        var executor = Executors.newSingleThreadExecutor();
+        try {
+            assertThrows(InactiveProductException.class, () ->
+                    new org.springframework.transaction.support.TransactionTemplate(transactions)
+                            .executeWithoutResult(status -> {
+                                Product cached = productRepository.findById(product.getId()).orElseThrow();
+                                assertTrue(cached.isActive());
+                                Sale sale = new Sale(null);
+                                sale.addItem(cached, 1);
+                                try {
+                                    executor.submit(() -> products.deactivate(product.getId())).get(10, TimeUnit.SECONDS);
+                                } catch (Exception exception) {
+                                    throw new IllegalStateException(exception);
+                                }
+                                if (preparedSale) saleService.confirm(sale);
+                                else saleService.confirm(null, List.of(new SaleService.SaleLine(product.getId(), 1)));
+                            }));
+            assertEquals(0, saleRepository.count());
+            assertEquals(0, stockMovementRepository.count());
+            Product current = productRepository.findById(product.getId()).orElseThrow();
+            assertEquals(2, current.getStock());
+            assertEquals(false, current.isActive());
+        } finally {
+            executor.shutdownNow();
+            assertTrue(executor.awaitTermination(10, TimeUnit.SECONDS));
+        }
+    }
+
+    @Test
+    void refreshingLockedProductsPreservesChangesInTheSameTransaction() {
+        Product product = saveProduct();
+        new org.springframework.transaction.support.TransactionTemplate(transactions)
+                .executeWithoutResult(status -> {
+                    products.deactivate(product.getId());
+                    products.activate(product.getId());
+                    inventory.increaseStock(product.getId(), 2, "Delivery");
+                    inventory.decreaseStock(product.getId(), 1, "Adjustment");
+                    saleService.confirm(null, List.of(new SaleService.SaleLine(product.getId(), 1)));
+                });
+        Product current = productRepository.findById(product.getId()).orElseThrow();
+        assertTrue(current.isActive());
+        assertEquals(2, current.getStock());
+        assertEquals(1, saleRepository.count());
+        var movements = stockMovementRepository.findByProductIdOrderByCreatedAtDescIdDesc(
+                product.getId(), org.springframework.data.domain.PageRequest.of(0, 10)).getContent();
+        assertEquals(3, movements.size());
+        assertEquals(List.of(3, 4, 2), movements.stream().map(movement -> movement.getStockBefore()).toList());
+        assertEquals(List.of(2, 3, 4), movements.stream().map(movement -> movement.getStockAfter()).toList());
     }
 
     private int completedSales(List<Future<Sale>> confirmations) throws Exception {

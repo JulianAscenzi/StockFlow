@@ -14,7 +14,7 @@ El alcance aprobado es una demostración pública para CV: Vercel sirve la inter
 
 ## Last general test result
 
-Verificación del 2026-10-02: suite completa con PostgreSQL/Testcontainers, **342 pruebas, 0 fallos, 0 errores y 0 omitidas**; 26 pruebas específicas aprobadas y compilación TypeScript/Vite aprobada. El resultado de navegador de esta corrección se registra abajo.
+Verificación del 2026-10-02: suite completa con PostgreSQL/Testcontainers, **345 pruebas, 0 fallos, 0 errores y 0 omitidas**; 45 pruebas específicas aprobadas y compilación TypeScript/Vite aprobada. El resultado de navegador de esta corrección se registra abajo.
 
 ## Cuaderno del proyecto
 
@@ -57,3 +57,9 @@ Se reprodujeron y corrigieron dos fallas de stock: editar/activar/desactivar sob
 Primer hallazgo pendiente de la auditoría corregido: desactivar impide nuevas ventas. `SaleService` valida el estado actual bajo bloqueo pesimista en orden de ID para solicitudes HTTP y ventas preparadas, antes de descontar stock. El advice responde 409 `PRODUCT_INACTIVE`. La recuperación idempotente de una venta confirmada sigue devolviendo el historial; una clave rechazada puede reutilizarse tras reactivar. Los ajustes de inventario de inactivos permanecen permitidos. La interfaz muestra el mensaje de rechazo, conserva el carrito editable y limpia sólo la recuperación correspondiente.
 
 Validación: 26 pruebas específicas; suite completa de 342 pruebas sin fallos, errores ni omisiones; compilación TypeScript/Vite; nueve escenarios de Chromium aislado aprobados. Las regresiones concurrentes observan la espera real de PostgreSQL y verifican ambos órdenes de venta/desactivación. Diff completo revisado y `git diff --check` aprobado. Sin cambios de esquema ni dependencias; sin push.
+
+## Revisión previa a publicación — 2026-10-02
+
+La revisión de los cuatro fixes pendientes de publicación encontró una falla adicional: adquirir `PESSIMISTIC_WRITE` no refrescaba productos ya cargados en la sesión JPA. Dos regresiones PostgreSQL reprodujeron ventas aceptadas después de una desactivación concurrente confirmada, tanto por IDs como mediante agregados preparados. La lectura bloqueada se implementa en un fragmento del repositorio, compartido por ventas, inventario y catálogo: flush de cambios propios, bloqueo y refresh. Una tercera regresión verifica balances y estado al encadenar cambios de estado, inventario y venta dentro de una sola transacción. No cambia contratos HTTP, esquema ni dependencias.
+
+Verificación final de la revisión: 45 pruebas específicas, 345 pruebas backend completas y nueve escenarios Chromium aislados aprobados, sin fallos ni omisiones. Compilación frontend y `git diff --check` aprobados; diff completo revisado. La revisión queda aprobada para el push solicitado por el usuario. La corrección agrega una lectura de refresco por adquisición de producto bloqueado; no se midió rendimiento bajo carga comercial.

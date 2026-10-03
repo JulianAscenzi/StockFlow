@@ -61,7 +61,7 @@ El dinero usa `BigDecimal`, nunca tipos binarios. Producto y precios/costos de l
 
 ## Inventario y concurrencia
 
-`ProductService` bloquea también las modificaciones de catálogo y los cambios de estado mediante `PESSIMISTIC_WRITE`, para que una edición concurrente no sobrescriba stock con valores anteriores. `InventoryService` ejecuta entradas y salidas dentro de transacciones. Obtiene el producto con `PESSIMISTIC_WRITE`, valida límites/suficiencia, actualiza el stock mediante métodos de dominio y guarda `StockMovement` en la misma transacción. `StockMovement` es `@Immutable`; el historial se pagina por `created_at DESC, id DESC`.
+`ProductService` bloquea también las modificaciones de catálogo y los cambios de estado mediante `PESSIMISTIC_WRITE`, para que una edición concurrente no sobrescriba stock con valores anteriores. `ProductRepository.findByIdForUpdate` usa una implementación JPA que hace flush de los cambios pendientes de la transacción, adquiere `PESSIMISTIC_WRITE` y refresca el producto bajo ese bloqueo. El bloqueo por sí solo no actualiza una entidad ya cargada en la sesión; el refresco evita validar estado o stock obsoleto, y el flush previo conserva cambios propios de operaciones anteriores en la misma transacción. `InventoryService` ejecuta entradas y salidas dentro de transacciones. Obtiene el producto con `PESSIMISTIC_WRITE`, valida límites/suficiencia, actualiza el stock mediante métodos de dominio y guarda `StockMovement` en la misma transacción. `StockMovement` es `@Immutable`; el historial se pagina por `created_at DESC, id DESC`.
 
 ## Autenticación
 
