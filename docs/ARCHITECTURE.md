@@ -57,7 +57,7 @@ La migración V5 agrega `sale_confirmations` con una clave primaria UUID, hash d
 
 ## Dinero
 
-El dinero usa `BigDecimal`, nunca tipos binarios. Producto y precios/costos de líneas usan `NUMERIC(12,2)`; subtotales y totales usan `NUMERIC(14,2)` para soportar cantidades y acumulación de líneas. Las ventas almacenan snapshots para que futuros cambios de producto no reescriban el historial comercial.
+El dinero usa `BigDecimal`, nunca tipos binarios. Producto y precios/costos de líneas usan `NUMERIC(12,2)`; subtotales y totales usan `NUMERIC(14,2)` para soportar cantidades y acumulación de líneas. Precio y costo de productos admiten de cero a 9999999999.99 y hasta dos decimales; DTOs, servicios y entidades rechazan el exceso sin redondear, y normalizan valores válidos a escala dos. Las ventas almacenan snapshots para que futuros cambios de producto no reescriban el historial comercial.
 
 ## Inventario y concurrencia
 

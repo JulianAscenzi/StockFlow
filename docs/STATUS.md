@@ -14,7 +14,7 @@ El alcance aprobado es una demostración pública para CV: Vercel sirve la inter
 
 ## Last general test result
 
-Verificación del 2026-10-02: suite completa con PostgreSQL/Testcontainers, **345 pruebas, 0 fallos, 0 errores y 0 omitidas**; 45 pruebas específicas aprobadas y compilación TypeScript/Vite aprobada. El resultado de navegador de esta corrección se registra abajo.
+Verificación del 2026-10-02: **351 pruebas backend sin fallos, errores ni omisiones**, compilación frontend y **9 escenarios de navegador aislado** aprobados. Los checkpoints de auditoría se registran abajo.
 
 ## Cuaderno del proyecto
 
@@ -63,3 +63,9 @@ Validación: 26 pruebas específicas; suite completa de 342 pruebas sin fallos, 
 La revisión de los cuatro fixes pendientes de publicación encontró una falla adicional: adquirir `PESSIMISTIC_WRITE` no refrescaba productos ya cargados en la sesión JPA. Dos regresiones PostgreSQL reprodujeron ventas aceptadas después de una desactivación concurrente confirmada, tanto por IDs como mediante agregados preparados. La lectura bloqueada se implementa en un fragmento del repositorio, compartido por ventas, inventario y catálogo: flush de cambios propios, bloqueo y refresh. Una tercera regresión verifica balances y estado al encadenar cambios de estado, inventario y venta dentro de una sola transacción. No cambia contratos HTTP, esquema ni dependencias.
 
 Verificación final de la revisión: 45 pruebas específicas, 345 pruebas backend completas y nueve escenarios Chromium aislados aprobados, sin fallos ni omisiones. Compilación frontend y `git diff --check` aprobados; diff completo revisado. La revisión queda aprobada para el push solicitado por el usuario. La corrección agrega una lectura de refresco por adquisición de producto bloqueado; no se midió rendimiento bajo carga comercial.
+
+## Precisión monetaria — 2026-10-02
+
+Precio y costo validan NUMERIC(12,2) en DTO, servicio y entidad; se rechaza exceso de escala o rango sin redondear ni modificar parcialmente el producto. Regresiones cubren ambos campos, creación/actualización, límites y lectura PostgreSQL.
+
+Verificación: pruebas específicas, suite completa (351), compilación frontend y navegador aislado (9) aprobados; diff completo revisado y `git diff --check` aprobado. Sin cambios de esquema ni dependencias nuevas; commit local, sin push.

@@ -105,21 +105,11 @@ class ProductTest {
     }
 
     @Test
-    void validationRejectsNegativePriceAndCost() {
-        Product product = productWith(
-                "Mouse",
-                "SKU-A1",
-                new BigDecimal("-0.01"),
-                new BigDecimal("-1.00"),
-                0,
-                0,
-                validCategory()
-        );
-
-        Set<ConstraintViolation<Product>> violations = validator.validate(product);
-
-        assertTrue(hasViolationFor(violations, "price"));
-        assertTrue(hasViolationFor(violations, "cost"));
+    void constructorRejectsNegativePriceAndCost() {
+        assertThrows(IllegalArgumentException.class, () -> productWith(
+                "Mouse", "SKU-A1", new BigDecimal("-0.01"), BigDecimal.ONE, 0, 0, validCategory()));
+        assertThrows(IllegalArgumentException.class, () -> productWith(
+                "Mouse", "SKU-A1", BigDecimal.ONE, new BigDecimal("-0.01"), 0, 0, validCategory()));
     }
 
     @Test

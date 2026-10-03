@@ -1,5 +1,6 @@
 package com.julianas.stockflow.product.api;
 
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -12,8 +13,8 @@ public record ProductCreateRequest(
         @NotBlank @Size(max = 150) String name,
         @NotBlank @Size(max = 50) String sku,
         @Size(max = 500) String description,
-        @NotNull @PositiveOrZero BigDecimal price,
-        @NotNull @PositiveOrZero BigDecimal cost,
+        @NotNull @PositiveOrZero @Digits(integer = 10, fraction = 2) BigDecimal price,
+        @NotNull @PositiveOrZero @Digits(integer = 10, fraction = 2) BigDecimal cost,
         @NotNull @PositiveOrZero Integer minimumStock,
         @NotNull @Positive Long categoryId
 ) {

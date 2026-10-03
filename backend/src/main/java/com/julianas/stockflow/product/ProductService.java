@@ -15,8 +15,6 @@ import java.util.Objects;
 @Service
 public class ProductService {
 
-    private static final BigDecimal ZERO = BigDecimal.ZERO;
-
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
 
@@ -178,18 +176,11 @@ public class ProductService {
     }
 
     private static void validateAmounts(BigDecimal price, BigDecimal cost, Integer minimumStock) {
-        requireNonNegative(price, "price");
-        requireNonNegative(cost, "cost");
+        ProductAmounts.normalize(price, "price");
+        ProductAmounts.normalize(cost, "cost");
         Objects.requireNonNull(minimumStock, "minimumStock");
         if (minimumStock < 0) {
             throw new IllegalArgumentException("minimumStock must not be negative");
-        }
-    }
-
-    private static void requireNonNegative(BigDecimal value, String fieldName) {
-        Objects.requireNonNull(value, fieldName);
-        if (value.compareTo(ZERO) < 0) {
-            throw new IllegalArgumentException(fieldName + " must not be negative");
         }
     }
 

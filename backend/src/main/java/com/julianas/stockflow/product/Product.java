@@ -12,6 +12,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -45,11 +46,13 @@ public class Product {
 
     @NotNull
     @PositiveOrZero
+    @Digits(integer = 10, fraction = 2)
     @Column(name = "price", nullable = false, precision = 12, scale = 2)
     private BigDecimal price;
 
     @NotNull
     @PositiveOrZero
+    @Digits(integer = 10, fraction = 2)
     @Column(name = "cost", nullable = false, precision = 12, scale = 2)
     private BigDecimal cost;
 
@@ -91,11 +94,13 @@ public class Product {
             boolean active,
             Category category
     ) {
+        BigDecimal validPrice = ProductAmounts.normalize(price, "price");
+        BigDecimal validCost = ProductAmounts.normalize(cost, "cost");
         this.name = name;
         this.sku = normalizeSku(sku);
         this.description = description;
-        this.price = price;
-        this.cost = cost;
+        this.price = validPrice;
+        this.cost = validCost;
         this.stock = stock;
         this.minimumStock = minimumStock;
         this.active = active;
@@ -111,11 +116,13 @@ public class Product {
             Integer minimumStock,
             Category category
     ) {
+        BigDecimal validPrice = ProductAmounts.normalize(price, "price");
+        BigDecimal validCost = ProductAmounts.normalize(cost, "cost");
         this.name = name;
         this.sku = normalizeSku(sku);
         this.description = description;
-        this.price = price;
-        this.cost = cost;
+        this.price = validPrice;
+        this.cost = validCost;
         this.minimumStock = minimumStock;
         this.category = category;
     }

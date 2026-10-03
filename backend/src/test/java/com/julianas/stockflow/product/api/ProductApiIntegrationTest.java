@@ -149,6 +149,46 @@ class ProductApiIntegrationTest extends ApiIntegrationTestSupport {
                 .andExpect(jsonPath("$.fieldErrors").isMap());
     }
 
+    @Test
+    void rejectsInvalidAmountsWithoutCreatingOrChangingProducts() throws Exception {
+        long category = createCategory("Amounts");
+        long id = createProduct(category, "Original", "AMOUNT");
+        for (String field : java.util.List.of("price", "cost")) {
+            for (String invalid : java.util.List.of("1.001", "1.000", "10000000000", "-0.01")) {
+                String body = json(productRequest("Changed", "CHANGED", null,
+                        field.equals("price") ? invalid : "1.00", field.equals("cost") ? invalid : "1.00", 0, category));
+                for (var request : java.util.List.of(post("/api/products"), put("/api/products/{id}", id))) {
+                    mockMvc.perform(request.contentType(MediaType.APPLICATION_JSON).content(body))
+                            .andExpect(status().isBadRequest())
+                            .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                            .andExpect(jsonPath("$.fieldErrors." + field).isNotEmpty());
+                }
+            }
+        }
+        mockMvc.perform(get("/api/products")).andExpect(jsonPath("$.totalElements").value(1));
+        mockMvc.perform(get("/api/products/{id}", id)).andExpect(jsonPath("$.name").value("Original"))
+                .andExpect(jsonPath("$.price").value(1234.56)).andExpect(jsonPath("$.cost").value(789.01));
+    }
+
+    @Test
+    void boundaryAmountsKeepTheSameValuesAfterPostgresqlRoundTrip() throws Exception {
+        long category = createCategory("Boundary");
+        var created = mockMvc.perform(post("/api/products").contentType(MediaType.APPLICATION_JSON)
+                        .content(json(productRequest("Boundary", "BOUNDARY", null, "9999999999.99", "0", 0, category))))
+                .andExpect(status().isCreated()).andReturn();
+        var first = objectMapper.readTree(created.getResponse().getContentAsString());
+        long id = first.get("id").asLong();
+        var read = mockMvc.perform(get("/api/products/{id}", id)).andExpect(status().isOk()).andReturn();
+        var stored = objectMapper.readTree(read.getResponse().getContentAsString());
+        org.junit.jupiter.api.Assertions.assertEquals(first.get("price"), stored.get("price"));
+        org.junit.jupiter.api.Assertions.assertEquals(first.get("cost"), stored.get("cost"));
+        mockMvc.perform(put("/api/products/{id}", id).contentType(MediaType.APPLICATION_JSON)
+                        .content(json(productRequest("Boundary", "BOUNDARY", null, "0", "9999999999.99", 0, category))))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/products/{id}", id)).andExpect(jsonPath("$.price").value(0))
+                .andExpect(jsonPath("$.cost").value(9999999999.99));
+    }
+
     private long createCategory(String name) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/categories")
                         .contentType(MediaType.APPLICATION_JSON)
