@@ -14,10 +14,12 @@ export function ProductsView({ notify }: { notify: (message: string, kind?: 'err
   const [loading, setLoading] = useState(true);
   const [creatingProduct, setCreatingProduct] = useState(false);
   const [creatingCategory, setCreatingCategory] = useState(false);
+  const mountedRef = useRef(false);
   const productSubmittingRef = useRef(false);
   const categorySubmittingRef = useRef(false);
   const requestRef = useRef({ id: 0, page: 0, query: '', controller: null as AbortController | null });
   const refresh = useCallback(async (requestedPage?: number, requestedQuery?: string, confirmedMessage?: string) => {
+    if (!mountedRef.current) return;
     requestRef.current.controller?.abort();
     const controller = new AbortController();
     const request = { id: requestRef.current.id + 1, page: requestedPage ?? requestRef.current.page,
@@ -36,8 +38,9 @@ export function ProductsView({ notify }: { notify: (message: string, kind?: 'err
     }
   }, [notify]);
   useEffect(() => {
+    mountedRef.current = true;
     void refresh(0, '');
-    return () => { requestRef.current.controller?.abort(); };
+    return () => { mountedRef.current = false; requestRef.current.controller?.abort(); };
   }, [refresh]);
   const search = (event: React.FormEvent) => { event.preventDefault(); void refresh(0, query.trim()); };
   const create = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -48,10 +51,11 @@ export function ProductsView({ notify }: { notify: (message: string, kind?: 'err
     setCreatingProduct(true);
     try {
       await api.createProduct({ name: String(values.get('name')), sku: String(values.get('sku')), description: String(values.get('description')), price: Number(values.get('price')), cost: Number(values.get('cost')), minimumStock: Number(values.get('minimumStock')), categoryId: Number(values.get('categoryId')) });
+      if (!mountedRef.current) return;
       form.reset(); setShowForm(false); notify('Producto creado.', 'success');
       await refresh(undefined, undefined, 'Producto creado.');
-    } catch (error) { notify((error as Error).message, 'error'); }
-    finally { productSubmittingRef.current = false; setCreatingProduct(false); }
+    } catch (error) { if (mountedRef.current) notify((error as Error).message, 'error'); }
+    finally { productSubmittingRef.current = false; if (mountedRef.current) setCreatingProduct(false); }
   };
   const createCategory = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -61,10 +65,11 @@ export function ProductsView({ notify }: { notify: (message: string, kind?: 'err
     setCreatingCategory(true);
     try {
       await api.createCategory({ name: String(values.get('categoryName')), description: String(values.get('categoryDescription')) });
+      if (!mountedRef.current) return;
       form.reset(); setShowCategoryForm(false); notify('Categoría creada.', 'success');
       await refresh(undefined, undefined, 'Categoría creada.');
-    } catch (error) { notify((error as Error).message, 'error'); }
-    finally { categorySubmittingRef.current = false; setCreatingCategory(false); }
+    } catch (error) { if (mountedRef.current) notify((error as Error).message, 'error'); }
+    finally { categorySubmittingRef.current = false; if (mountedRef.current) setCreatingCategory(false); }
   };
   return <section><header className="page-header actions"><div><p className="eyebrow">Catálogo</p><h1>Productos</h1><p>Precios, costos y niveles mínimos en un solo lugar.</p></div><button className="primary" disabled={creatingProduct} onClick={() => setShowForm(!showForm)}>+ Agregar producto</button></header>
     <section className="category-strip"><div><strong>Categorías</strong><span>{categories.length === 0 ? 'Todavía no hay categorías.' : categories.map((category) => category.name).join(' · ')}</span></div><button className="text-button" disabled={creatingCategory} onClick={() => setShowCategoryForm(!showCategoryForm)}>+ Nueva categoría</button></section>

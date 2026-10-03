@@ -298,3 +298,52 @@ for (const kind of ['product', 'category'] as const) {
     expect(created).toBe(true);
   });
 }
+
+for (const rejected of [false, true]) {
+  test(`late catalog creation ${rejected ? 'rejection' : 'success'} cannot affect another section`, async ({ page }) => {
+    await login(page);
+    await page.getByRole('button', { name: 'Productos', exact: true }).click();
+    await expect(page.getByText('Cargando catálogo…')).toHaveCount(0);
+    await page.getByRole('button', { name: '+ Nueva categoría', exact: true }).click();
+    await page.locator('form.catalog-form').getByLabel('Nombre', { exact: true }).fill(`Late creation ${rejected}`);
+    await page.evaluate(() => {
+      const originalFetch = window.fetch;
+      window.fetch = async (...args) => {
+        const response = await originalFetch(...args);
+        if (String(args[0]).endsWith('/api/categories') && args[1]?.method === 'POST') {
+          const originalJson = response.json.bind(response);
+          response.json = async () => {
+            const body = await originalJson();
+            // Signal after the response consumers have run their promise continuations.
+            setTimeout(() => { document.documentElement.dataset.creationHandled = 'true'; }, 0);
+            return body;
+          };
+        }
+        return response;
+      };
+    });
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    let captured!: () => void;
+    const capturedRequest = new Promise<void>((resolve) => { captured = resolve; });
+    await page.route('**/api/categories', async (route) => {
+      if (route.request().method() !== 'POST') { await route.continue(); return; }
+      const response = rejected ? undefined : await route.fetch();
+      captured(); await gate;
+      if (response) await route.fulfill({ response });
+      else await route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ message: 'Late rejection' }) });
+    });
+    await page.getByRole('button', { name: 'Guardar categoría', exact: true }).click();
+    await capturedRequest;
+    await page.getByRole('button', { name: 'Resumen', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Buen día', exact: true })).toBeVisible();
+    let refreshes = 0;
+    page.on('request', (request) => {
+      if (request.method() === 'GET' && /\/api\/(products|categories)/.test(request.url())) refreshes++;
+    });
+    release();
+    await page.waitForFunction(() => document.documentElement.dataset.creationHandled === 'true');
+    await expect(page.getByRole('status')).toHaveCount(0);
+    expect(refreshes).toBe(0);
+  });
+}

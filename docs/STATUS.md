@@ -14,7 +14,7 @@ El alcance aprobado es una demostración pública para CV: Vercel sirve la inter
 
 ## Last general test result
 
-Verificación del 2026-10-02: **351 pruebas backend sin fallos, errores ni omisiones**, compilación frontend y **24 escenarios de navegador aislado** aprobados. Los checkpoints de auditoría se registran abajo.
+Verificación del 2026-10-02: **351 pruebas backend sin fallos, errores ni omisiones**, compilación frontend y **26 escenarios de navegador aislado** aprobados. Los checkpoints de auditoría se registran abajo.
 
 ## Cuaderno del proyecto
 
@@ -99,3 +99,9 @@ Verificación: pruebas específicas, suite completa (351), compilación frontend
 Las nueve dependencias directas del frontend quedan fijadas a las versiones ya resueltas en el lockfile. Se verificó instalación limpia con npm ci --offline y que el grafo transitivo, versiones e integridades no cambiaron.
 
 Verificación: pruebas específicas, suite completa (351), compilación frontend y navegador aislado (24) aprobados; diff completo revisado y `git diff --check` aprobado. Sin cambios de esquema ni dependencias nuevas; commit local, sin push.
+
+## Revisión de los seis hallazgos antes del push — 2026-10-02
+
+La revisión encontró respuestas de creación de catálogo que mostraban avisos y refrescaban después de abandonar la sección. Dos regresiones de Chromium reprodujeron éxito y rechazo tardíos sobre el resumen; ambas pasan al comprobar que la vista siga montada antes de aplicar los efectos. Las operaciones ya enviadas se conservan en el servidor. Se revisaron también precisión y atomicidad monetaria, recuperación histórica, 401 de sesiones anteriores, controles y cancelación de solicitudes, y versiones exactas sin cambios transitivos.
+
+Verificación final: 351 pruebas backend y 26 escenarios Chromium sin fallos ni omisiones, compilación frontend y `git diff --check` aprobados; diff completo revisado. Sin cambios de esquema ni dependencias. Revisión aprobada para el push explícitamente solicitado a origin/main.
