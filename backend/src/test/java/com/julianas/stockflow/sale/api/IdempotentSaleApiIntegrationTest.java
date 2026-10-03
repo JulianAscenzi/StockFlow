@@ -46,6 +46,9 @@ class IdempotentSaleApiIntegrationTest extends ApiIntegrationTestSupport {
         long id = product("Original", 5);
         String key = UUID.randomUUID().toString();
         MvcResult first = confirm(key, payload(id, 2, " note ")).andExpect(status().isCreated()).andReturn();
+        var createdAt = java.time.Instant.parse(json.readTree(first.getResponse().getContentAsString())
+                .get("createdAt").asText());
+        assertThat(createdAt.getNano() % 1_000).as("PostgreSQL microsecond precision").isZero();
         var product = products.getById(id);
         products.update(id, "Changed", "CHANGED", null, new BigDecimal("999"), new BigDecimal("888"), 0, product.getCategory().getId());
         products.deactivate(id);

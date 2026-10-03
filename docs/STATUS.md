@@ -14,7 +14,7 @@ El alcance aprobado es una demostración pública para CV: Vercel sirve la inter
 
 ## Last general test result
 
-Suite completa con PostgreSQL/Testcontainers: **322 pruebas, 0 fallos, 0 errores y 0 omitidas**. La interfaz compila con Vite y la integración frontend–backend se verificó además en una base PostgreSQL temporal: categoría, producto, entrada, venta y resumen diario.
+Suite completa con PostgreSQL/Testcontainers: **336 pruebas, 0 fallos, 0 errores y 0 omitidas**. La interfaz compila con Vite y la integración frontend–backend se verificó además en una base PostgreSQL temporal: categoría, producto, entrada, venta y resumen diario.
 
 ## Cuaderno del proyecto
 
@@ -43,3 +43,7 @@ Bloque 26 completado: historial paginado y detalle histórico, sin alterar inven
 Bloque 27 completado: búsqueda paginada compartida, filtros PostgreSQL y selección conservada. Pruebas específicas: 66; suite completa: 322; navegador: ocho escenarios; compilación y whitespace aprobados. Próximo bloque: confirmación idempotente.
 
 Bloque 28: confirmación idempotente implementada. La recuperación usa una clave UUID persistida en `sessionStorage`; las respuestas tardías sólo pueden limpiar la operación que las originó, evitando borrar una recuperación nueva tras navegar. La compilación frontend pasa; las pruebas de integración requieren Docker/Testcontainers.
+
+## Auditoría general — 2026-10-02
+
+Docker/PostgreSQL disponibles. La auditoría detectó una diferencia entre la fecha inicial de una venta (nanosegundos) y su recuperación idempotente (microsegundos de PostgreSQL). Se corrige la fecha de creación a precisión de microsegundos y se refuerza la regresión de igualdad de respuestas. La validación conjunta final pasó 54 pruebas específicas y 336 pruebas backend completas sin fallos, errores ni omisiones; la compilación frontend también pasó.

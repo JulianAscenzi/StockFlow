@@ -60,7 +60,7 @@ public class Sale {
 
     @PrePersist
     private void initializeCreatedAt() {
-        createdAt = Instant.now();
+        createdAt = Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS);
     }
 
     SaleItem addItem(Product product, int quantity) {
