@@ -159,7 +159,7 @@ class IdempotentSaleApiIntegrationTest extends ApiIntegrationTestSupport {
                 .andExpect(header().string("Access-Control-Allow-Headers", org.hamcrest.Matchers.containsString("Idempotency-Key")));
         mvc.perform(post("/api/sales").header("Origin", "http://localhost:5173").header("Idempotency-Key", UUID.randomUUID())
                         .contentType("application/json").content(payload(id, 1, "")))
-                .andExpect(status().isCreated()).andExpect(header().string("Access-Control-Expose-Headers", "Location"));
+                .andExpect(status().isCreated()).andExpect(header().string("Access-Control-Expose-Headers", "Location, X-Request-ID"));
     }
 
     private long product(String name, int stock) {

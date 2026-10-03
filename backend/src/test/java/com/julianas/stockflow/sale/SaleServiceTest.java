@@ -35,9 +35,11 @@ class SaleServiceTest {
 
     private SaleService saleService;
 
+    @Mock private com.julianas.stockflow.common.metrics.BusinessMetrics metrics;
+
     @BeforeEach
     void setUp() {
-        saleService = new SaleService(saleRepository, inventoryService, productRepository);
+        saleService = new SaleService(saleRepository, inventoryService, productRepository, metrics);
     }
 
     @Test

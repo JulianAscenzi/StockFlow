@@ -33,9 +33,11 @@ class InventoryServiceTest {
     @Mock private StockMovementRepository stockMovementRepository;
     private InventoryService inventoryService;
 
+    @Mock private com.julianas.stockflow.common.metrics.BusinessMetrics metrics;
+
     @BeforeEach
     void setUp() {
-        inventoryService = new InventoryService(productRepository, stockMovementRepository);
+        inventoryService = new InventoryService(productRepository, stockMovementRepository, metrics);
     }
 
     @Test

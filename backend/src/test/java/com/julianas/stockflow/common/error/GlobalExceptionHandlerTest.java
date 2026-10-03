@@ -37,6 +37,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
 import java.util.Set;
+import java.sql.SQLException;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.transaction.CannotCreateTransactionException;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
@@ -225,6 +228,34 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void handlesDatabaseResourceFailureAsUnavailableWithoutInternalDetails() throws Exception {
+        mockMvc.perform(get("/test/database-unavailable"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("DATABASE_UNAVAILABLE"))
+                .andExpect(content().string(not(containsString("jdbc:postgresql"))))
+                .andExpect(jsonPath("$.trace").doesNotExist());
+    }
+
+    @Test
+    void detectsWrappedConnectionFailureWithoutTreatingEveryTransactionFailureAsAnOutage() throws Exception {
+        mockMvc.perform(get("/test/transaction-unavailable"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("DATABASE_UNAVAILABLE"))
+                .andExpect(content().string(not(containsString("secret"))));
+        mockMvc.perform(get("/test/transaction-bug"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.code").value("INTERNAL_ERROR"));
+    }
+
+    @Test
+    void shutdownSqlStateIsUnavailableButSyntaxErrorsRemainUnexpected() throws Exception {
+        mockMvc.perform(get("/test/database-shutdown"))
+                .andExpect(status().isServiceUnavailable());
+        mockMvc.perform(get("/test/database-syntax"))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
     void handlesUnexpectedExceptionWithoutTechnicalDetails() throws Exception {
         mockMvc.perform(get("/test/unexpected"))
                 .andExpect(status().isInternalServerError())
@@ -239,6 +270,31 @@ class GlobalExceptionHandlerTest {
     @RestController
     @RequestMapping("/test")
     private static class TestController {
+
+        @GetMapping("/database-unavailable")
+        void databaseUnavailable() {
+            throw new DataAccessResourceFailureException("jdbc:postgresql://internal secret");
+        }
+
+        @GetMapping("/transaction-unavailable")
+        void transactionUnavailable() {
+            throw new CannotCreateTransactionException("internal detail", new SQLException("secret", "08001"));
+        }
+
+        @GetMapping("/transaction-bug")
+        void transactionBug() {
+            throw new CannotCreateTransactionException("internal bug");
+        }
+
+        @GetMapping("/database-shutdown")
+        void databaseShutdown() {
+            throw new IllegalStateException(new SQLException("internal", "57P01"));
+        }
+
+        @GetMapping("/database-syntax")
+        void databaseSyntax() {
+            throw new IllegalStateException(new SQLException("internal", "42601"));
+        }
 
         private final jakarta.validation.Validator validator;
 

@@ -35,3 +35,12 @@ El MVP permanece cerrado. Orden aprobado: pruebas de navegador → CI → histor
 26. [x] Historial y detalle de ventas — consultas paginadas y snapshots históricos en la interfaz.
 27. [x] Búsqueda paginada compartida — nombre/SKU, filtros de venta e inventario y selección conservada.
 28. [x] Confirmación idempotente — clave UUID persistida transaccionalmente y recuperación en la misma pestaña mediante sessionStorage. La recuperación ignora respuestas tardías de operaciones anteriores.
+
+## Evolución DevOps — ejecución local
+
+29. [ ] Entorno completo con Docker Compose — PostgreSQL 17 persistente, backend existente y frontend Vite no root; networking interno, puertos host en loopback, health checks y configuración documentada. Implementación y validación locales registradas en STATUS; pendiente de commit por instrucción explícita del usuario. No incluye observabilidad, Kubernetes, Terraform ni cloud.
+30. [ ] Operación del backend — probes separadas, bootstrap concurrente seguro, graceful shutdown, request ID/logs y presupuesto del pool. Implementación local registrada en STATUS, sin commit por instrucción del usuario. No incluye Prometheus/Grafana ni Kubernetes.
+
+31. [ ] Observabilidad local — Etapa 3: Micrometer/Prometheus/Grafana, histogramas HTTP, dashboard provisionado y persistencia. Implementación y evidencia en STATUS; sin commit por instrucción del usuario. Excluye negocio, alertas, SLOs, tracing y cloud.
+
+32. [ ] Confiabilidad y negocio — Etapa 4: counters transaccionales, SLIs/SLOs provisionales, budget, recording rules, alertas y Alertmanager local, dashboard SRE y runbooks. Implementación/evidencia en STATUS, sin commit por pedido explícito. No incluye Kubernetes, cloud ni tracing.

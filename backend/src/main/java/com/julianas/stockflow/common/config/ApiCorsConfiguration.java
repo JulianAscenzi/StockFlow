@@ -29,8 +29,8 @@ public class ApiCorsConfiguration implements WebMvcConfigurer {
         registry.addMapping("/api/**")
                 .allowedOrigins(allowedOrigins.toArray(String[]::new))
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-                .allowedHeaders("Content-Type", "Authorization", "Idempotency-Key")
-                .exposedHeaders("Location")
+                .allowedHeaders("Content-Type", "Authorization", "Idempotency-Key", "X-Request-ID")
+                .exposedHeaders("Location", "X-Request-ID")
                 .maxAge(3600);
     }
 }

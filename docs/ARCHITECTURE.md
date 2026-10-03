@@ -19,7 +19,15 @@ Java 21, Spring Boot 4.1.1, Maven, Spring Data JPA/Hibernate, PostgreSQL 17 y Fl
 - `dashboard`: consultas agregadas, servicio de lectura y `GET /api/dashboard`.
 - `frontend`: cliente React + TypeScript + Vite con resumen, catálogo de productos/categorías, ajustes de inventario y confirmación de ventas. Durante desarrollo, Vite redirige `/api` al backend local. Las creaciones de productos y categorías bloquean su propio formulario mientras se envían; conservan los valores si se rechazan y distinguen una creación confirmada de un fallo posterior de actualización del catálogo. Después de abandonar la vista, las respuestas de creación no aplican estado, avisos ni refrescos.
 
-## Despliegue de demo
+## Ejecución local con Compose
+
+El backend incluye probes separadas (liveness sólo estado del proceso, readiness estado más DB), bootstrap de administrador serializado en PostgreSQL, request ID mediante MDC, perfil `prod` JSON y cierre ordenado nativo de Boot. La configuración, sus límites y el experimento de recuperación están en [OPERATIONS](OPERATIONS.md). Fuera del perfil local de observabilidad sólo health se expone por Actuator. Compose agrega Micrometer/Prometheus/Grafana: management 9091 ligado a una red interna de métricas, datasource y dashboard provisionados. [OBSERVABILITY](OBSERVABILITY.md) detalla seguridad y flujo.
+
+`docker compose up --build` inicia Prometheus, Grafana, PostgreSQL 17, la API con su Dockerfile multietapa existente y el frontend con Node 24/Vite. API y frontend ejecutan como usuarios no root. El navegador accede al frontend en loopback, puerto 5173 configurable con `FRONTEND_PORT`; Vite redirige `/api` a `backend:8080`. La API usa `database:5432`, sin puerto publicado. PostgreSQL conserva `postgres_data` y publica su puerto sólo en loopback para permitir también el desarrollo con Maven.
+
+El arranque espera `pg_isready` y después `/actuator/health`; el frontend comprueba HTTP con Node. Son health checks locales, no la estrategia definitiva de probes. Las credenciales se inyectan explícitamente desde `.env`, excluido de Git y de los contextos Docker. Compose deriva el login frontend del mismo `APP_AUTH_ENABLED` de la API. El código frontend se copia en la imagen y requiere rebuild al editar; esta imagen Vite es para reproducción local, mientras Vercel conserva su compilación estática.
+
+## Despliegue de demo pública
 
 La demo pública de portfolio usa Vercel para la interfaz estática y Render Free para la API Dockerizada y PostgreSQL 17. La interfaz recibe `VITE_API_BASE_URL` en compilación y la API sólo habilita CORS para los orígenes explícitos de `APP_CORS_ALLOWED_ORIGINS`; ninguna de esas variables es un secreto. Render provee su cadena interna `DATABASE_URL`; un `EnvironmentPostProcessor` la adapta a propiedades JDBC antes de iniciar JPA/Flyway. El endpoint operativo `GET /actuator/health` no revela detalles y se usa como health check. La demo fija `APP_AUTH_ENABLED=false` y sólo contiene datos ficticios.
 
@@ -78,3 +86,7 @@ Hay pruebas unitarias de entidades, servicios, validación, mappers y controller
 ## Selección paginada de productos
 
 GET `/api/products/lookup?q=&sellable=false&page=0&size=20` busca subcadenas literales de nombre o SKU sin distinguir mayúsculas, con máximo 100 y orden nombre/ID. `locate` permite tratar `%` y `_` como texto sin convertirlos en comodines. PostgreSQL filtra y cuenta antes de paginar. Ventas usa `sellable=true` (activo y stock positivo); inventario incluye todos. El contrato `/search?name=` permanece intacto. El selector compartido cancela respuestas obsoletas y mantiene la selección y el carrito fuera de los resultados visibles. Los errores de refresco posteriores a una operación confirmada lo aclaran explícitamente.
+
+## Métricas transaccionales y confiabilidad
+
+Los servicios de ventas e inventario registran counters de negocio mediante BusinessMetrics: éxitos sólo en afterCommit del límite transaccional exterior; rechazos de venta acotados sólo al completarse rollback. La recuperación idempotente lee historial sin emitir otra venta/movimiento. No se persisten métricas ni se modifica esquema. Son telemetría best effort, no contabilidad. El perfil observability muestrea readiness nativa fuera del scrape. Compose añade Alertmanager sin receptor externo; recording/alert rules y SRE Overview están versionados. [SRE](SRE.md) concentra definiciones y límites.

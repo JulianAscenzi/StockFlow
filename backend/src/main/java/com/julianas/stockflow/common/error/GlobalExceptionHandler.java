@@ -34,6 +34,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.sql.SQLException;
+import org.springframework.dao.DataAccessResourceFailureException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -296,6 +298,11 @@ public class GlobalExceptionHandler {
             Exception exception,
             HttpServletRequest request
     ) {
+        if (isDatabaseUnavailable(exception)) {
+            LOGGER.error("Database unavailable while processing request {}", request.getRequestURI(), exception);
+            return response(HttpStatus.SERVICE_UNAVAILABLE, "DATABASE_UNAVAILABLE",
+                    "The service is temporarily unavailable. Try again later.", request, Map.of());
+        }
         LOGGER.error("Unexpected error processing request {}", request.getRequestURI(), exception);
 
         return response(
@@ -305,6 +312,18 @@ public class GlobalExceptionHandler {
                 request,
                 Map.of()
         );
+    }
+
+    private static boolean isDatabaseUnavailable(Throwable exception) {
+        for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+            if (cause instanceof DataAccessResourceFailureException) return true;
+            if (cause instanceof SQLException sql) {
+                String state = sql.getSQLState();
+                if (state != null && (state.startsWith("08") || state.equals("57P01")
+                        || state.equals("57P02") || state.equals("57P03"))) return true;
+            }
+        }
+        return false;
     }
 
     private ResponseEntity<ApiError> response(

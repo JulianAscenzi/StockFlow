@@ -30,26 +30,59 @@ El catálogo de productos se navega por páginas y los selectores de categorías
 
 ## Requisitos
 
-- Java 21
-- Node.js con npm
-- Docker y Docker Compose
+Para el entorno completo: Docker con Docker Compose y conexión a Internet en el primer build.
+Para ejecutar procesos fuera de Docker: Java 21 y Node 24+ con npm.
 
-## Arranque local
+## Arranque local con Docker Compose
 
-1. Creá la configuración local a partir del ejemplo. No subas el archivo resultante al repositorio.
+Desde la raíz, prepará una sola vez la configuración:
 
-   ```bash
-   cp .env.example .env
-   ```
+```bash
+cp .env.example .env
+```
 
-2. Iniciá PostgreSQL y esperá a que el servicio quede saludable.
+Configurá `GRAFANA_ADMIN_PASSWORD` y reemplazá las contraseñas y el secreto JWT de ejemplo por valores propios locales; el JWT requiere al menos 32 caracteres. `.env` está ignorado y no se copia a las imágenes. Si ya tenés un `.env`, agregá las variables faltantes sin sobrescribirlo.
+
+Levantá toda la aplicación:
+
+```bash
+docker compose up --build
+```
+
+Abrí `http://localhost:5173` e ingresá con `APP_ADMIN_EMAIL` y `APP_ADMIN_PASSWORD`. PostgreSQL debe estar healthy antes de iniciar la API, y la API antes de iniciar Vite. Flyway aplica o valida V1–V5; Hibernate valida el esquema. Para segundo plano: `docker compose up --build -d --wait`.
+
+```text
+Navegador → localhost:5173 → frontend (Vite)
+                              /api → backend:8080 → database:5432
+```
+
+Compose publica `127.0.0.1:5173` (interfaz), `127.0.0.1:5432` (PostgreSQL, para conservar el desarrollo con Maven), `127.0.0.1:9090` (Prometheus) y `127.0.0.1:3000` (Grafana). La API permanece en la red interna. El navegador usa rutas relativas `/api`; Vite resuelve `backend` dentro de Docker. No hace falta CORS entre la interfaz y su proxy. El healthcheck del backend consulta su listener de management en la red interna; los demás usan loopback dentro de cada contenedor.
+
+El frontend es un contenedor local con Vite, dependencias instaladas mediante `npm ci` y código copiado en el build. Después de editar fuentes, repetí `docker compose up --build`; no hay bind mounts ni hot reload desde el host. No es una imagen de producción: en Vercel se siguen sirviendo archivos estáticos de `npm run build`.
+
+Verificación operativa:
+
+```bash
+docker compose config --quiet
+docker compose ps
+docker compose exec backend curl --fail http://backend-management:9091/actuator/health
+docker compose logs backend
+```
+
+`docker compose config` sin `--quiet` muestra valores resueltos, incluidos secretos; no publiques su salida. Cambiar `POSTGRES_PASSWORD` en `.env` no cambia la contraseña de una base ya inicializada. Tampoco cambiar `APP_ADMIN_PASSWORD` modifica un administrador existente: esas credenciales se usan en el primer arranque.
+
+## Desarrollo con Maven y Vite fuera de Docker
+
+Primero detené el entorno completo si está iniciado (`docker compose down`, sin `-v`). Con el mismo `.env`:
+
+1. Iniciá PostgreSQL y esperá a que el servicio quede saludable.
 
    ```bash
    docker compose up -d database
    docker compose ps
    ```
 
-3. En una terminal, cargá las variables de `.env` e iniciá el backend. Flyway aplicará las migraciones automáticamente; Hibernate sólo valida el esquema.
+2. En una terminal, cargá las variables de `.env` e iniciá el backend. Flyway aplicará las migraciones automáticamente; Hibernate sólo valida el esquema.
 
    ```bash
    set -a; . ./.env; set +a
@@ -59,12 +92,12 @@ El catálogo de productos se navega por páginas y los selectores de categorías
 
    El backend queda disponible en `http://localhost:8080`.
 
-4. En otra terminal, instalá las dependencias e iniciá la interfaz.
+3. En otra terminal, instalá las dependencias e iniciá la interfaz.
 
    ```bash
    cd frontend
    npm ci
-   npm run dev
+   VITE_AUTH_ENABLED=true npm run dev
    ```
 
    Abrí `http://localhost:5173`. Durante el desarrollo, Vite redirige las solicitudes `/api` al backend local.
@@ -112,7 +145,20 @@ Docker debe estar disponible para las pruebas de integración. Para una comproba
 
 ## Configuración
 
-`.env` define `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_PORT`, `APP_ADMIN_EMAIL`, `APP_ADMIN_PASSWORD` y `APP_JWT_SECRET`; consultá `.env.example` para valores locales. La primera ejecución crea un único administrador con email y contraseña hasheada con BCrypt. Cambiá las contraseñas y el secreto antes de usar una base fuera de tu equipo y nunca publiques `.env`.
+Las probes, logs, request ID, timeouts y el comportamiento ante una caída de PostgreSQL se documentan en [Operación del backend](docs/OPERATIONS.md).
+
+| Variable | Uso local |
+| --- | --- |
+| `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | Base y credenciales, obligatorias |
+| `POSTGRES_PORT` | Puerto PostgreSQL del host; por defecto 5432 |
+| `FRONTEND_PORT` | Puerto de interfaz en Compose; por defecto 5173 |
+| `APP_AUTH_ENABLED` | Autenticación y login en Compose; por defecto true |
+| `APP_ADMIN_EMAIL`, `APP_ADMIN_PASSWORD` | Administrador inicial |
+| `APP_JWT_SECRET` | Firma JWT, al menos 32 caracteres |
+
+Compose fija `POSTGRES_HOST=database`, el puerto interno de PostgreSQL en 5432 y `PORT=8080`; el puerto publicado del host no altera esos valores. En Maven el host sigue siendo localhost por defecto. No se carga todo `.env` en los contenedores: sólo las variables declaradas.
+
+Compose fija `VITE_API_BASE_URL` vacío y `VITE_API_PROXY_TARGET=http://backend:8080`; deriva `VITE_AUTH_ENABLED` de `APP_AUTH_ENABLED`. Ninguna variable `VITE_*` contiene secretos. La ejecución manual de Vite con autenticación requiere `VITE_AUTH_ENABLED=true npm run dev`. Render conserva `DATABASE_URL` y Vercel conserva `VITE_API_BASE_URL`/`VITE_AUTH_ENABLED`; sus configuraciones no cambian. La primera ejecución crea un único administrador con email y contraseña hasheada con BCrypt. Cambiá las contraseñas y el secreto antes de usar una base fuera de tu equipo y nunca publiques `.env`.
 
 El proxy de Vite usa `http://localhost:8080` por defecto. Para apuntar temporalmente a otra instancia local, por ejemplo en una prueba aislada, ejecutá:
 
@@ -126,7 +172,7 @@ VITE_API_PROXY_TARGET=http://127.0.0.1:8081 npm run dev
 Para detener los servicios sin borrar los datos locales:
 
 ```bash
-docker compose stop
+docker compose down
 ```
 
 No ejecutes `docker compose down -v` salvo que quieras eliminar deliberadamente el volumen de PostgreSQL y todos sus datos.
@@ -148,3 +194,9 @@ npm --prefix frontend run test:e2e
 El comando público invoca Maven y `BrowserE2EIT`, que crea PostgreSQL 17 y Spring Boot en un puerto aleatorio con credenciales exclusivas de pruebas. Playwright inicia Vite en otro puerto libre, con proxy a ese backend. No se reutilizan la demo ni servicios locales. El script interno `test:e2e:browser` requiere el entorno provisto por Java. Chromium usa un worker y cero reintentos; una suite vacía, omitida, fallida o sin informe falla la ejecución. Los diagnósticos quedan en `backend/target/browser-e2e.log` y `frontend/test-results/` (trazas y capturas de los fallos).
 
 CI ejecuta backend y compilación frontend en paralelo; navegador requiere ambos aprobados. Se activa en pull requests, push a main y manualmente, sin desplegar. Los informes se conservan siete días. Referencias de configuración: [servidor de Playwright](https://playwright.dev/docs/test-webserver), [setup-java](https://github.com/actions/setup-java), [setup-node](https://github.com/actions/setup-node) y [artefactos](https://github.com/actions/upload-artifact).
+
+## Observabilidad local
+
+Compose también inicia Prometheus y Grafana. Configurar `GRAFANA_ADMIN_PASSWORD` propia en `.env` antes de `docker compose up --build`. Prometheus: http://localhost:9090; Grafana: http://localhost:3000, usuario `GRAFANA_ADMIN_USER` (por defecto admin). Datasource y dashboard StockFlow se provisionan automáticamente. Puertos sólo en loopback; API y management quedan internos. Métricas, seguridad, percentiles y persistencia: [OBSERVABILITY](docs/OBSERVABILITY.md).
+
+La Etapa 4 añade **StockFlow - SRE Overview** y Alertmanager local en http://localhost:9093, sin notificaciones externas. No requiere nuevas credenciales. Definiciones y validación: [SRE](docs/SRE.md); procedimientos: [RUNBOOK](docs/RUNBOOK.md).

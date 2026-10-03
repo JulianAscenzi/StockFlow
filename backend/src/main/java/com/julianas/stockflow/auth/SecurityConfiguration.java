@@ -5,6 +5,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
+import org.springframework.core.annotation.Order;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpMethod;
@@ -29,6 +31,27 @@ import java.util.Map;
 @EnableWebSecurity
 @EnableConfigurationProperties(AuthProperties.class)
 public class SecurityConfiguration {
+
+    // This chain applies even when domain authentication is disabled.
+    // Trust only the internal management listener, never a forwarded header.
+    @Bean
+    @Order(0)
+    SecurityFilterChain managementSecurityFilterChain(HttpSecurity http,
+            Environment environment) throws Exception {
+        http.securityMatcher(request -> {
+                    int managementPort = environment.getProperty("local.management.port", Integer.class,
+                            environment.getProperty("management.server.port", Integer.class, -1));
+                    return environment.containsProperty("management.server.port")
+                            && managementPort > 0 && request.getLocalPort() == managementPort;
+                })
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(HttpMethod.GET, "/actuator/prometheus", "/actuator/health",
+                                "/actuator/health/liveness", "/actuator/health/readiness").permitAll()
+                        .anyRequest().denyAll());
+        return http.build();
+    }
 
     @Bean
     Clock clock() {
@@ -61,7 +84,8 @@ public class SecurityConfiguration {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-                        .requestMatchers("/actuator/health").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/actuator/health",
+                                "/actuator/health/liveness", "/actuator/health/readiness").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint((request, response, exception) -> {
                     ApiError error = new ApiError(Instant.now(), HttpStatus.UNAUTHORIZED.value(),

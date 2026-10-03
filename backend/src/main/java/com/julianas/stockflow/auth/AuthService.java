@@ -8,10 +8,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Locale;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.transaction.annotation.Isolation;
 
 @Service
 @ConditionalOnProperty(name = "app.auth.enabled", havingValue = "true", matchIfMissing = true)
 public class AuthService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthService.class);
 
     private final ApplicationUserRepository users;
     private final PasswordEncoder passwordEncoder;
@@ -30,14 +35,17 @@ public class AuthService {
         this.clock = clock;
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public void createInitialAdministrator() {
+        users.lockBootstrap();
         if (users.count() != 0) {
+            LOGGER.debug("Administrator bootstrap skipped: an account already exists");
             return;
         }
         String email = required(properties.admin().email(), "APP_ADMIN_EMAIL").toLowerCase(Locale.ROOT);
         String password = required(properties.admin().password(), "APP_ADMIN_PASSWORD");
-        users.save(new ApplicationUser(email, passwordEncoder.encode(password), Instant.now(clock)));
+        users.saveAndFlush(new ApplicationUser(email, passwordEncoder.encode(password), Instant.now(clock)));
+        LOGGER.info("Initial administrator inserted; transaction will commit before startup completes");
     }
 
     @Transactional(readOnly = true)

@@ -1,0 +1,70 @@
+groups:
+  - name: stockflow-operational-alerts
+    interval: 15s
+    rules:
+      - alert: "StockFlowAvailabilityBudgetFastBurn"
+        expr: "stockflow:error_budget:burn_rate1h > 12 and stockflow:error_budget:burn_rate5m > 12 and stockflow:eligible_requests:increase5m >= 20 and stockflow:eligible_errors:increase5m >= 3"
+        for: "2m"
+        labels:
+          severity: "critical"
+          service: "stockflow"
+        annotations:
+          summary: "Fast availability budget consumption"
+          description: "More than 6% eligible errors in both 1h and 5m windows; monthly budget at risk."
+          action: "Check readiness, DB and 5xx routes before restarting."
+          runbook_url: "docs/RUNBOOK.md#disponibilidad-degradada"
+      - alert: "StockFlowAvailabilityBudgetSustainedBurn"
+        expr: "stockflow:error_budget:burn_rate6h > 4 and stockflow:error_budget:burn_rate30m > 4 and stockflow:eligible_requests:increase30m >= 50 and stockflow:eligible_errors:increase30m >= 5 and stockflow:eligible_errors:increase5m >= 3"
+        for: "10m"
+        labels:
+          severity: "warning"
+          service: "stockflow"
+        annotations:
+          summary: "Sustained availability budget consumption"
+          description: "More than 2% eligible errors in both 6h and 30m windows."
+          action: "Investigate recurring errors and recent changes."
+          runbook_url: "docs/RUNBOOK.md#disponibilidad-degradada"
+      - alert: "StockFlowBackendNotScrapeable"
+        expr: "up{job=\"stockflow\"} == 0 or absent(up{job=\"stockflow\"})"
+        for: "1m"
+        labels:
+          severity: "critical"
+          service: "stockflow"
+        annotations:
+          summary: "StockFlow cannot be scraped"
+          description: "Backend may be stopped or management listener/network unavailable; HTTP SLI cannot measure requests that never arrive."
+          action: "Check container, Prometheus target error and internal network."
+          runbook_url: "docs/RUNBOOK.md#backend-no-scrapeable"
+      - alert: "StockFlowReadinessDown"
+        expr: "(stockflow_readiness{job=\"stockflow\"} == 0) and on(job,instance) (up{job=\"stockflow\"} == 1) and on(job,instance) (time() - stockflow_readiness_checked_timestamp_seconds{job=\"stockflow\"} < 45)"
+        for: "2m"
+        labels:
+          severity: "critical"
+          service: "stockflow"
+        annotations:
+          summary: "StockFlow is alive but not ready"
+          description: "The DB or readiness state prevents normal business operations."
+          action: "Check PostgreSQL health, connection logs and Hikari timeouts."
+          runbook_url: "docs/RUNBOOK.md#db-unavailable"
+      - alert: "StockFlowSaleLatencyDegraded"
+        expr: "stockflow:latency:ratio5m{operation=\"sale\"} < 0.95 and stockflow:latency:ratio5m{operation=\"sale\"} >= 0 and stockflow:successful_requests:increase5m{operation=\"sale\"} >= 20 and stockflow:slow_sale_requests:increase5m >= 3"
+        for: "5m"
+        labels:
+          severity: "warning"
+          service: "stockflow"
+        annotations:
+          summary: "Successful sales exceed latency objective"
+          description: "More than 5% successful confirmations take over 1s, with multiple slow requests and sustained traffic."
+          action: "Inspect DB locks, transaction duration and pool waiting."
+          runbook_url: "docs/RUNBOOK.md#alta-latencia"
+      - alert: "StockFlowHikariSaturated"
+        expr: "hikaricp_connections_pending{job=\"stockflow\"} > 0 and on(job,instance,pool) (hikaricp_connections_active{job=\"stockflow\"} / hikaricp_connections_max{job=\"stockflow\"} >= 0.9) and on(job,instance) (up{job=\"stockflow\"} == 1)"
+        for: "2m"
+        labels:
+          severity: "warning"
+          service: "stockflow"
+        annotations:
+          summary: "Database connection pool is saturated"
+          description: "Requests are waiting while at least 90% of pool capacity is occupied."
+          action: "Inspect slow queries and locks; do not blindly increase pool size."
+          runbook_url: "docs/RUNBOOK.md#hikari-saturado"

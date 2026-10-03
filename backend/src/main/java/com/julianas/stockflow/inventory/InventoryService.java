@@ -6,6 +6,7 @@ import com.julianas.stockflow.product.ProductRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import com.julianas.stockflow.common.metrics.BusinessMetrics;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Objects;
@@ -15,8 +16,10 @@ public class InventoryService {
 
     private final ProductRepository productRepository;
     private final StockMovementRepository stockMovementRepository;
+    private final BusinessMetrics metrics;
 
-    public InventoryService(ProductRepository productRepository, StockMovementRepository stockMovementRepository) {
+    public InventoryService(ProductRepository productRepository, StockMovementRepository stockMovementRepository, BusinessMetrics metrics) {
+        this.metrics = Objects.requireNonNull(metrics, "metrics");
         this.productRepository = Objects.requireNonNull(productRepository, "productRepository");
         this.stockMovementRepository = Objects.requireNonNull(stockMovementRepository, "stockMovementRepository");
     }
@@ -32,9 +35,11 @@ public class InventoryService {
         }
         int stockAfter = (int) stockAfterAsLong;
         product.increaseStock(request.quantity());
-        return stockMovementRepository.save(new StockMovement(
+        StockMovement saved = stockMovementRepository.save(new StockMovement(
                 product, StockMovementType.IN, request.quantity(), stockBefore, stockAfter, request.reason()
         ));
+        metrics.stockMovement(StockMovementType.IN);
+        return saved;
     }
 
     @Transactional
@@ -47,9 +52,11 @@ public class InventoryService {
         }
         int stockAfter = stockBefore - request.quantity();
         product.decreaseStock(request.quantity());
-        return stockMovementRepository.save(new StockMovement(
+        StockMovement saved = stockMovementRepository.save(new StockMovement(
                 product, StockMovementType.OUT, request.quantity(), stockBefore, stockAfter, request.reason()
         ));
+        metrics.stockMovement(StockMovementType.OUT);
+        return saved;
     }
 
     @Transactional(readOnly = true)

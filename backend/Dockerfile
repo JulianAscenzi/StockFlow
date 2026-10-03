@@ -8,7 +8,9 @@ RUN chmod +x mvnw && ./mvnw package -DskipTests
 
 FROM eclipse-temurin:21-jre-jammy
 
-RUN useradd --system --create-home stockflow
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --system --create-home stockflow
 USER stockflow
 WORKDIR /app
 COPY --from=build --chown=stockflow:stockflow /workspace/target/*.jar app.jar
