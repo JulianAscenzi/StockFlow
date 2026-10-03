@@ -347,3 +347,58 @@ for (const rejected of [false, true]) {
     expect(refreshes).toBe(0);
   });
 }
+
+for (const rejected of [false, true]) {
+  test(`late inventory movement ${rejected ? 'rejection' : 'success'} cannot affect another section`, async ({ page }) => {
+    await login(page);
+    const product = await fixture(page, `LATE_MOVE_${rejected}`);
+    await page.getByRole('button', { name: 'Inventario', exact: true }).click();
+    await page.getByLabel('Buscar por nombre o SKU').fill(product.sku);
+    await page.getByRole('button', { name: 'Buscar productos', exact: true }).click();
+    await expect(page.getByRole('combobox', { name: /^Producto/ }).locator(`option[value="${product.id}"]`)).toHaveCount(1);
+    await page.getByRole('combobox', { name: /^Producto/ }).selectOption(String(product.id));
+    await page.getByLabel('Cantidad', { exact: true }).fill('2');
+    await page.getByLabel('Motivo', { exact: true }).fill('Late movement');
+    await page.evaluate(() => {
+      const originalFetch = window.fetch;
+      window.fetch = async (...args) => {
+        const response = await originalFetch(...args);
+        if (String(args[0]).includes('/stock/in') && args[1]?.method === 'POST') {
+          const originalJson = response.json.bind(response);
+          response.json = async () => {
+            const body = await originalJson();
+            // Signal after the response consumers have run their promise continuations.
+            setTimeout(() => { document.documentElement.dataset.movementHandled = 'true'; }, 0);
+            return body;
+          };
+        }
+        return response;
+      };
+    });
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    let captured!: () => void;
+    const capturedRequest = new Promise<void>((resolve) => { captured = resolve; });
+    await page.route(`**/api/products/${product.id}/stock/in`, async (route) => {
+      if (route.request().method() !== 'POST') { await route.continue(); return; }
+      const response = rejected ? undefined : await route.fetch();
+      captured(); await gate;
+      if (response) await route.fulfill({ response });
+      else await route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ message: 'Late rejection' }) });
+    });
+    await page.getByRole('button', { name: 'Registrar entrada', exact: true }).click();
+    await capturedRequest;
+    await page.getByRole('button', { name: 'Resumen', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Buen día', exact: true })).toBeVisible();
+    let refreshes = 0;
+    page.on('request', (request) => {
+      if (request.method() === 'GET' && /\/api\/(products|categories)/.test(request.url())) refreshes++;
+    });
+    release();
+    await page.waitForFunction(() => document.documentElement.dataset.movementHandled === 'true');
+    await expect(page.getByRole('status')).toHaveCount(0);
+    expect(refreshes).toBe(0);
+    const saved = await page.request.get(`/api/products/${product.id}`, { headers: product.headers });
+    expect((await saved.json()).stock).toBe(rejected ? 5 : 7);
+  });
+}

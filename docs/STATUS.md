@@ -14,7 +14,7 @@ El alcance aprobado es una demostración pública para CV: Vercel sirve la inter
 
 ## Last general test result
 
-Verificación del 2026-10-02: **351 pruebas backend sin fallos, errores ni omisiones**, compilación frontend y **26 escenarios de navegador aislado** aprobados. Los checkpoints de auditoría se registran abajo.
+Verificación del 2026-10-02: **351 pruebas backend sin fallos, errores ni omisiones**, compilación frontend y **28 escenarios de navegador aislado** aprobados. Los checkpoints de auditoría se registran abajo.
 
 ## Cuaderno del proyecto
 
@@ -105,3 +105,9 @@ Verificación: pruebas específicas, suite completa (351), compilación frontend
 La revisión encontró respuestas de creación de catálogo que mostraban avisos y refrescaban después de abandonar la sección. Dos regresiones de Chromium reprodujeron éxito y rechazo tardíos sobre el resumen; ambas pasan al comprobar que la vista siga montada antes de aplicar los efectos. Las operaciones ya enviadas se conservan en el servidor. Se revisaron también precisión y atomicidad monetaria, recuperación histórica, 401 de sesiones anteriores, controles y cancelación de solicitudes, y versiones exactas sin cambios transitivos.
 
 Verificación final: 351 pruebas backend y 26 escenarios Chromium sin fallos ni omisiones, compilación frontend y `git diff --check` aprobados; diff completo revisado. Sin cambios de esquema ni dependencias. Revisión aprobada para el push explícitamente solicitado a origin/main.
+
+## Respuestas tardías de inventario — 2026-10-02
+
+Dos regresiones Chromium reprodujeron avisos de éxito y rechazo de ajustes sobre el resumen después de abandonar inventario. La vista ahora comprueba que siga montada antes de aplicar estado, avisos o refrescos, también al recibir la consulta posterior de stock. Los movimientos enviados conservan su resultado en el servidor; la regresión de éxito verifica el stock persistido.
+
+Verificación: 28 escenarios Chromium aislados aprobados, compilación TypeScript/Vite y revisión visual de acceso sin errores. Suite backend completa (351), diff completo revisado y `git diff --check` aprobados. Sin cambios de esquema ni dependencias; commit local, sin push.

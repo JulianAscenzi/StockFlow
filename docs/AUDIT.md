@@ -6,6 +6,7 @@ Revisión del backend, frontend, migraciones, autenticación, configuración y C
 
 | Prioridad | Problema | Evidencia y solución |
 | --- | --- | --- |
+| Media | Ajustes de inventario responden después de salir de la sección | Dos regresiones Chromium reprodujeron avisos tardíos sobre el resumen. Inventario comprueba que siga montado antes de aplicar estado, avisos y refrescos, incluida la consulta posterior de stock. La entrada confirmada conserva el stock persistido. |
 | Media | Creaciones del catálogo responden después de salir de la sección | Dos regresiones Chromium reprodujeron avisos tardíos de éxito y rechazo sobre el resumen. Productos y categorías ahora comprueban que la vista siga montada antes de aplicar estado, avisar o refrescar; las solicitudes ya enviadas conservan su resultado en el servidor. |
 | Baja | Versiones `latest` | Las nueve dependencias directas del frontend quedan fijadas a las versiones ya resueltas en el lockfile. Se verificó instalación limpia con npm ci --offline y que el grafo transitivo, versiones e integridades no cambiaron. |
 | Baja | Escrituras duplicadas | Los formularios de productos y categorías tienen estados y guardas de envío independientes, bloquean sus controles, conservan valores ante rechazo y distinguen creación confirmada de fallo de refresco. Chromium verifica envíos repetidos, corrección y reintento en ambos formularios. |
