@@ -116,7 +116,7 @@ public class ProductService {
         validateAmounts(price, cost, minimumStock);
         Objects.requireNonNull(categoryId, "categoryId");
 
-        Product product = findById(id);
+        Product product = findByIdForUpdate(id);
         if (!normalizedSku.equalsIgnoreCase(product.getSku())) {
             rejectDuplicateSku(normalizedSku);
         }
@@ -137,7 +137,7 @@ public class ProductService {
     @Transactional
     public Product activate(Long id) {
         Objects.requireNonNull(id, "id");
-        Product product = findById(id);
+        Product product = findByIdForUpdate(id);
         product.activate();
         return productRepository.save(product);
     }
@@ -145,13 +145,18 @@ public class ProductService {
     @Transactional
     public Product deactivate(Long id) {
         Objects.requireNonNull(id, "id");
-        Product product = findById(id);
+        Product product = findByIdForUpdate(id);
         product.deactivate();
         return productRepository.save(product);
     }
 
     private Product findById(Long id) {
         return productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException(id));
+    }
+
+    private Product findByIdForUpdate(Long id) {
+        return productRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
     }
 

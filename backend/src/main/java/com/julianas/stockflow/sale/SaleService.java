@@ -48,9 +48,9 @@ public class SaleService {
     public Sale confirm(String notes, List<SaleLine> lines) {
         List<SaleLine> requiredLines = List.copyOf(Objects.requireNonNull(lines, "lines"));
         Sale sale = new Sale(notes);
-        for (SaleLine line : requiredLines) {
+        for (SaleLine line : requiredLines.stream().sorted(Comparator.comparing(SaleLine::productId)).toList()) {
             SaleLine requiredLine = Objects.requireNonNull(line, "sale line");
-            Product product = productRepository.findById(requiredLine.productId())
+            Product product = productRepository.findByIdForUpdate(requiredLine.productId())
                     .orElseThrow(() -> new ProductNotFoundException(requiredLine.productId()));
             sale.addItem(product, requiredLine.quantity());
         }

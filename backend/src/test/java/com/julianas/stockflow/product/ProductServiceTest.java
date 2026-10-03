@@ -355,7 +355,7 @@ class ProductServiceTest {
     void rejectsSkuOwnedByAnotherProduct() {
         Category category = new Category("Peripherals", null);
         Product product = existingProduct(category, true);
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(product));
         when(productRepository.existsBySkuIgnoreCase("KEY-01")).thenReturn(true);
 
         assertThrows(DuplicateProductSkuException.class, () -> updateWithSku(" key-01 "));
@@ -368,7 +368,7 @@ class ProductServiceTest {
     @Test
     void activatesProduct() {
         Product product = existingProduct(new Category("Peripherals", null), false);
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(product));
         when(productRepository.save(product)).thenReturn(product);
 
         Product activated = productService.activate(1L);
@@ -382,7 +382,7 @@ class ProductServiceTest {
     @Test
     void deactivatesProduct() {
         Product product = existingProduct(new Category("Peripherals", null), true);
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(product));
         when(productRepository.save(product)).thenReturn(product);
 
         Product deactivated = productService.deactivate(1L);
@@ -401,7 +401,7 @@ class ProductServiceTest {
     }
 
     private void configureValidUpdate(Product product, Category category) {
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(product));
         when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.of(category));
         when(productRepository.save(product)).thenReturn(product);
     }

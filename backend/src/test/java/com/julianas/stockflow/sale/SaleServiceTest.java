@@ -41,6 +41,28 @@ class SaleServiceTest {
     }
 
     @Test
+    void requestLocksProductsInIdOrderBeforeCreatingSnapshotsAndWithdrawingStock() {
+        for (long id : List.of(1L, 2L)) {
+            Product product = mock(Product.class);
+            when(product.getId()).thenReturn(id);
+            when(product.getName()).thenReturn("Product " + id);
+            when(product.getSku()).thenReturn("SKU-" + id);
+            when(product.getPrice()).thenReturn(new BigDecimal("10.00"));
+            when(product.getCost()).thenReturn(new BigDecimal("4.00"));
+            when(productRepository.findByIdForUpdate(id)).thenReturn(java.util.Optional.of(product));
+        }
+
+        saleService.confirm(null, List.of(new SaleService.SaleLine(2L, 1), new SaleService.SaleLine(1L, 1)));
+
+        InOrder order = inOrder(productRepository, inventoryService);
+        order.verify(productRepository).findByIdForUpdate(1L);
+        order.verify(productRepository).findByIdForUpdate(2L);
+        order.verify(inventoryService).decreaseStock(1L, 1, "Sale");
+        order.verify(inventoryService).decreaseStock(2L, 1, "Sale");
+        verify(productRepository, never()).findById(org.mockito.ArgumentMatchers.anyLong());
+    }
+
+    @Test
     void confirmsSaleWithItemsAndConsistentTotal() {
         Sale sale = saleWithTotal("25.00", "10.00", "15.00");
         long productId = 1;
