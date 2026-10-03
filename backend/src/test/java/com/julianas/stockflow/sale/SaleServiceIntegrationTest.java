@@ -48,6 +48,8 @@ class SaleServiceIntegrationTest {
         registry.add("spring.datasource.password", POSTGRESQL::getPassword);
     }
 
+    @Autowired private org.springframework.transaction.PlatformTransactionManager transactions;
+    @Autowired private com.julianas.stockflow.product.ProductService products;
     @Autowired private SaleService saleService;
     @Autowired private SaleRepository saleRepository;
     @Autowired private ProductRepository productRepository;
@@ -161,6 +163,59 @@ class SaleServiceIntegrationTest {
         } finally {
             executor.shutdownNow();
             assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS));
+        }
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = {true, false})
+    void firstProductLockDeterminesWhetherSaleCanConfirm(boolean deactivateFirst) throws Exception {
+        Product product = saveProduct();
+        Sale prepared = new Sale(null);
+        prepared.addItem(product, 1);
+        CountDownLatch locked = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        var executor = Executors.newFixedThreadPool(2);
+        try {
+            Future<?> first = executor.submit(() -> new org.springframework.transaction.support.TransactionTemplate(transactions)
+                    .executeWithoutResult(status -> {
+                        if (deactivateFirst) products.deactivate(product.getId());
+                        else saleService.confirm(null, List.of(new SaleService.SaleLine(product.getId(), 1)));
+                        locked.countDown();
+                        try {
+                            if (!release.await(10, TimeUnit.SECONDS)) throw new IllegalStateException("Release timeout");
+                        } catch (InterruptedException exception) {
+                            Thread.currentThread().interrupt();
+                            throw new IllegalStateException(exception);
+                        }
+                    }));
+            assertTrue(locked.await(5, TimeUnit.SECONDS));
+            Future<?> second = executor.submit(() -> {
+                if (deactivateFirst) saleService.confirm(prepared);
+                else products.deactivate(product.getId());
+            });
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+            boolean waiting = false;
+            while (!waiting && System.nanoTime() < deadline) {
+                waiting = Boolean.TRUE.equals(jdbcTemplate.queryForObject(
+                        "select exists(select 1 from pg_stat_activity where datname = current_database() "
+                                + "and pid <> pg_backend_pid() and wait_event_type = 'Lock' "
+                                + "and query ilike '%products%')", Boolean.class));
+            }
+            assertTrue(waiting, "Second operation must wait for the product lock");
+            release.countDown();
+            first.get(10, TimeUnit.SECONDS);
+            if (deactivateFirst) {
+                ExecutionException failure = assertThrows(ExecutionException.class, () -> second.get(10, TimeUnit.SECONDS));
+                assertInstanceOf(InactiveProductException.class, failure.getCause());
+            } else second.get(10, TimeUnit.SECONDS);
+            assertEquals(deactivateFirst ? 0 : 1, saleRepository.count());
+            assertEquals(deactivateFirst ? 0 : 1, stockMovementRepository.count());
+            assertEquals(deactivateFirst ? 2 : 1, productRepository.findById(product.getId()).orElseThrow().getStock());
+            assertEquals(false, productRepository.findById(product.getId()).orElseThrow().isActive());
+        } finally {
+            release.countDown();
+            executor.shutdownNow();
+            assertTrue(executor.awaitTermination(10, TimeUnit.SECONDS));
         }
     }
 

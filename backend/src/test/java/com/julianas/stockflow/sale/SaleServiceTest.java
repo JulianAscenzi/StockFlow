@@ -45,6 +45,7 @@ class SaleServiceTest {
         for (long id : List.of(1L, 2L)) {
             Product product = mock(Product.class);
             when(product.getId()).thenReturn(id);
+            when(product.isActive()).thenReturn(true);
             when(product.getName()).thenReturn("Product " + id);
             when(product.getSku()).thenReturn("SKU-" + id);
             when(product.getPrice()).thenReturn(new BigDecimal("10.00"));
@@ -69,6 +70,8 @@ class SaleServiceTest {
         for (SaleItem item : sale.getItems()) {
             Product product = mock(Product.class);
             when(product.getId()).thenReturn(productId++);
+            when(product.isActive()).thenReturn(true);
+            when(productRepository.findByIdForUpdate(product.getId())).thenReturn(java.util.Optional.of(product));
             when(item.getProduct()).thenReturn(product);
             when(item.getQuantity()).thenReturn(1);
         }
@@ -106,6 +109,10 @@ class SaleServiceTest {
         when(firstProduct.getId()).thenReturn(1L);
         Product secondProduct = mock(Product.class);
         when(secondProduct.getId()).thenReturn(2L);
+        when(firstProduct.isActive()).thenReturn(true);
+        when(secondProduct.isActive()).thenReturn(true);
+        when(productRepository.findByIdForUpdate(1L)).thenReturn(java.util.Optional.of(firstProduct));
+        when(productRepository.findByIdForUpdate(2L)).thenReturn(java.util.Optional.of(secondProduct));
         SaleItem firstItem = saleItem(firstProduct, 1, "10.00");
         SaleItem secondItem = saleItem(secondProduct, 1, "15.00");
         Sale sale = mock(Sale.class);
@@ -118,6 +125,33 @@ class SaleServiceTest {
         InOrder order = inOrder(inventoryService);
         order.verify(inventoryService).decreaseStock(1L, 1, "Sale");
         order.verify(inventoryService).decreaseStock(2L, 1, "Sale");
+    }
+
+    @Test
+    void rejectsInactiveRequestWithoutStockChangesOrPersistence() {
+        Product inactive = mock(Product.class);
+        when(inactive.getId()).thenReturn(2L);
+        when(productRepository.findByIdForUpdate(2L)).thenReturn(java.util.Optional.of(inactive));
+        assertThrows(InactiveProductException.class, () -> saleService.confirm(null,
+                List.of(new SaleService.SaleLine(2L, 1))));
+        org.mockito.Mockito.verifyNoInteractions(inventoryService, saleRepository);
+    }
+
+    @Test
+    void rejectsPreparedSaleUsingCurrentStateBeforeAnyWithdrawal() {
+        Product detached = mock(Product.class);
+        when(detached.getId()).thenReturn(2L);
+        Sale sale = new Sale(null);
+        when(detached.getName()).thenReturn("Old active product");
+        when(detached.getSku()).thenReturn("OLD");
+        when(detached.getPrice()).thenReturn(new BigDecimal("10.00"));
+        when(detached.getCost()).thenReturn(new BigDecimal("4.00"));
+        sale.addItem(detached, 1);
+        Product current = mock(Product.class);
+        when(current.getId()).thenReturn(2L);
+        when(productRepository.findByIdForUpdate(2L)).thenReturn(java.util.Optional.of(current));
+        assertThrows(InactiveProductException.class, () -> saleService.confirm(sale));
+        org.mockito.Mockito.verifyNoInteractions(inventoryService, saleRepository);
     }
 
     @Test

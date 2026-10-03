@@ -52,6 +52,16 @@ class SaleControllerTest {
     }
 
     @Test
+    void inactiveProductReturnsConflict() throws Exception {
+        when(saleService.confirm(null, List.of(new SaleService.SaleLine(8L, 2))))
+                .thenThrow(new com.julianas.stockflow.sale.InactiveProductException(8L));
+        mockMvc.perform(post("/api/sales").contentType("application/json")
+                        .content("{\"items\":[{\"productId\":8,\"quantity\":2}]}"))
+                .andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("PRODUCT_INACTIVE"));
+        verifyNoInteractions(saleMapper);
+    }
+
+    @Test
     void missingSaleReturnsDomainError() throws Exception {
         when(saleService.detail(99L)).thenThrow(new com.julianas.stockflow.sale.SaleNotFoundException(99L));
         mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/sales/99"))

@@ -14,7 +14,7 @@ El alcance aprobado es una demostración pública para CV: Vercel sirve la inter
 
 ## Last general test result
 
-Verificación del 2026-10-02: suite completa con PostgreSQL/Testcontainers, **336 pruebas, 0 fallos, 0 errores y 0 omitidas**; 54 pruebas específicas aprobadas y compilación TypeScript/Vite aprobada. Las pruebas de navegador no se volvieron a ejecutar en esta auditoría; sus resultados anteriores se conservan abajo.
+Verificación del 2026-10-02: suite completa con PostgreSQL/Testcontainers, **342 pruebas, 0 fallos, 0 errores y 0 omitidas**; 26 pruebas específicas aprobadas y compilación TypeScript/Vite aprobada. El resultado de navegador de esta corrección se registra abajo.
 
 ## Cuaderno del proyecto
 
@@ -51,3 +51,9 @@ Docker/PostgreSQL disponibles. La auditoría detectó una diferencia entre la fe
 CORS ahora admite PATCH para activar/desactivar productos desde un origen permitido; se verifica el preflight de ambas rutas. Esta corrección está incluida en la validación conjunta de 54 pruebas específicas y 336 pruebas completas.
 
 Se reprodujeron y corrigieron dos fallas de stock: editar/activar/desactivar sobrescribía stock concurrente; la confirmación utilizada por HTTP podía vender con stock obsoleto de la sesión JPA. El catálogo ahora bloquea antes de leer, y las ventas bloquean los productos en orden de ID antes de crear snapshots. Se agregan cuatro escenarios concurrentes deterministas y una prueba del orden de bloqueos. El [informe de auditoría](AUDIT.md) documenta cuatro bugs corregidos, siete hallazgos pendientes y sus prioridades. No se modificaron migraciones ni se hizo push.
+
+## Productos inactivos y ventas — 2026-10-02
+
+Primer hallazgo pendiente de la auditoría corregido: desactivar impide nuevas ventas. `SaleService` valida el estado actual bajo bloqueo pesimista en orden de ID para solicitudes HTTP y ventas preparadas, antes de descontar stock. El advice responde 409 `PRODUCT_INACTIVE`. La recuperación idempotente de una venta confirmada sigue devolviendo el historial; una clave rechazada puede reutilizarse tras reactivar. Los ajustes de inventario de inactivos permanecen permitidos. La interfaz muestra el mensaje de rechazo, conserva el carrito editable y limpia sólo la recuperación correspondiente.
+
+Validación: 26 pruebas específicas; suite completa de 342 pruebas sin fallos, errores ni omisiones; compilación TypeScript/Vite; nueve escenarios de Chromium aislado aprobados. Las regresiones concurrentes observan la espera real de PostgreSQL y verifican ambos órdenes de venta/desactivación. Diff completo revisado y `git diff --check` aprobado. Sin cambios de esquema ni dependencias; sin push.

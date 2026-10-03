@@ -52,14 +52,32 @@ public class SaleService {
             SaleLine requiredLine = Objects.requireNonNull(line, "sale line");
             Product product = productRepository.findByIdForUpdate(requiredLine.productId())
                     .orElseThrow(() -> new ProductNotFoundException(requiredLine.productId()));
+            requireActive(product);
             sale.addItem(product, requiredLine.quantity());
         }
-        return confirm(sale);
+        validate(sale);
+        return persist(sale);
     }
 
     @Transactional
     public Sale confirm(Sale sale) {
         Sale requiredSale = Objects.requireNonNull(sale, "sale");
+        validate(requiredSale);
+        for (SaleItem item : requiredSale.getItems().stream()
+                .sorted(Comparator.comparing(line -> line.getProduct().getId())).toList()) {
+            Long id = item.getProduct().getId();
+            Product current = productRepository.findByIdForUpdate(id)
+                    .orElseThrow(() -> new ProductNotFoundException(id));
+            requireActive(current);
+        }
+        return persist(requiredSale);
+    }
+
+    private void requireActive(Product product) {
+        if (!product.isActive()) throw new InactiveProductException(product.getId());
+    }
+
+    private void validate(Sale requiredSale) {
         if (requiredSale.getItems().isEmpty()) {
             throw new EmptySaleException();
         }
@@ -70,7 +88,9 @@ public class SaleService {
         if (requiredSale.getTotal().compareTo(expectedTotal) != 0) {
             throw new IllegalArgumentException("sale total must equal the sum of item subtotals");
         }
+    }
 
+    private Sale persist(Sale requiredSale) {
         List<SaleItem> itemsByProductId = requiredSale.getItems().stream()
                 .sorted(Comparator.comparing(item -> item.getProduct().getId()))
                 .toList();

@@ -10,7 +10,7 @@ function definitelyRejected(error: unknown) {
   const codes: Record<number, string[]> = {
     400: ['VALIDATION_ERROR', 'EMPTY_SALE', 'INVALID_ARGUMENT', 'INVALID_PARAMETER', 'MALFORMED_REQUEST'],
     404: ['PRODUCT_NOT_FOUND'],
-    409: ['INSUFFICIENT_STOCK']
+    409: ['INSUFFICIENT_STOCK', 'PRODUCT_INACTIVE']
   };
   return error.status !== undefined && codes[error.status]?.includes(error.code ?? '') === true;
 }
@@ -67,7 +67,9 @@ export function SaleView({ notify, onHistory, onLoginRequired }: {
             }
           }
           catch { setRecoveryMessage('La venta fue rechazada, pero no se pudo limpiar la recuperación. Reintentá con la misma clave.'); }
-          notify((error as Error).message, 'error');
+          notify(error instanceof HttpError && error.code === 'PRODUCT_INACTIVE'
+            ? 'El producto está inactivo. Quitalo de la venta para continuar'
+            : (error as Error).message, 'error');
         } else {
           setSessionExpired(error instanceof HttpError && error.status === 401);
           setRecoveryMessage(error instanceof HttpError && error.code === 'IDEMPOTENCY_KEY_REUSED'

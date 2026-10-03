@@ -256,3 +256,23 @@ test('lookup discards late searches and preserves inventory selection', async ({
     await expect(page.getByText('Seleccionado: Product LATE_% · disponible 6')).toBeVisible();
   } finally { release(); }
 });
+
+test('inactive product rejects sale and restores editable cart', async ({ page }) => {
+  await login(page);
+  const product = await seed(page, 'INACTIVE');
+  await page.getByRole('button', { name: 'Nueva venta', exact: true }).click();
+  await page.getByLabel('Buscar por nombre o SKU').fill('INACTIVE');
+  await page.getByRole('button', { name: 'Buscar productos', exact: true }).click();
+  await expect(page.getByLabel('Agregar producto').locator(`option[value="${product.id}"]`)).toHaveCount(1);
+  await page.getByLabel('Agregar producto').selectOption(String(product.id));
+  await page.getByRole('button', { name: 'Agregar a la venta' }).click();
+  expect((await page.request.patch(`/api/products/${product.id}/deactivate`, { headers: product.headers })).ok()).toBeTruthy();
+  await page.getByRole('button', { name: 'Confirmar venta', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('El producto está inactivo. Quitalo de la venta para continuar');
+  await expect(page.getByLabel(`Cantidad de ${product.name}`)).toBeEnabled();
+  await expect(page.getByLabel('Nota opcional')).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Reintentar confirmación' })).toHaveCount(0);
+  expect(await page.evaluate(() => sessionStorage.getItem('stockflow.pending-sale.v1'))).toBeNull();
+  await page.getByLabel(`Quitar ${product.name}`).click();
+  await expect(page.getByText('Todavía no agregaste productos.')).toBeVisible();
+});

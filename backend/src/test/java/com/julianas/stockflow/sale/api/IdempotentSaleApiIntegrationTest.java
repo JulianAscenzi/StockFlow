@@ -67,6 +67,27 @@ class IdempotentSaleApiIntegrationTest extends ApiIntegrationTestSupport {
     }
 
     @Test
+    void inactiveRejectionRollsBackAndKeyCanBeReusedAfterActivation() throws Exception {
+        long first = product("Active", 5);
+        long second = product("Inactive", 5);
+        products.deactivate(second);
+        String key = UUID.randomUUID().toString();
+        String body = json.writeValueAsString(Map.of("items", List.of(
+                Map.of("productId", first, "quantity", 2), Map.of("productId", second, "quantity", 2))));
+        confirm(key, body).andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("PRODUCT_INACTIVE"));
+        assertThat(count("sales")).isZero();
+        assertThat(count("sale_confirmations")).isZero();
+        assertThat(count("stock_movements")).isEqualTo(2);
+        assertThat(products.getById(first).getStock()).isEqualTo(5);
+        assertThat(products.getById(second).getStock()).isEqualTo(5);
+        inventory.increaseStock(second, 1, "Inactive adjustment");
+        inventory.decreaseStock(second, 1, "Inactive adjustment");
+        products.activate(second);
+        confirm(key, body).andExpect(status().isCreated());
+        assertThat(count("sale_confirmations")).isEqualTo(1);
+    }
+
+    @Test
     void rollbackLeavesKeyReusableAndRevertsEarlierStockChanges() throws Exception {
         long first = product("First", 5);
         long second = product("Second", 1);
