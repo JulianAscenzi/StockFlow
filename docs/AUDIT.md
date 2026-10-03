@@ -6,6 +6,7 @@ Revisión del backend, frontend, migraciones, autenticación, configuración y C
 
 | Prioridad | Problema | Evidencia y solución |
 | --- | --- | --- |
+| Baja | Cantidades en ventas | Las cantidades se conservan como texto editable y se validan antes de generar una clave o enviar una venta nueva; las recuperaciones mantienen su payload histórico. |
 | Media | Sesión vencida | El cliente centraliza los 401 de solicitudes protegidas en instalaciones privadas, limpia la sesión visible y vuelve al login. Tras ingresar restaura la sección anterior y conserva la recuperación de ventas sin reintentar escrituras. Un token y una versión de sesión capturados por solicitud evitan que respuestas tardías cierren una sesión nueva, incluso con el mismo token. Chromium verifica las cinco secciones y el reintento con la misma clave. |
 | Media | Respuestas atrasadas | El catálogo cancela solicitudes previas y aplica datos, paginación, carga y errores sólo si pertenecen a la solicitud vigente. El texto editado no cambia el filtro aplicado hasta buscar; las señales alcanzan todas las páginas de categorías. Chromium controla respuestas y errores tardíos y una página obsoleta. |
 | Media | Precisión monetaria | Precio y costo validan NUMERIC(12,2) en DTO, servicio y entidad; se rechaza exceso de escala o rango sin redondear ni modificar parcialmente el producto. Regresiones cubren ambos campos, creación/actualización, límites y lectura PostgreSQL. |
@@ -20,9 +21,8 @@ Las regresiones concurrentes coordinan transacciones mediante latches y observan
 
 ## Hallazgos pendientes y mejoras
 
-1. **Baja — Cantidades en ventas.** La confirmación se ejecuta con un botón fuera de un formulario validado. `min` y `max` no impiden enviar decimales o cantidades superiores al stock mostrado. Validar enteros positivos antes de enviar; el stock final debe seguir verificándose en el servidor porque el mostrado puede quedar desactualizado.
-2. **Baja — Escrituras duplicadas del catálogo.** Crear productos/categorías no bloquea controles mientras la solicitud está en curso. La unicidad protege los datos, pero se generan solicitudes repetidas y mensajes confusos. Agregar estado de envío y distinguir errores de refresco posteriores a una creación confirmada.
-3. **Baja — Versiones `latest`.** `frontend/package.json` usa `latest` para dependencias principales. El lockfile y `npm ci` mantienen instalaciones reproducibles; regenerar el lockfile puede incorporar saltos mayores. Fijar versiones y actualizar de manera deliberada.
+1. **Baja — Escrituras duplicadas del catálogo.** Crear productos/categorías no bloquea controles mientras la solicitud está en curso. La unicidad protege los datos, pero se generan solicitudes repetidas y mensajes confusos. Agregar estado de envío y distinguir errores de refresco posteriores a una creación confirmada.
+2. **Baja — Versiones `latest`.** `frontend/package.json` usa `latest` para dependencias principales. El lockfile y `npm ci` mantienen instalaciones reproducibles; regenerar el lockfile puede incorporar saltos mayores. Fijar versiones y actualizar de manera deliberada.
 
 ## Fortalezas verificadas en código
 

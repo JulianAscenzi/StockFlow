@@ -2,7 +2,17 @@ import { useMemo, useRef, useState } from 'react';
 import { api, HttpError } from '../api';
 import { clearPendingSale, pendingSaleMatches, readPendingSale, savePendingSale, type PendingSale } from '../pendingSale';
 import { ProductSelector } from './ProductSelector';
-import type { Product, SaleRequest } from '../types';
+import type { Product } from '../types';
+
+type EditableLine = { productId: number; quantity: string };
+
+function quantityError(quantity: string, stock?: number) {
+  const value = Number(quantity);
+  if (quantity.trim() === '' || !Number.isInteger(value) || value <= 0) return 'La cantidad debe ser un entero positivo.';
+  if (value > 2147483647) return 'La cantidad supera el máximo permitido.';
+  if (stock !== undefined && value > stock) return `La cantidad supera el stock mostrado (${stock}).`;
+  return '';
+}
 
 const money = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
 function definitelyRejected(error: unknown) {
@@ -24,7 +34,7 @@ export function SaleView({ notify, onHistory, onLoginRequired }: {
   const [pending, setPending] = useState<PendingSale | null>(initial.pending);
   const [storageError, setStorageError] = useState(initial.error);
   const [products, setProducts] = useState<PendingSale['products']>(initial.pending?.products ?? []);
-  const [lines, setLines] = useState<SaleRequest['items']>(initial.pending?.payload.items ?? []);
+  const [lines, setLines] = useState<EditableLine[]>(initial.pending?.payload.items.map((line) => ({ ...line, quantity: String(line.quantity) })) ?? []);
   const [chosen, setChosen] = useState<Product | null>(null);
   const [refresh, setRefresh] = useState(0);
   const [notes, setNotes] = useState(initial.pending?.payload.notes ?? '');
@@ -34,23 +44,30 @@ export function SaleView({ notify, onHistory, onLoginRequired }: {
   const submittingRef = useRef(false);
   const locked = submitting || pending !== null || storageError !== '';
   const productById = useMemo(() => new Map(products.map((product) => [product.id, product])), [products]);
-  const total = lines.reduce((sum, line) => sum + (productById.get(line.productId)?.price ?? 0) * line.quantity, 0);
+  const total = lines.reduce((sum, line) => {
+    const quantity = Number(line.quantity);
+    return sum + (productById.get(line.productId)?.price ?? 0) * (Number.isFinite(quantity) && quantity > 0 ? quantity : 0);
+  }, 0);
 
   const add = () => {
     if (!chosen || locked || lines.some((line) => line.productId === chosen.id)) return;
     setProducts((current) => [...current.filter((product) => product.id !== chosen.id), chosen]);
-    setLines((current) => [...current, { productId: chosen.id, quantity: 1 }]);
+    setLines((current) => [...current, { productId: chosen.id, quantity: '1' }]);
     setChosen(null);
   };
   const confirm = async () => {
     if (submittingRef.current || storageError || lines.length === 0) return;
+    if (!pending && lines.some((line) => quantityError(line.quantity, productById.get(line.productId)?.stock))) {
+      notify('Revisá las cantidades antes de confirmar la venta.', 'error');
+      return;
+    }
     submittingRef.current = true;
     setSubmitting(true);
     setSessionExpired(false);
     try {
       let operation = pending;
       try {
-        operation ??= { version: 1, key: crypto.randomUUID(), payload: { notes: notes || undefined, items: lines.map((line) => ({ ...line })) }, products };
+        operation ??= { version: 1, key: crypto.randomUUID(), payload: { notes: notes || undefined, items: lines.map((line) => ({ productId: line.productId, quantity: Number(line.quantity) })) }, products };
         savePendingSale(operation);
       } catch {
         setRecoveryMessage('No se pudo guardar la confirmación en esta pestaña. No se envió la solicitud. Habilitá el almacenamiento y reintentá.');
@@ -112,10 +129,13 @@ export function SaleView({ notify, onHistory, onLoginRequired }: {
       {lines.length === 0 ? <p className="empty">Todavía no agregaste productos.</p> : <div className="sale-lines">{lines.map((line) => {
         const product = productById.get(line.productId);
         const name = product?.name ?? `Producto #${line.productId}`;
+        const error = pending ? '' : quantityError(line.quantity, product?.stock);
+        const errorId = `sale-quantity-error-${line.productId}`;
         return <article key={line.productId}><div><strong>{name}</strong>{product && <small>{money.format(product.price)} c/u · disponible {product.stock}</small>}</div>
-          <input aria-label={`Cantidad de ${name}`} type="number" min="1" max={product?.stock} value={line.quantity} disabled={locked}
-            onChange={(event) => setLines((current) => current.map((item) => item.productId === line.productId ? { ...item, quantity: Math.max(1, Number(event.target.value)) } : item))} />
+          <input aria-label={`Cantidad de ${name}`} type="number" min="1" step="1" max={product?.stock} aria-invalid={Boolean(error)} aria-describedby={error ? errorId : undefined} value={line.quantity} disabled={locked}
+            onChange={(event) => setLines((current) => current.map((item) => item.productId === line.productId ? { ...item, quantity: event.target.value } : item))} />
           <button className="icon-button" aria-label={`Quitar ${name}`} disabled={locked} onClick={() => setLines((current) => current.filter((item) => item.productId !== line.productId))}>×</button>
+          {error && <p id={errorId} className="line-error" role="alert">{error}</p>}
         </article>;
       })}</div>}
     </section><aside className="sale-summary"><h2>Resumen</h2><p>{lines.length} {lines.length === 1 ? 'producto' : 'productos'}</p><strong>{money.format(total)}</strong>

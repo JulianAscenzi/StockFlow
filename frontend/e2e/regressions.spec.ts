@@ -183,3 +183,45 @@ test('a late unauthorized response cannot close a new session with the same toke
     expect(await page.evaluate(() => localStorage.getItem('stockflow.access-token'))).toBe(token);
   } finally { release(); }
 });
+
+test('invalid sale quantities never send requests or create a recovery', async ({ page }) => {
+  await login(page);
+  const product = await fixture(page, 'QUANTITY');
+  await addFixtureToSale(page, product);
+  let requests = 0;
+  page.on('request', (request) => { if (request.url().endsWith('/api/sales') && request.method() === 'POST') requests++; });
+  const quantity = page.getByLabel(`Cantidad de ${product.name}`);
+  for (const value of ['', '0', '-1', '1.5', '6', '2147483648']) {
+    await quantity.fill(value);
+    await page.getByRole('button', { name: 'Confirmar venta', exact: true }).click();
+    await expect(quantity).toHaveValue(value);
+    await expect(quantity).toHaveAttribute('aria-invalid', 'true');
+    await expect(page.getByRole('alert')).toBeVisible();
+    expect(requests).toBe(0);
+    expect(await page.evaluate(() => sessionStorage.getItem('stockflow.pending-sale.v1'))).toBeNull();
+    await expect(page.getByLabel('Nota opcional')).toBeEnabled();
+  }
+  await quantity.fill('2');
+  await expect(quantity).toHaveAttribute('aria-invalid', 'false');
+  await page.getByRole('button', { name: 'Confirmar venta', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Venta confirmada');
+  expect(requests).toBe(1);
+});
+
+test('sale recovery replays its original payload despite the displayed stock', async ({ page }) => {
+  await login(page);
+  const product = await fixture(page, 'QUANTITY_REPLAY');
+  const key = await page.evaluate(() => crypto.randomUUID());
+  const payload = { items: [{ productId: product.id, quantity: 2 }] };
+  const response = await page.request.post('/api/sales', { headers: { ...product.headers, 'Idempotency-Key': key }, data: payload });
+  expect(response.status()).toBe(201);
+  const sale = await response.json();
+  await page.evaluate(({ key, payload, product }) => sessionStorage.setItem('stockflow.pending-sale.v1',
+    JSON.stringify({ version: 1, key, payload, products: [{ id: product.id, name: product.name, price: 100, stock: 0 }] })),
+  { key, payload, product });
+  await page.getByRole('button', { name: 'Nueva venta', exact: true }).click();
+  await page.getByRole('button', { name: 'Reintentar confirmación' }).click();
+  await expect(page.getByRole('status')).toContainText(`Venta #${sale.id}.`);
+  expect((await (await page.request.get(`/api/products/${product.id}`, { headers: product.headers })).json()).stock).toBe(3);
+  expect(await page.evaluate(() => sessionStorage.getItem('stockflow.pending-sale.v1'))).toBeNull();
+});
