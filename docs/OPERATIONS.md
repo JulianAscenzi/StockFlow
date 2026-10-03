@@ -1,6 +1,6 @@
 # Operación del backend
 
-Esta guía cubre las capacidades operativas del backend y su validación local. No agrega Kubernetes ni cloud. La observabilidad local está documentada en [OBSERVABILITY](OBSERVABILITY.md). El arranque completo sigue documentado en README.
+Esta guía cubre las capacidades operativas del backend y su validación local. La ejecución Kubernetes local complementaria está en [KUBERNETES](KUBERNETES.md); no se agrega cloud. La observabilidad local está documentada en [OBSERVABILITY](OBSERVABILITY.md). El arranque completo sigue documentado en README.
 
 ## Health y tráfico
 
@@ -107,3 +107,7 @@ En ejecución habitual, argumentos CLI y variables de entorno pueden sobrescribi
 ## Objetivos y alertas locales
 
 La Etapa 4 está documentada en [SRE](SRE.md). Para interpretar burn rate, readiness y scraping sin confundir fallos de negocio con dependencia técnica, seguir [RUNBOOK](RUNBOOK.md). Alertas se definen en Prometheus, no mediante clicks en Grafana; Alertmanager recibe sólo localmente.
+
+## Operación en Kubernetes
+
+[KUBERNETES](KUBERNETES.md) agrega probes efectivas, startup budget, dos réplicas, recuperación del controlador, PVCs y despliegues/rollback. Readiness retira endpoints cuando PostgreSQL cae; liveness conserva las JVM. Boot mantiene su fase de 30s y Kubernetes concede 45s. El PDB protege una réplica frente a eviction voluntaria, no delete pod ni fallos físicos. Scripts fijan el contexto del laboratorio y nunca usan volúmenes Compose.

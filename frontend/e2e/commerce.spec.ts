@@ -2,8 +2,8 @@ import { test, expect, type Page } from '@playwright/test';
 
 async function login(page: Page) {
   await page.goto('/');
-  await page.getByLabel('Correo electrónico').fill('browser@stockflow.test');
-  await page.getByLabel('Contraseña').fill('browser-test-password');
+  await page.getByLabel('Correo electrónico').fill(process.env.E2E_ADMIN_EMAIL || 'browser@stockflow.test');
+  await page.getByLabel('Contraseña').fill(process.env.E2E_ADMIN_PASSWORD || 'browser-test-password');
   await page.getByRole('button', { name: 'Ingresar', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Buen día' })).toBeVisible();
 }

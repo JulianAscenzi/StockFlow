@@ -136,3 +136,9 @@ El script sólo lee; para una regresión de etiquetas usar también productos/ca
 ## Confiabilidad y actividad de negocio
 
 Etapa 4: [SRE](SRE.md) centraliza SLIs, objetivos, budget, cardinalidad y reglas; [RUNBOOK](RUNBOOK.md) explica intervención. Alertmanager local-only está en http://localhost:9093 (loopback, ALERTMANAGER_PORT). El segundo dashboard StockFlow - SRE Overview se provisiona en la misma carpeta. Readiness se exporta mediante un gauge cacheado del health nativo, refrescado cada 15s, sin consultar DB en el scrape; la edad del chequeo permite reconocer datos viejos. Se añaden buckets exactos 500ms/1s a los histogramas HTTP existentes.
+
+## Observabilidad de Kubernetes
+
+[KUBERNETES](KUBERNETES.md) usa configuración propia `k8s/observability/prometheus.yml` y reutiliza rules, dashboards y Alertmanager canónicos mediante ConfigMaps. Descubrimiento de pods con RBAC local al namespace filtra backend/management y conserva targets Running aunque readiness esté DOWN. instance=IP:9091 y pod distinguen JVM; rate/increase se calculan antes de sumar, histogramas se agregan por le. Leyendas Hikari incluyen instance para no confundir pools con el mismo nombre. UI por port-forward en loopback; no se agrega Operator ni se altera scraping Compose.
+
+La revisión visual final encontró que lastNotNull sobre gauges por instancia podía conservar pods eliminados en tarjetas UP/uptime/readiness/edad. Esas tarjetas consultan ahora instant=true/range=false, mostrando sólo instancias actuales; los gráficos históricos conservan sus series y los SLOs agregados no cambian.

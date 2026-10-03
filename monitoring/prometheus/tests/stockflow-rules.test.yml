@@ -150,8 +150,6 @@ tests:
     - exp_labels:
         severity: critical
         service: stockflow
-        job: stockflow
-        instance: backend-management:9091
       exp_annotations:
         summary: StockFlow cannot be scraped
         description: Backend may be stopped or management listener/network unavailable; HTTP SLI cannot measure requests that
@@ -265,4 +263,107 @@ tests:
   - eval_time: 15m
     alertname: StockFlowAvailabilityBudgetSustainedBurn
     exp_alerts: []
+- name: one replica down is not service outage
+  interval: 15s
+  input_series:
+  - series: up{job="stockflow",instance="a"}
+    values: 0+0x20
+  - series: up{job="stockflow",instance="b"}
+    values: 1+0x20
+  alert_rule_test:
+  - eval_time: 2m
+    alertname: StockFlowBackendNotScrapeable
+    exp_alerts: []
+- name: all replicas down is service outage
+  interval: 15s
+  input_series:
+  - series: up{job="stockflow",instance="a"}
+    values: 0+0x20
+  - series: up{job="stockflow",instance="b"}
+    values: 0+0x20
+  alert_rule_test:
+  - eval_time: 2m
+    alertname: StockFlowBackendNotScrapeable
+    exp_alerts:
+    - exp_labels:
+        severity: critical
+        service: stockflow
+      exp_annotations:
+        summary: StockFlow cannot be scraped
+        description: Backend may be stopped or management listener/network unavailable;
+          HTTP SLI cannot measure requests that never arrive.
+        action: Check container, Prometheus target error and internal network.
+        runbook_url: docs/RUNBOOK.md#backend-no-scrapeable
+- name: no discovered replicas is service outage
+  interval: 15s
+  input_series: []
+  alert_rule_test:
+  - eval_time: 2m
+    alertname: StockFlowBackendNotScrapeable
+    exp_alerts:
+    - exp_labels:
+        severity: critical
+        service: stockflow
+      exp_annotations:
+        summary: StockFlow cannot be scraped
+        description: Backend may be stopped or management listener/network unavailable;
+          HTTP SLI cannot measure requests that never arrive.
+        action: Check container, Prometheus target error and internal network.
+        runbook_url: docs/RUNBOOK.md#backend-no-scrapeable
+- name: business counters aggregate replicas and tolerate reset
+  interval: 1m
+  input_series:
+  - series: stockflow_sales_confirmed_total{job="stockflow",instance="a"}
+    values: 0 10 20 0 10 20
+  - series: stockflow_sales_confirmed_total{job="stockflow",instance="b"}
+    values: 0 5 10 15 20 25
+  - series: stockflow_sales_rejected_total{job="stockflow",instance="a",reason="INSUFFICIENT_STOCK"}
+    values: 0 10 20 0 10 20
+  - series: stockflow_sales_rejected_total{job="stockflow",instance="b",reason="INSUFFICIENT_STOCK"}
+    values: 0 5 10 15 20 25
+  - series: stockflow_stock_movements_total{job="stockflow",instance="a",type="IN"}
+    values: 0 10 20 0 10 20
+  - series: stockflow_stock_movements_total{job="stockflow",instance="b",type="IN"}
+    values: 0 5 10 15 20 25
+  promql_expr_test:
+  - expr: sum(increase(stockflow_sales_confirmed_total{job="stockflow"}[5m]))
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 62.5
+  - expr: sum(increase(stockflow_sales_rejected_total{job="stockflow"}[5m]))
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 62.5
+  - expr: sum(increase(stockflow_stock_movements_total{job="stockflow"}[5m]))
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 62.5
+- name: availability and budget aggregate two replicas
+  interval: 1m
+  input_series:
+  - series: http_server_requests_seconds_count{job="stockflow",instance="a",uri="/api/dashboard",method="GET",status="200"}
+    values: 0+10x10
+  - series: http_server_requests_seconds_count{job="stockflow",instance="b",uri="/api/dashboard",method="GET",status="200"}
+    values: 0+20x10
+  - series: http_server_requests_seconds_count{job="stockflow",instance="a",uri="/api/dashboard",method="GET",status="503"}
+    values: 0+1x10
+  promql_expr_test:
+  - expr: stockflow:eligible_requests:increase5m
+    eval_time: 5m
+    exp_samples:
+    - labels: '{__name__="stockflow:eligible_requests:increase5m"}'
+      value: 155
+  - expr: stockflow:eligible_errors:increase5m
+    eval_time: 5m
+    exp_samples:
+    - labels: '{__name__="stockflow:eligible_errors:increase5m"}'
+      value: 5
+  - expr: stockflow:availability:ratio5m
+    eval_time: 5m
+    exp_samples:
+    - labels: '{__name__="stockflow:availability:ratio5m"}'
+      value: 0.967741935483871
 fuzzy_compare: true

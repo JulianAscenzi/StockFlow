@@ -38,9 +38,11 @@ El MVP permanece cerrado. Orden aprobado: pruebas de navegador → CI → histor
 
 ## Evolución DevOps — ejecución local
 
-29. [ ] Entorno completo con Docker Compose — PostgreSQL 17 persistente, backend existente y frontend Vite no root; networking interno, puertos host en loopback, health checks y configuración documentada. Implementación y validación locales registradas en STATUS; pendiente de commit por instrucción explícita del usuario. No incluye observabilidad, Kubernetes, Terraform ni cloud.
-30. [ ] Operación del backend — probes separadas, bootstrap concurrente seguro, graceful shutdown, request ID/logs y presupuesto del pool. Implementación local registrada en STATUS, sin commit por instrucción del usuario. No incluye Prometheus/Grafana ni Kubernetes.
+29. [x] Entorno completo con Docker Compose — PostgreSQL 17 persistente, backend existente y frontend Vite no root; networking interno, puertos host en loopback, health checks y configuración documentada. Implementación y validación registradas en STATUS e incluidas en df830d7. No incluye observabilidad, Kubernetes, Terraform ni cloud.
+30. [x] Operación del backend — probes separadas, bootstrap concurrente seguro, graceful shutdown, request ID/logs y presupuesto del pool. Implementación y validación registradas en STATUS e incluidas en df830d7. No incluye Prometheus/Grafana ni Kubernetes.
 
-31. [ ] Observabilidad local — Etapa 3: Micrometer/Prometheus/Grafana, histogramas HTTP, dashboard provisionado y persistencia. Implementación y evidencia en STATUS; sin commit por instrucción del usuario. Excluye negocio, alertas, SLOs, tracing y cloud.
+31. [x] Observabilidad local — Etapa 3: Micrometer/Prometheus/Grafana, histogramas HTTP, dashboard provisionado y persistencia. Implementación y evidencia en STATUS e incluidas en df830d7. Excluye negocio, alertas, SLOs, tracing y cloud.
 
-32. [ ] Confiabilidad y negocio — Etapa 4: counters transaccionales, SLIs/SLOs provisionales, budget, recording rules, alertas y Alertmanager local, dashboard SRE y runbooks. Implementación/evidencia en STATUS, sin commit por pedido explícito. No incluye Kubernetes, cloud ni tracing.
+32. [x] Confiabilidad y negocio — Etapa 4: counters transaccionales, SLIs/SLOs provisionales, budget, recording rules, alertas y Alertmanager local, dashboard SRE y runbooks. Implementación/evidencia en STATUS e incluidas en df830d7. No incluye Kubernetes, cloud ni tracing.
+
+33. [ ] Kubernetes local — Etapa 5: kind, manifiestos declarativos, dos réplicas, probes, PostgreSQL/PVC, recursos, secrets, observabilidad multiinstancia y experimentos reales de recuperación, apagado, rollout/rollback. Evidencia local en STATUS y KUBERNETES; sin staging/commit/push por instrucción explícita. No incluye Helm, Terraform, cloud, operadores ni autoscaling.

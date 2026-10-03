@@ -50,7 +50,9 @@
         {
           "refId": "A",
           "expr": "up{job=\"stockflow\"}",
-          "legendFormat": "UP = 1"
+          "legendFormat": "{{instance}}",
+          "instant": true,
+          "range": false
         }
       ],
       "fieldConfig": {
@@ -250,7 +252,9 @@
         {
           "refId": "A",
           "expr": "process_uptime_seconds{job=\"stockflow\"}",
-          "legendFormat": "{{instance}}"
+          "legendFormat": "{{instance}}",
+          "instant": true,
+          "range": false
         }
       ],
       "fieldConfig": {
@@ -743,22 +747,22 @@
         {
           "refId": "A",
           "expr": "hikaricp_connections_active{job=\"stockflow\"}",
-          "legendFormat": "active {{pool}}"
+          "legendFormat": "active {{pool}} {{instance}}"
         },
         {
           "refId": "B",
           "expr": "hikaricp_connections_idle{job=\"stockflow\"}",
-          "legendFormat": "idle {{pool}}"
+          "legendFormat": "idle {{pool}} {{instance}}"
         },
         {
           "refId": "C",
           "expr": "hikaricp_connections_pending{job=\"stockflow\"}",
-          "legendFormat": "pending {{pool}}"
+          "legendFormat": "pending {{pool}} {{instance}}"
         },
         {
           "refId": "D",
           "expr": "hikaricp_connections_max{job=\"stockflow\"}",
-          "legendFormat": "max {{pool}}"
+          "legendFormat": "max {{pool}} {{instance}}"
         }
       ],
       "fieldConfig": {
@@ -792,7 +796,7 @@
         {
           "refId": "A",
           "expr": "hikaricp_connections_active{job=\"stockflow\"}/hikaricp_connections_max{job=\"stockflow\"}",
-          "legendFormat": "{{pool}}"
+          "legendFormat": "{{pool}} {{instance}}"
         }
       ],
       "fieldConfig": {
@@ -826,12 +830,12 @@
         {
           "refId": "A",
           "expr": "rate(hikaricp_connections_acquire_seconds_sum{job=\"stockflow\"}[$__rate_interval])/rate(hikaricp_connections_acquire_seconds_count{job=\"stockflow\"}[$__rate_interval])",
-          "legendFormat": "acquire {{pool}}"
+          "legendFormat": "acquire {{pool}} {{instance}}"
         },
         {
           "refId": "B",
           "expr": "rate(hikaricp_connections_usage_seconds_sum{job=\"stockflow\"}[$__rate_interval])/rate(hikaricp_connections_usage_seconds_count{job=\"stockflow\"}[$__rate_interval])",
-          "legendFormat": "usage {{pool}}"
+          "legendFormat": "usage {{pool}} {{instance}}"
         }
       ],
       "fieldConfig": {

@@ -97,7 +97,7 @@ Estas proyecciones suponen distribución uniforme de requests; la decisión real
 | --- | --- | --- | --- |
 | StockFlowAvailabilityBudgetFastBurn | Burn 1h y 5m >12, mínimos de tráfico/error | 2m | critical |
 | StockFlowAvailabilityBudgetSustainedBurn | Burn 6h y 30m >4, mínimos de tráfico/error y errores recientes | 10m | warning |
-| StockFlowBackendNotScrapeable | up=0 o target ausente | 1m | critical |
+| StockFlowBackendNotScrapeable | ninguna réplica scrapeable o todos los targets ausentes | 1m | critical |
 | StockFlowReadinessDown | Readiness=0 con scraper UP y chequeo reciente (<45s) | 2m | critical |
 | StockFlowSaleLatencyDegraded | Menos de 95% exitosas ≤1s, ≥20 exitosas y ≥3 lentas en 5m | 5m | warning |
 | StockFlowHikariSaturated | Pending>0 y uso del pool ≥90%, scraper UP | 2m | warning |
@@ -110,7 +110,7 @@ La política multi-window se inspira en [Google SRE](https://sre.google/workbook
 
 Prometheus envía alertas a `alertmanager:9093`. Alertmanager 0.34.1 agrupa por servicio y nombre, espera 10s, actualiza grupos cada 30s y repetiría cada 4h. El receptor local-only no tiene integraciones: la UI en http://localhost:9093 muestra alertas sin enviar mensajes externos. Puerto loopback configurable con ALERTMANAGER_PORT. El volumen alertmanager_data conserva silencios/estado; no se versiona. El gossip de cluster se desactiva para esta instancia local.
 
-Inhibe readiness/pool cuando la misma instancia no es scrapeable y el burn sostenido cuando está activo el rápido. No oculta la coexistencia de budget consumido y caída de DB, que responden preguntas diferentes. `runbook_url` utiliza rutas conceptuales `docs/RUNBOOK.md#...`; todavía no hay un sitio público sirviéndolas. Abrirlas desde el repositorio.
+Inhibe readiness/pool cuando ninguna instancia del servicio es scrapeable y el burn sostenido cuando está activo el rápido. No oculta la coexistencia de budget consumido y caída de DB, que responden preguntas diferentes. `runbook_url` utiliza rutas conceptuales `docs/RUNBOOK.md#...`; todavía no hay un sitio público sirviéndolas. Abrirlas desde el repositorio.
 
 ```bash
 docker compose exec prometheus promtool check config /etc/prometheus/prometheus.yml
@@ -125,3 +125,7 @@ Los tests de reglas usan series sintéticas deterministas para matemática, excl
 ## Cambiar objetivos
 
 Actualizar explícitamente targets, divisores de budget, umbrales derivados y ventanas en las reglas; agregar/modificar buckets exactos en application-observability.properties si cambian los límites de latencia. Actualizar títulos/documentación y tests promtool, revisar runbooks, rebuild de backend y recarga/reinicio Prometheus. No basta con editar el número del panel. No cambiar objetivos para ocultar un incidente. Antes de adoptar metas comerciales, medir carga representativa, disponibilidad del recorrido completo, volumen mínimo y retención real. No se agregan Kubernetes, cloud ni tracing en esta etapa.
+
+## SLOs con múltiples réplicas
+
+Las 50 recording rules ya calculan SLIs de servicio mediante sum(rate/increase) y sum by(le) para percentiles. Se mantienen sin cambios matemáticos. BackendNotScrapeable pasa a `sum(up{job="stockflow"}) == 0 or sum(absent(up{job="stockflow"}))`: una réplica UP evita declarar caída completa; ausencia de targets sí alerta. El resultado carece de labels de instancia y Alertmanager inhibe readiness/pool por service cuando está activa esa caída total. Readiness y Hikari siguen por instancia; el resto de las seis alertas conserva sus umbrales. Promtool incluye una réplica caída, todas caídas, ausencia total y reset de counters. Ver evidencia y límites de Kubernetes en [KUBERNETES](KUBERNETES.md). Counters brutos no son persistencia comercial y el SLI no observa tráfico que no llegó a la JVM.

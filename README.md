@@ -200,3 +200,7 @@ CI ejecuta backend y compilación frontend en paralelo; navegador requiere ambos
 Compose también inicia Prometheus y Grafana. Configurar `GRAFANA_ADMIN_PASSWORD` propia en `.env` antes de `docker compose up --build`. Prometheus: http://localhost:9090; Grafana: http://localhost:3000, usuario `GRAFANA_ADMIN_USER` (por defecto admin). Datasource y dashboard StockFlow se provisionan automáticamente. Puertos sólo en loopback; API y management quedan internos. Métricas, seguridad, percentiles y persistencia: [OBSERVABILITY](docs/OBSERVABILITY.md).
 
 La Etapa 4 añade **StockFlow - SRE Overview** y Alertmanager local en http://localhost:9093, sin notificaciones externas. No requiere nuevas credenciales. Definiciones y validación: [SRE](docs/SRE.md); procedimientos: [RUNBOOK](docs/RUNBOOK.md).
+
+## Kubernetes local
+
+La Etapa 5 usa kind y manifiestos simples en `k8s/`, con dos réplicas backend, PostgreSQL persistente y observabilidad. Guía de despliegue, acceso y experimentos: [docs/KUBERNETES.md](docs/KUBERNETES.md). Compose y la demo pública conservan su ejecución.

@@ -25,7 +25,7 @@ groups:
           action: "Investigate recurring errors and recent changes."
           runbook_url: "docs/RUNBOOK.md#disponibilidad-degradada"
       - alert: "StockFlowBackendNotScrapeable"
-        expr: "up{job=\"stockflow\"} == 0 or absent(up{job=\"stockflow\"})"
+        expr: "sum(up{job=\"stockflow\"}) == 0 or sum(absent(up{job=\"stockflow\"}))"
         for: "1m"
         labels:
           severity: "critical"

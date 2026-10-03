@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: stockflow-config
+  namespace: stockflow
+data:
+  POSTGRES_DB: stockflow
+  POSTGRES_USER: stockflow
+  POSTGRES_HOST: database
+  POSTGRES_PORT: "5432"
+  SPRING_PROFILES_ACTIVE: prod,observability
+  MANAGEMENT_SERVER_ADDRESS: "0.0.0.0"
+  APP_AUTH_ENABLED: "true"
+  APP_ADMIN_EMAIL: admin@stockflow.local
+  JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=50 -XX:InitialRAMPercentage=20 -XX:ActiveProcessorCount=2"

@@ -12,7 +12,7 @@ receivers:
 inhibit_rules:
   - source_matchers: ['alertname="StockFlowBackendNotScrapeable"']
     target_matchers: ['alertname=~"StockFlowReadinessDown|StockFlowHikariSaturated"']
-    equal: [service, instance]
+    equal: [service]
   - source_matchers: ['alertname="StockFlowAvailabilityBudgetFastBurn"']
     target_matchers: ['alertname="StockFlowAvailabilityBudgetSustainedBurn"']
     equal: [service]

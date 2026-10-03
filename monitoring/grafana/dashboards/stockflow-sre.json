@@ -1179,7 +1179,9 @@
         {
           "refId": "A",
           "expr": "stockflow_readiness{job=\"stockflow\"}",
-          "legendFormat": "{{instance}}"
+          "legendFormat": "{{instance}}",
+          "instant": true,
+          "range": false
         }
       ],
       "fieldConfig": {
@@ -1249,7 +1251,9 @@
         {
           "refId": "A",
           "expr": "up{job=\"stockflow\"}",
-          "legendFormat": "{{instance}}"
+          "legendFormat": "{{instance}}",
+          "instant": true,
+          "range": false
         }
       ],
       "fieldConfig": {
@@ -1319,7 +1323,9 @@
         {
           "refId": "A",
           "expr": "(time() - stockflow_readiness_checked_timestamp_seconds{job=\"stockflow\"}) and (stockflow_readiness_checked_timestamp_seconds{job=\"stockflow\"} > 0) or on() vector(-1)",
-          "legendFormat": "seconds since native check"
+          "legendFormat": "{{instance}}",
+          "instant": true,
+          "range": false
         }
       ],
       "fieldConfig": {
@@ -1447,12 +1453,12 @@
         {
           "refId": "A",
           "expr": "hikaricp_connections_pending{job=\"stockflow\"}",
-          "legendFormat": "pending"
+          "legendFormat": "pending {{instance}}"
         },
         {
           "refId": "B",
           "expr": "hikaricp_connections_active{job=\"stockflow\"}",
-          "legendFormat": "active"
+          "legendFormat": "active {{instance}}"
         }
       ],
       "fieldConfig": {

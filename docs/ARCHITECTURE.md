@@ -90,3 +90,7 @@ GET `/api/products/lookup?q=&sellable=false&page=0&size=20` busca subcadenas lit
 ## Métricas transaccionales y confiabilidad
 
 Los servicios de ventas e inventario registran counters de negocio mediante BusinessMetrics: éxitos sólo en afterCommit del límite transaccional exterior; rechazos de venta acotados sólo al completarse rollback. La recuperación idempotente lee historial sin emitir otra venta/movimiento. No se persisten métricas ni se modifica esquema. Son telemetría best effort, no contabilidad. El perfil observability muestrea readiness nativa fuera del scrape. Compose añade Alertmanager sin receptor externo; recording/alert rules y SRE Overview están versionados. [SRE](SRE.md) concentra definiciones y límites.
+
+## Kubernetes local
+
+El laboratorio Etapa 5 usa namespace stockflow en kind: dos réplicas backend detrás de ClusterIP, frontend Vite con proxy DNS interno, PostgreSQL 17 StatefulSet/PVC y observabilidad con Deployments/PVCs. Flyway y bootstrap mantienen coordinación PostgreSQL en cada arranque. Management 9091 no forma parte del Service backend ni se publica al host; Prometheus descubre pods mediante RBAC namespaced. No hay Ingress, Helm ni operadores. [KUBERNETES](KUBERNETES.md) documenta seguridad, recursos y límites de nodo único. PostgreSQL dentro de Kubernetes se utiliza aquí para laboratorio; en producción/cloud evaluaremos una base administrada.
