@@ -112,6 +112,18 @@ class IdempotentSaleApiIntegrationTest extends ApiIntegrationTestSupport {
     }
 
     @Test
+    void allowsCrossOriginProductActivationAndDeactivation() throws Exception {
+        for (String action : List.of("activate", "deactivate")) {
+            mvc.perform(options("/api/products/1/" + action).header("Origin", "http://localhost:5173")
+                            .header("Access-Control-Request-Method", "PATCH")
+                            .header("Access-Control-Request-Headers", "Authorization"))
+                    .andExpect(status().isOk())
+                    .andExpect(header().string("Access-Control-Allow-Methods",
+                            org.hamcrest.Matchers.containsString("PATCH")));
+        }
+    }
+
+    @Test
     void validatesUuidDuplicatesAndCorsHeader() throws Exception {
         long id = product("Validation", 5);
         confirm("bad", payload(id, 1, "")).andExpect(status().isBadRequest());

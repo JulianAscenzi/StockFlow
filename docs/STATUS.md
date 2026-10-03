@@ -47,3 +47,5 @@ Bloque 28: confirmación idempotente implementada. La recuperación usa una clav
 ## Auditoría general — 2026-10-02
 
 Docker/PostgreSQL disponibles. La auditoría detectó una diferencia entre la fecha inicial de una venta (nanosegundos) y su recuperación idempotente (microsegundos de PostgreSQL). Se corrige la fecha de creación a precisión de microsegundos y se refuerza la regresión de igualdad de respuestas. La validación conjunta final pasó 54 pruebas específicas y 336 pruebas backend completas sin fallos, errores ni omisiones; la compilación frontend también pasó.
+
+CORS ahora admite PATCH para activar/desactivar productos desde un origen permitido; se verifica el preflight de ambas rutas. Esta corrección está incluida en la validación conjunta de 54 pruebas específicas y 336 pruebas completas.
