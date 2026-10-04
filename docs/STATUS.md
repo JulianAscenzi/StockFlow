@@ -335,3 +335,48 @@ Deuda consciente: ejecución real GitHub/GHCR (permisos, cache, push/pull y atte
 Cierre local: kind load docker-image aprobó ambas imágenes nuevas de Compose en stockflow-helm-audit (sólo cache del nodo, sin modificar workloads ni datos). Se retiraron únicamente containers/redes/volúmenes del proyecto Compose temporal y el builder stockflow-stage7; los clusters previos permanecen. git diff --check aprobado, revisión completa realizada, staging vacío y comprobación contra credenciales temporales sin coincidencias. No hay tars/SBOMs/provenance runtime ni tokens/passwords añadidos al working tree. No se hizo staging, commit, push ni publicación.
 
 Etapa 7 preparada y validada localmente.
+
+
+## Etapa 7 — primera validación remota — 2026-10-04
+
+El estado inicial ya contenía el commit `5063c4bde453c0898ffc8f7f5f1c0b2909411c9a` (`feat: add traceable container image publishing pipeline`), con working tree limpio. No se duplicó ni reescribió: `git push origin main` devolvió Everything up-to-date; la ejecución existente de ese push es [37237744986](https://github.com/JulianAscenzi/StockFlow/actions/runs/37237744986). Inspección inicial de archivos versionados sin credenciales/runtime no deseados; `.env` local sigue ignorado. No se imprimieron credenciales GitHub/GHCR/Kubernetes ni se modificó administración/visibilidad.
+
+Run push a main: **success**, intento 1, 21:51:14–21:58:04 UTC (~6m50s). No hubo jobs fallidos ni correcciones de código/workflow:
+
+| Job | Resultado | Duración del job |
+| --- | --- | --- |
+| backend | success; 385 tests, cero failures/errors/skipped | 1m28s |
+| frontend | success; build aprobado | 8s |
+| browser | success; suite Playwright completa | 1m34s |
+| images (frontend) | success; OCI, SBOM/provenance y cache exportados | 59s |
+| images (backend) | success; OCI, SBOM/provenance y cache exportados | 1m23s, después de espera en cola |
+| image-smoke | success; imágenes exactas integradas | 50s |
+| publish (backend) | success; digest remoto verificado | 50s |
+| publish (frontend) | success; digest remoto verificado | 39s |
+
+Se corroboraron permisos efectivos en logs: contents:read y packages:write sólo en publish, más metadata:read implícito de GitHub. Login mediante GITHUB_TOKEN, sin PAT ni permisos globales adicionales.
+
+Tag compartido: `sha-5063c4bde453c0898ffc8f7f5f1c0b2909411c9a`. Índices OCI reales:
+
+| Imagen | Digest publicado/verificado |
+| --- | --- |
+| ghcr.io/julianascenzi/stockflow-backend | sha256:9e27f5c5d0a9237d52124209a2f2941c2bf1ad2457f7bbf4cb6921c214945c6a |
+| ghcr.io/julianascenzi/stockflow-frontend | sha256:6485c6c709d2ce2cce957cd4f5641aa1ed07b41687b41e68eb365cf316de7737 |
+
+Ambos packages muestran Public en sus páginas y son accesibles anónimamente. La prueba usó un DOCKER_CONFIG nuevo sin credenciales: consulta independiente del registry, docker pull por tag y por digest de ambas imágenes aprobados; digests coinciden con CI. No se reconstruyeron ni se usaron las imágenes locales previas. El smoke existente ejecutado con las referencias GHCR@digest descargadas aprobó PostgreSQL temporal, backend non-root/readiness/liveness y frontend non-root/HTTP/proxy/login/dashboard autenticado.
+
+Attestations remotas verificadas mediante Docker Buildx imagetools inspect (.SBOM/.Provenance) y lectura de índices/manifiestos/blobs GHCR anónima, con comprobación sha256 y subject. Una imagen ejecutable linux/amd64 por índice; SBOM SPDX-2.3 con 242 packages backend y 277 frontend. Provenance predicateType https://slsa.dev/provenance/v1 contiene el SHA publicado; SBOM predicateType https://spdx.dev/Document. Subjects apuntan a los manifiestos ejecutables: backend `sha256:b48b857f87670990ad7e4fd9ccf4a67e846a8dc54d6a8e937ef69569e9ecc9de`, frontend `sha256:8c249968329e24357dde5cebd7ff7d20490307e5d8a83c7e74222f8d2157bfd6`; ambos están incluidos en sus índices publicados. No son firmas independientes. SBOM/provenance descargados permanecen fuera de Git.
+
+Helm 3.19.0: lint aprobado (único INFO icon cosmético), render por SHA tag y por digest exactos aprobados. Cluster nuevo kind `stockflow-ghcr`, Kubernetes 1.35.0, namespace stockflow-ghcr, release stockflow revision 1 deployed. Kubeconfig y nuevos Secrets aleatorios externos en `/tmp/stockflow-stage7-remote`, permisos 600. No se ejecutó kind load: eventos Pulling/Successfully pulled confirman descargas GHCR en el nodo nuevo. Backend 2/2 Ready, frontend Ready, siete pods Ready, cuatro PVCs Bound. Los dos pods backend y el frontend muestran **image e imageID exactamente iguales a repository@digest de los índices GHCR indicados arriba**. Se demuestra SHA → índice OCI remoto → imageID observado.
+
+Durante el arranque frío hubo dos reinicios por pod backend: Flyway falló con UnknownHostException: database antes de que PostgreSQL/Service headless estuvieran disponibles. Posteriormente quedaron Ready y los contadores estabilizaron; no se cambió semántica de arranque, probes ni arquitectura. Helm wait aprobó. E2E comercial Kubernetes existente aprobado (1 escenario: login/categoría/producto/entrada/venta/dashboard), imagen frontend comprobada visualmente sin errores; Prometheus descubre los dos pods backend, ambos UP.
+
+Artifacts listados por API disponibles y no expirados: backend-reports, browser-reports, oci-backend/frontend, image-metadata-backend/frontend, image-smoke-reports, published-backend/frontend y dos build records automáticos .dockerbuild. Los JSON públicos de SBOM/provenance se inspeccionaron sin patrones de credenciales; el build no recibe secrets ni build-args sensibles. La descarga del artifact mediante la URL temporal del conector devolvió HTTP 403 desde este entorno, por lo que se usaron las attestations reales del registry para inspeccionar el contenido y no se presume haber descargado esos ZIP localmente.
+
+Cache GHA: primera ejecución importó/exportó los scopes configurados y jobs aprobaron; todavía no se declara reutilización medida en una segunda ejecución. El commit documental de este checkpoint es legítimo, no un commit vacío para medir cache. Publicación backend/frontend continúa no atómica: una falla futura puede dejar uno de los packages/tags publicado; comprobar ambos published artifacts/digests antes de promover. No se indujo ese fallo.
+
+Los digests locales del checkpoint previo difieren de GHCR, como es esperable: fuente local aún sin commit, timestamps/SOURCE_DATE_EPOCH, labels de revisión, builder/metadata y attestations diferentes. Se verifica trazabilidad del artefacto concreto; no se afirma reproductibilidad bit a bit.
+
+GitHub Security: endpoints secret-scanning, Dependabot y code-scanning devolvieron 401 anónimamente; el conector no permite esas familias de endpoints. No se accedió a alertas ni se puede afirmar que estén vacías. Requiere revisión autenticada en la pestaña Security; no se modificó configuración administrativa ni se detectó una credencial real en archivos inspeccionados. Scanner de vulnerabilidades, firma independiente, evidencia durable, actualización de bases, multi-arch y runtime frontend de producción siguen como deuda consciente. No se creó tag semántico, Terraform, cloud ni CD.
+
+Etapa 7 validada remotamente.

@@ -40,7 +40,7 @@ publish carga el mismo tar, comprueba digest local, publica sus tags y consulta 
 - `image-smoke-reports`: diagnóstico/resultado, siete días.
 - `published-*`: image.json con published=true sólo después de verificar todos sus tags, 30 días.
 
-Estas retenciones no son un archivo permanente de releases. Los tags/artifacts del runner deben revisarse en la ejecución real; descargar evidencia antes de su vencimiento si se necesita conservarla.
+Build-push-action también genera automáticamente artifacts de build record `.dockerbuild`; se observaron ambos en la primera ejecución real. Estas retenciones no son un archivo permanente de releases. Los tags/artifacts del runner deben revisarse en la ejecución real; descargar evidencia antes de su vencimiento si se necesita conservarla.
 
 ## SBOM y provenance
 
@@ -110,4 +110,4 @@ helm template stockflow ./helm/stockflow -n stockflow -f ./helm/stockflow/values
 python3 scripts/image-smoke.py --backend IMAGEN_LOCAL_BACKEND --frontend IMAGEN_LOCAL_FRONTEND --output /tmp/stockflow-image-smoke
 ```
 
-Smoke requiere PostgreSQL 17-alpine disponible en Docker. Docker builds, carga OCI/digests, attestations, smoke, tests, Compose y render Helm se comprueban localmente. El YAML/estructura y scripts del workflow se inspeccionan sin instalar act ni linters nuevos. Una ejecución real tras push deberá verificar actions, GHA cache, permisos GHCR, publicación/pull por digest y attestations remotas. Ninguno de esos resultados se presume a partir del build local. Evidencia ejecutada en [STATUS](STATUS.md).
+Smoke requiere PostgreSQL 17-alpine disponible en Docker. Docker builds, carga OCI/digests, attestations, smoke, tests, Compose y render Helm se comprueban localmente. El YAML/estructura y scripts del workflow se inspeccionan sin instalar act ni linters nuevos. La primera ejecución real por push a main aprobó CI, publicación GHCR con GITHUB_TOKEN, pulls anónimos por tag/digest, SBOM/provenance remotos y despliegue Helm por digest en un kind nuevo sin kind load. Ambos packages se observaron públicos, sin cambiar visibilidad desde esta validación. Commit, run y digests verificados están en [STATUS](STATUS.md). El camino de tag semántico continúa sin ejecución real; no se creó un tag de release. Las consultas de GitHub Security requieren acceso que las herramientas disponibles no proporcionaron; no se presume ausencia de alertas.
