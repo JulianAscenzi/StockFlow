@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "stockflow.labels" (dict "root" . "component" "prometheus") | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: prometheus
+      app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  template:
+    metadata:
+      labels:
+        app: prometheus
+        app.kubernetes.io/instance: {{ .Release.Name | quote }}
+        app.kubernetes.io/name: stockflow
+        app.kubernetes.io/component: prometheus
+        app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+        app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmaps.yaml") . | sha256sum }}
+    spec:
+      automountServiceAccountToken: true
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: prometheus
+        image: {{ .Values.prometheus.image | quote }}
+        args:
+        - --config.file=/etc/prometheus/prometheus.yml
+        - --storage.tsdb.path=/prometheus
+        - --storage.tsdb.retention.time=32d
+        - --storage.tsdb.retention.size=2GB
+        env: []
+        ports:
+        - name: http
+          containerPort: 9090
+        resources:
+          {{- toYaml .Values.prometheus.resources | nindent 10 }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: http
+          periodSeconds: 5
+          timeoutSeconds: 3
+        volumeMounts:
+        - name: config
+          mountPath: /etc/prometheus
+          readOnly: true
+        - name: rules
+          mountPath: /etc/prometheus/rules
+          readOnly: true
+        - name: data
+          mountPath: /prometheus
+          readOnly: false
+        imagePullPolicy: {{ .Values.global.imagePullPolicy | quote }}
+      volumes:
+      - name: config
+        configMap:
+          name: prometheus-config
+      - name: rules
+        configMap:
+          name: prometheus-rules
+      - name: data
+        persistentVolumeClaim:
+          claimName: {{ default "prometheus-data" .Values.prometheus.storage.existingClaim | quote }}
+      serviceAccountName: prometheus
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "stockflow.labels" (dict "root" . "component" "prometheus") | nindent 4 }}
+spec:
+  selector:
+    app: prometheus
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  ports:
+  - name: http
+    port: 9090
+    targetPort: http
+---
+{{- if not .Values.prometheus.storage.existingClaim }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-data
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "stockflow.labels" (dict "root" . "component" "prometheus") | nindent 4 }}
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.prometheus.storage.size | quote }}
+{{- end }}

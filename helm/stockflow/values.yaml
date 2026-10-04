@@ -1,0 +1,102 @@
+# Namespace comes from --namespace; credentials are managed outside Helm.
+global:
+  imagePullPolicy: IfNotPresent
+existingSecret: stockflow-secrets
+backend:
+  image:
+    repository: stockflow-backend
+    tag: stage5-v1
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: '1'
+      memory: 768Mi
+  replicaCount: 2
+  ports:
+    http: 8080
+    management: 9091
+  terminationGracePeriodSeconds: 45
+  pdb:
+    minAvailable: 1
+  startupProbe:
+    httpGet:
+      path: /actuator/health/liveness
+      port: management
+    periodSeconds: 5
+    timeoutSeconds: 2
+    failureThreshold: 36
+  livenessProbe:
+    httpGet:
+      path: /actuator/health/liveness
+      port: management
+    periodSeconds: 10
+    timeoutSeconds: 2
+    failureThreshold: 3
+  readinessProbe:
+    httpGet:
+      path: /actuator/health/readiness
+      port: management
+    periodSeconds: 5
+    timeoutSeconds: 4
+    failureThreshold: 2
+frontend:
+  image:
+    repository: stockflow-frontend
+    tag: stage5-v1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 384Mi
+postgresql:
+  image: postgres:17-alpine
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 384Mi
+  storage:
+    size: 2Gi
+prometheus:
+  image: prom/prometheus:v3.14.0
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 384Mi
+  storage:
+    size: 3Gi
+    existingClaim: ''
+grafana:
+  image: grafana/grafana:13.2.2
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 768Mi
+  storage:
+    size: 1Gi
+    existingClaim: ''
+  existingSecret: grafana-secret
+alertmanager:
+  image: prom/alertmanager:v0.34.1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 32Mi
+    limits:
+      cpu: 500m
+      memory: 96Mi
+  storage:
+    size: 1Gi
+    existingClaim: ''

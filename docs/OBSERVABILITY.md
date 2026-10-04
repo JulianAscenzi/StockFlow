@@ -87,13 +87,17 @@ Cada combinación de etiquetas y cada bucket produce una serie. Al agregar rutas
 
 ## Provisioning y presentación
 
-```
-monitoring/
-├── prometheus/prometheus.yml
+```text
+monitoring/prometheus/prometheus.yml                 # Compose scraping
+monitoring/prometheus/tests/stockflow-rules.test.yml # shared rule tests
+helm/stockflow/files/monitoring/
+├── prometheus/rules/                               # canonical rules
+├── alertmanager/alertmanager.yml
 └── grafana/
     ├── provisioning/datasources/prometheus.yml
     ├── provisioning/dashboards/stockflow.yml
-    └── dashboards/stockflow-overview.json
+    ├── dashboards/stockflow-overview.json
+    └── dashboards/stockflow-sre.json
 ```
 
 Datasource con UID estable `stockflow-prometheus`; dashboard `StockFlow - Application Overview`, UID `stockflow-overview`. Se carga al arrancar; no requiere clicks para reconstruirlo. Overview agrupa estado de scraping, requests/s, fracción 5xx, p50/p95/p99 y uptime. HTTP muestra rate por ruta/status, duración promedio/p95 y 4xx/5xx. JVM muestra heap usado/máximo/utilización, non-heap, threads y pausas GC. Proceso muestra CPU de JVM y sistema. Pool muestra active/idle/pending/max, utilización y tiempo medio de adquisición/uso. Unidades: segundos, bytes, requests/s y fracciones representadas como porcentaje.

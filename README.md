@@ -203,4 +203,4 @@ La Etapa 4 añade **StockFlow - SRE Overview** y Alertmanager local en http://lo
 
 ## Kubernetes local
 
-La Etapa 5 usa kind y manifiestos simples en `k8s/`, con dos réplicas backend, PostgreSQL persistente y observabilidad. Guía de despliegue, acceso y experimentos: [docs/KUBERNETES.md](docs/KUBERNETES.md). Compose y la demo pública conservan su ejecución.
+Helm es el flujo recomendado para el laboratorio kind: [docs/HELM.md](docs/HELM.md). El Chart reproduce las dos réplicas backend, PostgreSQL persistente y observabilidad de la Etapa 5. Los manifiestos `k8s/` permanecen como referencia educativa; guía base y experimentos: [docs/KUBERNETES.md](docs/KUBERNETES.md). Compose y la demo pública conservan su ejecución.

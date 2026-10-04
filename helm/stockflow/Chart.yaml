@@ -1,0 +1,6 @@
+apiVersion: v2
+name: stockflow
+description: Inventario y ventas con PostgreSQL y observabilidad; basado en el laboratorio Kubernetes validado.
+type: application
+version: 0.1.0
+appVersion: "0.0.1-SNAPSHOT"

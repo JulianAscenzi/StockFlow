@@ -1,0 +1,111 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "stockflow.labels" (dict "root" . "component" "backend") | nindent 4 }}
+spec:
+  replicas: {{ .Values.backend.replicaCount }}
+  minReadySeconds: 5
+  revisionHistoryLimit: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: backend
+      app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  template:
+    metadata:
+      labels:
+        app: backend
+        app.kubernetes.io/instance: {{ .Release.Name | quote }}
+        app.kubernetes.io/name: stockflow
+        app.kubernetes.io/component: backend
+        app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+        app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmaps.yaml") . | sha256sum }}
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: {{ .Values.backend.terminationGracePeriodSeconds }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: backend
+        image: {{ printf "%s:%s" .Values.backend.image.repository .Values.backend.image.tag | quote }}
+        imagePullPolicy: {{ .Values.global.imagePullPolicy | quote }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.backend.ports.http }}
+        - name: management
+          containerPort: {{ .Values.backend.ports.management }}
+        env:
+        - name: PORT
+          value: {{ .Values.backend.ports.http | quote }}
+        - name: MANAGEMENT_SERVER_PORT
+          value: {{ .Values.backend.ports.management | quote }}
+        envFrom:
+        - configMapRef:
+            name: stockflow-config
+        - secretRef:
+            name: {{ required "existingSecret is required" .Values.existingSecret | quote }}
+        resources:
+          {{- toYaml .Values.backend.resources | nindent 10 }}
+        startupProbe:
+          {{- toYaml .Values.backend.startupProbe | nindent 10 }}
+        livenessProbe:
+          {{- toYaml .Values.backend.livenessProbe | nindent 10 }}
+        readinessProbe:
+          {{- toYaml .Values.backend.readinessProbe | nindent 10 }}
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: tmp
+        emptyDir:
+          sizeLimit: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "stockflow.labels" (dict "root" . "component" "backend") | nindent 4 }}
+spec:
+  selector:
+    app: backend
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  ports:
+  - name: http
+    port: {{ .Values.backend.ports.http }}
+    targetPort: http
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: backend
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "stockflow.labels" (dict "root" . "component" "backend") | nindent 4 }}
+spec:
+  minAvailable: {{ .Values.backend.pdb.minAvailable }}
+  selector:
+    matchLabels:
+      app: backend
+      app.kubernetes.io/instance: {{ .Release.Name | quote }}

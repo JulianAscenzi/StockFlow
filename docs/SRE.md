@@ -24,7 +24,7 @@ Son counters en memoria: se reinician con la JVM y Prometheus conserva su histor
 
 ## Requests elegibles y disponibilidad
 
-El SLI es `requests exitosas elegibles / requests elegibles`. Se utiliza una allowlist de las rutas MVC normalizadas actuales: dashboard, categorías y sus detalles, productos/detalles/lookup/search/active/category/activate/deactivate, historial y ajustes de stock, ventas y sus detalles. La expresión exacta está en `monitoring/prometheus/rules/stockflow-recording.yml`; no depende de URLs crudas ni IDs. Incluye todas las instancias del job stockflow.
+El SLI es `requests exitosas elegibles / requests elegibles`. Se utiliza una allowlist de las rutas MVC normalizadas actuales: dashboard, categorías y sus detalles, productos/detalles/lookup/search/active/category/activate/deactivate, historial y ajustes de stock, ventas y sus detalles. La expresión exacta está en `helm/stockflow/files/monitoring/prometheus/rules/stockflow-recording.yml`; no depende de URLs crudas ni IDs. Incluye todas las instancias del job stockflow.
 
 - Éxitos: HTTP 2xx y 3xx en esas rutas.
 - Fallos elegibles: todos los HTTP 5xx de esas rutas, incluido `503 DATABASE_UNAVAILABLE`.
@@ -66,7 +66,7 @@ Ejemplo: 10.000 elegibles permiten 50 fallos. Si hubo 10, se consumió 20% y que
 
 ## Reglas y consultas
 
-Las reglas cortas evalúan cada 15s y las de 30d cada minuto. Todas están versionadas en `monitoring/prometheus/rules`. Las 50 recording rules agrupan requests/errores/rates, disponibilidad, budget, objetivos, fracción rápida y percentiles por operación.
+Las reglas cortas evalúan cada 15s y las de 30d cada minuto. Todas están versionadas en `helm/stockflow/files/monitoring/prometheus/rules`. Las 50 recording rules agrupan requests/errores/rates, disponibilidad, budget, objetivos, fracción rápida y percentiles por operación.
 
 ```promql
 stockflow:availability:ratio5m

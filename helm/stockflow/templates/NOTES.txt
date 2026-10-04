@@ -1,0 +1,8 @@
+StockFlow release {{ .Release.Name }} en namespace {{ .Release.Namespace }}.
+
+Acceso local:
+  kubectl -n {{ .Release.Namespace }} port-forward --address 127.0.0.1 service/frontend 5173:5173
+
+Los Secrets son externos. Uninstall conserva los cuatro PVCs.
+Para reinstalar los PVCs de observabilidad, indicar storage.existingClaim.
+Guía completa: docs/HELM.md en el repositorio StockFlow.

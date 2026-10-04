@@ -1,6 +1,8 @@
 # Kubernetes local — Etapa 5
 
-Laboratorio dedicado `stockflow-lab`, namespace `stockflow`. No usa cloud, Helm, Ingress, operadores, autoscaling ni Terraform. Los manifiestos son recursos Kubernetes base. Compose y la demo Vercel/Render mantienen sus configuraciones.
+Referencia educativa de Etapa 5 (`raw manifests/reference`). El flujo recomendado de Etapa 6 está en [HELM](HELM.md); `scripts/k8s-up.sh` ahora usa Helm y `scripts/k8s-up-raw.sh` conserva el flujo base. No aplicar ambos a un mismo namespace.
+
+Laboratorio dedicado `stockflow-lab`, namespace `stockflow`. Esta referencia no usa cloud, Ingress, operadores, autoscaling ni Terraform. Los manifiestos son recursos Kubernetes base. Compose y la demo Vercel/Render mantienen sus configuraciones.
 
 ## Arquitectura
 
@@ -54,7 +56,7 @@ El email inicial es `admin@stockflow.local`; consultar el archivo temporal priva
 ## Despliegue y acceso
 
 ```bash
-./scripts/k8s-up.sh
+./scripts/k8s-up-raw.sh
 kubectl --context kind-stockflow-lab -n stockflow port-forward --address 127.0.0.1 service/frontend 5173:5173
 # En terminales adicionales, sólo cuando se necesiten las UIs:
 kubectl --context kind-stockflow-lab -n stockflow port-forward --address 127.0.0.1 service/grafana 3000:3000
@@ -64,7 +66,7 @@ kubectl --context kind-stockflow-lab -n stockflow port-forward --address 127.0.0
 
 Abrir http://127.0.0.1:5173. No publicar DB ni management. Port-forward se conecta a un pod, no demuestra balanceo del Service por sí mismo; el proxy Vite sí consulta el ClusterIP backend. Si se reemplaza el pod destino del port-forward, reiniciar ese comando.
 
-`k8s-up.sh` construye imágenes `stage5-v1`, carga imágenes y configura los ConfigMaps de observabilidad desde los archivos canónicos de `monitoring/`. Valida cada manifiesto con dry-run del servidor y espera rollouts. La importación usa la plataforma del host porque Docker con índices multi-arquitectura incompletos puede hacer fallar `kind load --all-platforms`. No hay registry externo para imágenes StockFlow. No mutar un tag ya desplegado: usar un tag nuevo y actualizar el Deployment.
+`k8s-up-raw.sh` construye imágenes `stage5-v1`, carga imágenes y configura los ConfigMaps de observabilidad desde los archivos canónicos de `helm/stockflow/files/monitoring/`. Valida cada manifiesto con dry-run del servidor y espera rollouts. La importación usa la plataforma del host porque Docker con índices multi-arquitectura incompletos puede hacer fallar `kind load --all-platforms`. No hay registry externo para imágenes StockFlow. No mutar un tag ya desplegado: usar un tag nuevo y actualizar el Deployment.
 
 ## Probes y arranque
 
@@ -141,12 +143,12 @@ Descubrimiento `role: pod` con Role namespaced, filtro app=backend y puerto mana
 
 Las 50 reglas agregan rate/increase entre instancias; histogram_quantile usa `sum by(le)` antes de calcular p50/p95/p99. Los SLOs son de servicio. Los tres counters de negocio usan sum(rate(...)), sum by(reason) y sum by(type), respectivamente. Un reinicio lleva counters a cero: rate/increase detectan reset por serie antes de sumar; el bruto sum(counter) no es contabilidad ni persistencia. Eventos entre scrapes pueden perderse.
 
-BackendNotScrapeable ahora se activa cuando sum(up)=0 o no existen targets, conserva for=1m. Una réplica caída con otra UP no dispara esa alerta. Readiness y saturación conservan diagnóstico por instancia; burn y latencia permanecen agregados. Reglas, dashboards y Alertmanager se reutilizan desde monitoring, sin perder Compose. No se agrega Operator/ServiceMonitor.
+BackendNotScrapeable ahora se activa cuando sum(up)=0 o no existen targets, conserva for=1m. Una réplica caída con otra UP no dispara esa alerta. Readiness y saturación conservan diagnóstico por instancia; burn y latencia permanecen agregados. Reglas, dashboards y Alertmanager se reutilizan desde helm/stockflow/files/monitoring, sin perder Compose. No se agrega Operator/ServiceMonitor.
 
 ```bash
 kubectl -n stockflow exec deployment/prometheus -- promtool check config /etc/prometheus/prometheus.yml
 kubectl -n stockflow exec deployment/prometheus -- promtool check rules /etc/prometheus/rules/stockflow-recording.yml /etc/prometheus/rules/stockflow-alerts.yml
-docker run --rm --entrypoint promtool -v "$PWD/monitoring/prometheus:/etc/prometheus:ro" \
+docker run --rm --entrypoint promtool -v "$PWD/monitoring/prometheus:/etc/prometheus:ro" -v "$PWD/helm/stockflow/files/monitoring/prometheus/rules:/etc/prometheus/rules:ro" \
   prom/prometheus:v3.14.0 test rules /etc/prometheus/tests/stockflow-rules.test.yml
 kubectl -n stockflow exec deployment/alertmanager -- amtool check-config /etc/alertmanager/alertmanager.yml
 ```

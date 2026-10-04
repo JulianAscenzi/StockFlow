@@ -1,0 +1,11 @@
+# Images built and loaded into kind by scripts/k8s-up.sh.
+global:
+  imagePullPolicy: IfNotPresent
+backend:
+  image:
+    repository: stockflow-backend
+    tag: stage5-v1
+frontend:
+  image:
+    repository: stockflow-frontend
+    tag: stage5-v1

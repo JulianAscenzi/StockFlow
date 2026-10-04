@@ -1,0 +1,84 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: stockflow-config
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "stockflow.labels" (dict "root" . "component" "backend") | nindent 4 }}
+data:
+  POSTGRES_DB: stockflow
+  POSTGRES_USER: stockflow
+  POSTGRES_HOST: database
+  POSTGRES_PORT: '5432'
+  SPRING_PROFILES_ACTIVE: prod,observability
+  MANAGEMENT_SERVER_ADDRESS: 0.0.0.0
+  APP_AUTH_ENABLED: 'true'
+  APP_ADMIN_EMAIL: admin@stockflow.local
+  JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=50 -XX:InitialRAMPercentage=20 -XX:ActiveProcessorCount=2
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "stockflow.labels" (dict "root" . "component" "observability") | nindent 4 }}
+data:
+  prometheus.yml: |
+    {{- tpl (.Files.Get "files/prometheus-kubernetes.yml") . | nindent 4 }}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-rules
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "stockflow.labels" (dict "root" . "component" "observability") | nindent 4 }}
+data:
+  {{- (.Files.Glob "files/monitoring/prometheus/rules/*.yml").AsConfig | nindent 2 }}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "stockflow.labels" (dict "root" . "component" "observability") | nindent 4 }}
+data:
+  {{- (.Files.Glob "files/monitoring/alertmanager/*.yml").AsConfig | nindent 2 }}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "stockflow.labels" (dict "root" . "component" "observability") | nindent 4 }}
+data:
+  {{- (.Files.Glob "files/monitoring/grafana/provisioning/datasources/*.yml").AsConfig | nindent 2 }}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-providers
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "stockflow.labels" (dict "root" . "component" "observability") | nindent 4 }}
+data:
+  {{- (.Files.Glob "files/monitoring/grafana/provisioning/dashboards/*.yml").AsConfig | nindent 2 }}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "stockflow.labels" (dict "root" . "component" "observability") | nindent 4 }}
+data:
+  {{- (.Files.Glob "files/monitoring/grafana/dashboards/*.json").AsConfig | nindent 2 }}

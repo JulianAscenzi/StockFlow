@@ -45,4 +45,6 @@ El MVP permanece cerrado. Orden aprobado: pruebas de navegador → CI → histor
 
 32. [x] Confiabilidad y negocio — Etapa 4: counters transaccionales, SLIs/SLOs provisionales, budget, recording rules, alertas y Alertmanager local, dashboard SRE y runbooks. Implementación/evidencia en STATUS e incluidas en df830d7. No incluye Kubernetes, cloud ni tracing.
 
-33. [ ] Kubernetes local — Etapa 5: kind, manifiestos declarativos, dos réplicas, probes, PostgreSQL/PVC, recursos, secrets, observabilidad multiinstancia y experimentos reales de recuperación, apagado, rollout/rollback. Evidencia local en STATUS y KUBERNETES; sin staging/commit/push por instrucción explícita. No incluye Helm, Terraform, cloud, operadores ni autoscaling.
+33. [x] Kubernetes local — Etapa 5: kind, manifiestos declarativos, dos réplicas, probes, PostgreSQL/PVC, recursos, secrets, observabilidad multiinstancia y experimentos reales de recuperación, apagado, rollout/rollback. Implementación incluida en d395a63; evidencia en STATUS y KUBERNETES. No incluye Helm, Terraform, cloud, operadores ni autoscaling.
+
+34. [ ] Helm — Etapa 6: Chart propio equivalente a Kubernetes, values acotados, Secrets externos, observabilidad canónica compartida, install/upgrade/rollback/uninstall y preservación de PVCs. Implementada y validada localmente; pendiente de commit por instrucción explícita (sin staging/commit/push). Evidencia en STATUS y HELM. No incluye Terraform, cloud, GitOps ni operadores.
