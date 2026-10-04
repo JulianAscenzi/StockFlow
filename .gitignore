@@ -40,3 +40,19 @@ frontend/vite.config.d.ts
 # Browser test reports
 frontend/test-results/
 frontend/playwright-report/
+
+# Terraform local state, credentials/configuration and generated plans
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.plan
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+crash.log
+crash.*.log
+# Keep .terraform.lock.hcl and terraform.tfvars.example versionable.

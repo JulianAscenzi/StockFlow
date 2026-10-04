@@ -1,0 +1,35 @@
+# Reference only. Copy to ignored terraform.tfvars after future deployment authorization.
+region             = "us-east-1"
+project_name       = "stockflow"
+environment        = "lab"
+vpc_cidr           = "10.42.0.0/16"
+availability_zones = ["us-east-1a", "us-east-1b"]
+
+backend_image_repository = "ghcr.io/julianascenzi/stockflow-backend"
+# Placeholder, NOT a deployable/released digest. Replace using verified registry evidence.
+backend_image_digest = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+
+task_cpu      = 512
+task_memory   = 1024
+desired_count = 1
+# Empty: HTTP blocked. Future technical checks require operator /32; never credentials over HTTP.
+alb_allowed_ipv4_cidrs = []
+
+db_instance_class         = "db.t4g.micro"
+db_allocated_storage      = 20
+db_name                   = "stockflow"
+multi_az                  = false
+backup_retention_days     = 7
+deletion_protection       = true
+final_snapshot_identifier = "stockflow-lab-final-replace-with-unique-date"
+
+# Dummy account/ARN identifiers only; secrets must exist OUTSIDE Terraform.
+db_application_secret_arn = "arn:aws:secretsmanager:us-east-1:000000000000:secret:stockflow/lab/database-EXAMPLE"
+application_secret_arn    = "arn:aws:secretsmanager:us-east-1:000000000000:secret:stockflow/lab/application-EXAMPLE"
+secret_kms_key_arns        = []
+log_retention_days        = 14
+tags                      = {}
+
+enable_budget              = false
+monthly_budget_usd         = 75
+budget_notification_emails = []

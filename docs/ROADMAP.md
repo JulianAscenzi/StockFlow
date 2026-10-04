@@ -49,4 +49,6 @@ El MVP permanece cerrado. Orden aprobado: pruebas de navegador → CI → histor
 
 34. [x] Helm — Etapa 6: Chart propio equivalente a Kubernetes, values acotados, Secrets externos, observabilidad canónica compartida, install/upgrade/rollback/uninstall y preservación de PVCs. Implementada y validada; incluida en 1d5d730. Evidencia en STATUS y HELM. No incluye Terraform, cloud, GitOps ni operadores.
 
-35. [ ] Imágenes CI/GHCR — Etapa 7: builds OCI backend/frontend dependientes de CI, smoke, tags SHA/semver, digest, SBOM/provenance y Helm por digest. Preparada y validada localmente; publicación real pendiente de una ejecución GitHub posterior al push autorizado. Sin CD, cloud ni Terraform. Ver CONTAINER_REGISTRY y STATUS.
+35. [x] Imágenes CI/GHCR — Etapa 7: builds OCI backend/frontend dependientes de CI, smoke, tags SHA/semver, digest, SBOM/provenance y Helm por digest. Publicación real, pulls anónimos, attestations y kind desde GHCR validados; evidencia en STATUS, checkpoint 18de2c0. Sin CD ni cloud. Ver CONTAINER_REGISTRY.
+
+36. [x] Arquitectura cloud e IaC — Etapa 8: ADR ECS/EKS/EC2, costos oficiales AWS, diseño ECS Fargate/ALB/RDS, secretos externos, IAM acotado y Terraform. Preparada y validada localmente con fmt/init/validate, siete tests mock offline y revisión estática; evidencia en STATUS. No crea recursos ni autoriza plan contra AWS, apply, deployment real o CD. Prerrequisitos cloud pendientes explícitos en adr/0001-cloud-runtime, AWS_COSTS y terraform/README.

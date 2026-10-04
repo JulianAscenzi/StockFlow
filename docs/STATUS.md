@@ -380,3 +380,32 @@ Los digests locales del checkpoint previo difieren de GHCR, como es esperable: f
 GitHub Security: endpoints secret-scanning, Dependabot y code-scanning devolvieron 401 anónimamente; el conector no permite esas familias de endpoints. No se accedió a alertas ni se puede afirmar que estén vacías. Requiere revisión autenticada en la pestaña Security; no se modificó configuración administrativa ni se detectó una credencial real en archivos inspeccionados. Scanner de vulnerabilidades, firma independiente, evidencia durable, actualización de bases, multi-arch y runtime frontend de producción siguen como deuda consciente. No se creó tag semántico, Terraform, cloud ni CD.
 
 Etapa 7 validada remotamente.
+
+## Etapa 8 — arquitectura e IaC, sin crear infraestructura (2026-10-04)
+
+Estado inicial limpio en `18de2c0`. Se revisaron arquitectura, roadmap, evidencia histórica, Dockerfile/variables Spring, Helm y runtime Vercel. ROADMAP aún describía la publicación GHCR como pendiente; se corrigió sólo ese estado según la evidencia real ya registrada de Etapa 7. No se repitió ni se presume una nueva ejecución GitHub en esta etapa.
+
+[ADR 0001](adr/0001-cloud-runtime.md) compara ECS, EKS y EC2 y elige ECS Fargate + ALB + RDS. [AWS_COSTS](AWS_COSTS.md) usa precios oficiales públicos consultados 2026-10-04, us-east-1, 730 h/mes: ECS lab USD 61,74; EC2 + RDS sin ALB USD 36,19 (con ALB 60,50); EKS dos nodos + RDS USD 184,31. Ejemplo productivo con dos tasks, RDS small Multi-AZ, dos NAT y mayor storage/logs: USD 240,33, sin impuestos/créditos/egress extra. Tarifas/SKU y supuestos documentados, sin cotización ni sizing productivo garantizados.
+
+Frontend permanece estático en Vercel; imagen Vite continúa laboratorio. Terraform flat en `terraform/`, sin módulos/dependencias charts. VPC privada /16, dos AZ, dos subnets públicas ALB/tasks y dos DB aisladas. Sin NAT en lab; tasks públicas con ingress únicamente desde ALB 8080/9091. PostgreSQL privado 5432 únicamente desde backend; storage gp3 cifrado, master secret administrado por AWS, backups siete días, deletion protection true, snapshot final obligatorio y sin autoscaling storage.
+
+Listener HTTP ALB cerrado por defecto; CIDRs técnicos explícitos, sin 0.0.0.0/0 de ingreso, sin credenciales por HTTP. Target 8080 y readiness 9091; Actuator no publicado por listener. Fargate Linux/amd64, 0,5 vCPU/1 GiB, una task por defecto, pares CPU/memoria validados, desired 0/1/2, rolling 100/200, circuit breaker rollback y stop/graceful configurados. Imagen sólo GHCR@digest requerido; no se copió el digest actual a recursos reutilizables.
+
+Secrets de aplicación/DB externos por ARN y claves JSON; sin valores ni secret-version data sources Terraform. App DB role separado de master, con bootstrap privado todavía por diseñar/autorizar. Execution role sólo logs del grupo concreto y lectura de dos secrets; KMS opcional en claves concretas/vía Secrets Manager. Sin application role ni AWS APIs en backend, ECR permissions, PAT ni credentials provider. `sensitive` no se presenta como protección del state. CloudWatch logs JSON con retención 14 días/métricas nativas; stack SRE local sin cambios. Budget account-wide opt-in, USD 75 derivado de baseline+margen, sin destinatarios reales; no límite duro de gasto.
+
+Validaciones **actuales**:
+
+* Terraform **1.16.5** descargado desde HashiCorp y checksum oficial comprobado; required_version `~> 1.16.0`. AWS provider **6.67.0**, constraint `~> 6.0`, firma HashiCorp validada por init y checksums en `.terraform.lock.hcl` versionable.
+* `terraform fmt -check -recursive`: aprobado.
+* `terraform init -backend=false -input=false`: aprobado; sólo descarga provider y genera lockfile local.
+* `terraform validate`: aprobado sin warnings. En sandbox el plugin no pudo iniciar su socket local; la misma validación fuera de esa restricción aprobó, sin Configure/API AWS ni credenciales nuevas.
+* `terraform test`: **7 pasaron, 0 fallaron**, provider AWS completamente mock, sólo planes estructurales en memoria; ningún apply. Prueba defaults DB/red/digest/secret ARNs/IAM/retención, overrides dos replicas/Multi-AZ, rechazo HTTP abierto, par Fargate inválido, imagen mutable y budget sin destinatario, y KMS opt-in. Primer intento no pudo evaluar atributos computed en plan; se añadieron defaults/overrides mock explícitos, sin cambiar recursos reales para ocultarlo.
+* `backend/./mvnw test`: **385 tests, 0 failures/errors/skipped**, BUILD SUCCESS (~1m45s), PostgreSQL Testcontainers local. Sin cambios de aplicación, Docker, Compose, Helm, workflow o reglas/dashboards; no se repite Playwright por esta preparación documental/IaC.
+* Revisión estática: DB no pública, no CIDR abierto a 5432, master no inyectado en backend, IAM secrets concretos/log streams acotados, sin secret values/keys, cifrado RDS y logs AWS managed, retención finita, snapshot y protección de borrado. `0.0.0.0/0` sólo ruta Internet y egress HTTPS justificado de tasks; no permiso IAM global innecesario. Root filesystem ECS escribible por necesidad de /tmp del usuario non-root: endurecer con volumen escribible correctamente requiere prueba runtime, no se inventa equivalencia con fsGroup Kubernetes.
+* `git diff --check`: aprobado; staging vacío. `.terraform/`, tfstate/backups, plans, tfvars locales/overrides/crash logs ignorados; lockfile y tfvars.example versionables. No state/plan generado en repositorio ni credentials AWS en archivos nuevos.
+
+Límites: no plan normal contra AWS ni consultas de cuenta, por lo que IAM/SCP/cuotas, disponibilidad exacta engine/clase/AZ, DB bootstrap/Flyway con usuario limitado, Fargate/runtime/digest pull, restore y alarmas requieren una etapa autorizada posterior. Vercel HTTPS→ALB HTTP sería mixed content: dominio/ACM/HTTPS/CORS exacto requeridos antes de login/browser. TLS RDS lab require cifra sin verificar identidad; verify-full/CA pendiente para producción. Compute privado/NAT por AZ sólo diseñado/costeado, no selectable en este root; label production no habilita producción. Budget/alertas billing no detienen gasto; snapshots/secrets externos pueden facturar después de destroy. Remote state S3 con versioning/encryption/lockfile nativo diseñado, sin bucket ni backend remoto creado.
+
+No se ejecutó `terraform apply`, ningún plan contra AWS ni creación/modificación AWS CLI. **Ningún recurso cloud creado por esta etapa.** No credenciales reales generadas, no state versionado, no CD, staging, commit ni push. Todo permanece local para revisión.
+
+Etapa 8 preparada y validada sin crear infraestructura cloud.

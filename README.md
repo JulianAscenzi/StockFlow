@@ -204,3 +204,5 @@ La Etapa 4 añade **StockFlow - SRE Overview** y Alertmanager local en http://lo
 ## Kubernetes local
 
 Helm es el flujo recomendado para el laboratorio kind: [docs/HELM.md](docs/HELM.md). El Chart reproduce las dos réplicas backend, PostgreSQL persistente y observabilidad de la Etapa 5. Los manifiestos `k8s/` permanecen como referencia educativa; guía base y experimentos: [docs/KUBERNETES.md](docs/KUBERNETES.md). Compose y la demo pública conservan su ejecución.
+
+El diseño cloud objetivo y Terraform se preparan sin crear infraestructura: [ADR cloud](docs/adr/0001-cloud-runtime.md), [costos AWS](docs/AWS_COSTS.md) y [guía Terraform](terraform/README.md). ECS Fargate + RDS complementa el laboratorio Kubernetes; no hay despliegue AWS ni CD.

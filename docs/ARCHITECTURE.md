@@ -96,3 +96,39 @@ Los servicios de ventas e inventario registran counters de negocio mediante Busi
 El laboratorio Etapa 5 usa namespace stockflow en kind: dos réplicas backend detrás de ClusterIP, frontend Vite con proxy DNS interno, PostgreSQL 17 StatefulSet/PVC y observabilidad con Deployments/PVCs. Flyway y bootstrap mantienen coordinación PostgreSQL en cada arranque. Management 9091 no forma parte del Service backend ni se publica al host; Prometheus descubre pods mediante RBAC namespaced. La Etapa 6 empaqueta estos recursos en un Chart propio, sin dependencias externas: [HELM](HELM.md). No hay Ingress ni operadores. [KUBERNETES](KUBERNETES.md) documenta seguridad, recursos y límites de nodo único. PostgreSQL dentro de Kubernetes se utiliza aquí para laboratorio; en producción/cloud evaluaremos una base administrada.
 
 La Etapa 7 prepara la publicación mediante eventos GitHub de imágenes backend/frontend en GHCR, después de CI y smoke del mismo artefacto OCI. SBOM/provenance acompañan al digest; no hay despliegue automático ni cambio del runtime Vite de laboratorio. Helm permite repository/tag/digest sin modificar el flujo kind local. Contrato y límites: [CONTAINER_REGISTRY](CONTAINER_REGISTRY.md).
+
+## Arquitectura cloud objetivo — Etapa 8, sin deployment
+
+El [ADR 0001](adr/0001-cloud-runtime.md) selecciona ECS Fargate + ALB + RDS PostgreSQL 17. [Terraform](../terraform/README.md) prepara recursos explícitos para laboratorio; [AWS_COSTS](AWS_COSTS.md) compara ECS, EKS y EC2 con tarifas oficiales us-east-1. No se crearon recursos AWS ni se implementó CD.
+
+```mermaid
+flowchart TB
+    Operator[Operador: HTTP técnico por CIDR autorizado]
+    Frontend[Vercel: frontend estático HTTPS]
+    Future[Dominio + ACM + API HTTPS: futuro, sin crear]
+    GHCR[GHCR público: backend por digest amd64]
+    Secrets[Secrets Manager: master RDS y secrets app externos]
+    Logs[CloudWatch Logs JSON: retención 14 días]
+    subgraph VPC["VPC 10.42.0.0/16 — dos AZ"]
+      IGW[Internet Gateway]
+      subgraph Public["Públicas .0.0/24 y .1.0/24 — ruta IGW"]
+        ALB["SG ALB: listener 80, ingress cerrado por defecto"]
+        Tasks["SG backend: ECS Fargate, 1 task default / 2 opcional, IP pública"]
+      end
+      subgraph Isolated["DB .10.0/24 y .11.0/24 — sin ruta Internet"]
+        DB["SG DB: RDS 17 privado cifrado, Single-AZ / Multi-AZ opcional"]
+      end
+      ALB -->|"8080 API; readiness 9091 sólo desde SG ALB"| Tasks
+      Tasks -->|"5432 TLS sólo desde SG backend"| DB
+    end
+    Operator --> IGW --> ALB
+    Frontend -.-> Future -.-> ALB
+    Tasks -->|"443 por IGW: descarga OCI, sin NAT"| GHCR
+    Tasks -->|"443: execution role, ARNs concretos"| Secrets
+    Tasks -->|"443: execution role, streams del grupo"| Logs
+    DB -->|"Master administrado por RDS; nunca inyectado en app"| Secrets
+```
+
+Diagrama objetivo, no estado desplegado. Las tasks públicas no aceptan Internet inbound directo; DB sólo acepta el SG backend. Application task role ausente. No se publica management ni PostgreSQL. Terraform contiene únicamente ARNs de secrets externos, no valores; master RDS generado por AWS en un apply futuro. El frontend Vite Docker permanece local. Vercel no puede conectarse por navegador al HTTP ALB: HTTPS/dominio/CORS se requieren antes de integrar autenticación.
+
+Esta red evita NAT por costo para laboratorio. Producción requiere compute privado/salida revisada, HTTPS, CA RDS `verify-full`, capacity/failover y alarmas comprobadas. El root inicial no implementa automáticamente esa variante. CloudWatch complementa la stack SRE local, que permanece sin cambios.
