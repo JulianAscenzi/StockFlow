@@ -66,7 +66,7 @@ kubectl --context kind-stockflow-lab -n stockflow port-forward --address 127.0.0
 
 Abrir http://127.0.0.1:5173. No publicar DB ni management. Port-forward se conecta a un pod, no demuestra balanceo del Service por sí mismo; el proxy Vite sí consulta el ClusterIP backend. Si se reemplaza el pod destino del port-forward, reiniciar ese comando.
 
-`k8s-up-raw.sh` construye imágenes `stage5-v1`, carga imágenes y configura los ConfigMaps de observabilidad desde los archivos canónicos de `helm/stockflow/files/monitoring/`. Valida cada manifiesto con dry-run del servidor y espera rollouts. La importación usa la plataforma del host porque Docker con índices multi-arquitectura incompletos puede hacer fallar `kind load --all-platforms`. No hay registry externo para imágenes StockFlow. No mutar un tag ya desplegado: usar un tag nuevo y actualizar el Deployment.
+`k8s-up-raw.sh` construye imágenes `stage5-v1`, carga imágenes y configura los ConfigMaps de observabilidad desde los archivos canónicos de `helm/stockflow/files/monitoring/`. Valida cada manifiesto con dry-run del servidor y espera rollouts. La importación usa la plataforma del host porque Docker con índices multi-arquitectura incompletos puede hacer fallar `kind load --all-platforms`. El flujo raw local usa imágenes cargadas en kind. Etapa 7 prepara un camino opcional GHCR mediante Helm, sin CD: [CONTAINER_REGISTRY](CONTAINER_REGISTRY.md). No mutar un tag ya desplegado: usar un tag nuevo y actualizar el Deployment.
 
 ## Probes y arranque
 

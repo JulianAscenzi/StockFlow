@@ -1,11 +1,13 @@
 # Namespace comes from --namespace; credentials are managed outside Helm.
 global:
   imagePullPolicy: IfNotPresent
+  imagePullSecrets: [] # References to existing registry Secrets, never credentials.
 existingSecret: stockflow-secrets
 backend:
   image:
     repository: stockflow-backend
     tag: stage5-v1
+    digest: '' # When set, repository@digest takes precedence over tag.
   resources:
     requests:
       cpu: 250m
@@ -45,6 +47,7 @@ frontend:
   image:
     repository: stockflow-frontend
     tag: stage5-v1
+    digest: ''
   resources:
     requests:
       cpu: 100m

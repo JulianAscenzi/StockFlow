@@ -4,6 +4,7 @@ on:
   pull_request:
   push:
     branches: [main]
+    tags: ['v[0-9]*.[0-9]*.[0-9]*']
   workflow_dispatch:
 
 permissions:
@@ -11,7 +12,7 @@ permissions:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.head_ref || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref_type != 'tag' }}
 
 jobs:
   backend:
@@ -124,4 +125,170 @@ jobs:
             backend/target/browser-e2e.log
             frontend/test-results/
           retention-days: 7
+          if-no-files-found: error
+
+  images:
+    needs: [backend, frontend]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Artifact integrity tests
+        run: python3 -m unittest discover -s scripts/tests -p test_image_artifact.py -v
+      - name: Image coordinates and source timestamp
+        id: source
+        env:
+          OWNER: ${{ github.repository_owner }}
+          COMPONENT: ${{ matrix.component }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          version=''
+          if [[ "$REF_TYPE" == tag ]]; then
+            [[ "$REF_NAME" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || { echo 'Expected stable vX.Y.Z tag' >&2; exit 1; }
+            version="${REF_NAME#v}"
+          fi
+          echo "repository=ghcr.io/${OWNER,,}/stockflow-$COMPONENT" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "epoch=$(git log -1 --format=%ct)" >> "$GITHUB_OUTPUT"
+          echo "created=$(git log -1 --format=%cI)" >> "$GITHUB_OUTPUT"
+          mkdir -p "$RUNNER_TEMP/image"
+      - uses: docker/setup-buildx-action@v4
+        with:
+          version: v0.37.2
+          driver-opts: image=moby/buildkit:v0.33.1
+      - uses: docker/metadata-action@v6
+        id: meta
+        with:
+          images: ${{ steps.source.outputs.repository }}
+          flavor: latest=false
+          tags: |
+            type=sha,format=long
+            type=semver,pattern={{version}},enable=${{ github.ref_type == 'tag' }}
+          labels: |
+            org.opencontainers.image.created=${{ steps.source.outputs.created }}
+      - name: Build OCI image with attestations (never push here)
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: ./${{ matrix.component }}
+          platforms: linux/amd64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: SOURCE_DATE_EPOCH=${{ steps.source.outputs.epoch }}
+          outputs: type=oci,dest=${{ runner.temp }}/image/image.tar,rewrite-timestamp=true
+          provenance: mode=max
+          sbom: true
+          cache-from: type=gha,scope=stockflow-${{ matrix.component }}-amd64
+          cache-to: type=gha,scope=stockflow-${{ matrix.component }}-amd64,mode=max
+      - name: Record and verify OCI digest, SBOM and provenance
+        env:
+          METADATA: ${{ steps.meta.outputs.json }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+          REPOSITORY: ${{ steps.source.outputs.repository }}
+          VERSION: ${{ steps.source.outputs.version }}
+        run: |
+          printf '%s' "$METADATA" > "$RUNNER_TEMP/image/metadata.json"
+          python3 scripts/image-artifact.py record "$RUNNER_TEMP/image" \
+            --metadata "$RUNNER_TEMP/image/metadata.json" --digest "$DIGEST" \
+            --repository "$REPOSITORY" --commit "$GITHUB_SHA" --version "$VERSION"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: oci-${{ matrix.component }}
+          path: ${{ runner.temp }}/image/
+          compression-level: 0
+          retention-days: 1
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        with:
+          name: image-metadata-${{ matrix.component }}
+          path: |
+            ${{ runner.temp }}/image/image.json
+            ${{ runner.temp }}/image/sbom.spdx.json
+            ${{ runner.temp }}/image/provenance.json
+          retention-days: 30
+          if-no-files-found: error
+
+  image-smoke:
+    needs: [images]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: docker/setup-docker-action@v5
+        with:
+          version: v29.8.2
+          daemon-config: '{"features":{"containerd-snapshotter":true}}'
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: oci-*
+          path: ${{ runner.temp }}/images
+      - name: Load exact OCI artifacts and smoke-test integration
+        run: |
+          set -euo pipefail
+          for component in backend frontend; do
+            python3 scripts/image-artifact.py load "$RUNNER_TEMP/images/oci-$component"
+          done
+          docker pull postgres:17-alpine
+          backend=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["tags"][0])' "$RUNNER_TEMP/images/oci-backend/image.json")
+          frontend=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["tags"][0])' "$RUNNER_TEMP/images/oci-frontend/image.json")
+          python3 scripts/image-smoke.py --backend "$backend" --frontend "$frontend" --output "$RUNNER_TEMP/smoke"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: image-smoke-reports
+          path: ${{ runner.temp }}/smoke/
+          retention-days: 7
+          if-no-files-found: warn
+
+  publish:
+    needs: [backend, frontend, browser, images, image-smoke]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref_type == 'tag')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: docker/setup-docker-action@v5
+        with:
+          version: v29.8.2
+          daemon-config: '{"features":{"containerd-snapshotter":true}}'
+      - uses: docker/setup-buildx-action@v4
+        with:
+          version: v0.37.2
+          driver-opts: image=moby/buildkit:v0.33.1
+      - uses: actions/download-artifact@v8
+        with:
+          name: oci-${{ matrix.component }}
+          path: ${{ runner.temp }}/image
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish tested OCI index and verify registry digest
+        id: publish
+        run: python3 scripts/image-artifact.py publish "$RUNNER_TEMP/image"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: published-${{ matrix.component }}
+          path: ${{ runner.temp }}/image/image.json
+          retention-days: 30
           if-no-files-found: error

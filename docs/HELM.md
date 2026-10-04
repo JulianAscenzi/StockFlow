@@ -6,11 +6,13 @@
 
 `values.yaml` conserva imágenes, dos réplicas backend, recursos, probes, puertos 8080/9091, terminación de 45s, PDB minAvailable=1 y tamaños de almacenamiento validados. Sólo se parametrizan decisiones operativas útiles: imágenes, recursos, almacenamiento, referencias a Secrets y configuración backend. Reglas, seguridad, retención, networking interno y estrategia de rollout permanecen explícitos. `values.schema.json` rechaza cantidades/puertos inválidos y un grace period inferior a la fase Boot de 30s.
 
-`values-local.yaml` identifica las imágenes locales del laboratorio y su pull policy. Actualmente los defaults usan las mismas imágenes funcionales: no existe aún un registry de aplicación ni se inventa una configuración de producción. Los overrides permiten cambiar esas referencias sin editar templates.
+`values-local.yaml` identifica las imágenes locales del laboratorio y su pull policy. Actualmente los defaults usan las mismas imágenes funcionales: el flujo local no requiere registry. El pipeline GHCR preparado en Etapa 7 permite overrides de repository/tag/digest; ver [CONTAINER_REGISTRY](CONTAINER_REGISTRY.md). Los overrides permiten cambiar esas referencias sin editar templates.
 
 El namespace viene de `.Release.Namespace`: usar `--namespace … --create-namespace`. El Chart no crea Namespace. Los nombres de recursos conservan `backend`, `frontend`, `database`, etc. para mantener DNS, provisioning y herramientas existentes. **Una release StockFlow por namespace**; para otra instalación usar otro namespace. `app` permanece para los experimentos previos; selectors agregan `app.kubernetes.io/instance`. Prometheus filtra namespace, release, app=backend, puerto management y fase Running; no filtra readiness. Sólo tiene get/list/watch de pods en ese namespace. Management no se publica mediante Service.
 
-`Chart.yaml`: apiVersion=v2, type=application, version=0.1.0 es la versión del paquete y sus templates; appVersion=0.0.1-SNAPSHOT identifica la versión actual del backend Maven. Son ciclos distintos: una modificación del Chart no implica una nueva aplicación. Los tags de imagen son referencias explícitas en values; appVersion no los reemplaza.
+`Chart.yaml`: apiVersion=v2, type=application, version=0.2.0 es la versión del paquete y sus templates; appVersion=0.0.1-SNAPSHOT identifica la versión actual del backend Maven. Son ciclos distintos: una modificación del Chart no implica una nueva aplicación. Los tags de imagen son referencias explícitas en values; appVersion no los reemplaza.
+
+Backend/frontend aceptan `image.digest` vacío por defecto; un digest sha256 válido produce repository@digest y tiene prioridad sobre tag. Limpiarlo explícitamente para volver a tags. `global.imagePullSecrets` acepta nombres de Secrets externos existentes y se aplica a todos los workloads; por defecto se omite. No contiene credenciales. Los defaults kind y valores funcionales se conservan.
 
 ## Fuente única de observabilidad
 

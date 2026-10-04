@@ -7,3 +7,12 @@ app.kubernetes.io/component: {{ .component | quote }}
 app.kubernetes.io/managed-by: {{ .root.Release.Service | quote }}
 helm.sh/chart: {{ printf "%s-%s" .root.Chart.Name .root.Chart.Version | quote }}
 {{- end -}}
+
+{{/* Tags aid browsing; a supplied digest selects immutable image content. */}}
+{{- define "stockflow.image" -}}
+{{- if .digest -}}
+{{- printf "%s@%s" .repository .digest -}}
+{{- else -}}
+{{- printf "%s:%s" .repository .tag -}}
+{{- end -}}
+{{- end -}}

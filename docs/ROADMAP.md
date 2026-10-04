@@ -47,4 +47,6 @@ El MVP permanece cerrado. Orden aprobado: pruebas de navegador → CI → histor
 
 33. [x] Kubernetes local — Etapa 5: kind, manifiestos declarativos, dos réplicas, probes, PostgreSQL/PVC, recursos, secrets, observabilidad multiinstancia y experimentos reales de recuperación, apagado, rollout/rollback. Implementación incluida en d395a63; evidencia en STATUS y KUBERNETES. No incluye Helm, Terraform, cloud, operadores ni autoscaling.
 
-34. [ ] Helm — Etapa 6: Chart propio equivalente a Kubernetes, values acotados, Secrets externos, observabilidad canónica compartida, install/upgrade/rollback/uninstall y preservación de PVCs. Implementada y validada localmente; pendiente de commit por instrucción explícita (sin staging/commit/push). Evidencia en STATUS y HELM. No incluye Terraform, cloud, GitOps ni operadores.
+34. [x] Helm — Etapa 6: Chart propio equivalente a Kubernetes, values acotados, Secrets externos, observabilidad canónica compartida, install/upgrade/rollback/uninstall y preservación de PVCs. Implementada y validada; incluida en 1d5d730. Evidencia en STATUS y HELM. No incluye Terraform, cloud, GitOps ni operadores.
+
+35. [ ] Imágenes CI/GHCR — Etapa 7: builds OCI backend/frontend dependientes de CI, smoke, tags SHA/semver, digest, SBOM/provenance y Helm por digest. Preparada y validada localmente; publicación real pendiente de una ejecución GitHub posterior al push autorizado. Sin CD, cloud ni Terraform. Ver CONTAINER_REGISTRY y STATUS.
