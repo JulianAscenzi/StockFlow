@@ -124,7 +124,7 @@ Los tests de reglas usan series sintéticas deterministas para matemática, excl
 
 ## Cambiar objetivos
 
-Actualizar explícitamente targets, divisores de budget, umbrales derivados y ventanas en las reglas; agregar/modificar buckets exactos en application-observability.properties si cambian los límites de latencia. Actualizar títulos/documentación y tests promtool, revisar runbooks, rebuild de backend y recarga/reinicio Prometheus. No basta con editar el número del panel. No cambiar objetivos para ocultar un incidente. Antes de adoptar metas comerciales, medir carga representativa, disponibilidad del recorrido completo, volumen mínimo y retención real. No se agregan Kubernetes, cloud ni tracing en esta etapa.
+Actualizar explícitamente targets, divisores de budget, umbrales derivados y ventanas en las reglas; agregar/modificar buckets exactos en application-observability.properties si cambian los límites de latencia. Actualizar títulos/documentación y tests promtool, revisar runbooks, rebuild de backend y recarga/reinicio Prometheus. No basta con editar el número del panel. No cambiar objetivos para ocultar un incidente. Antes de adoptar metas comerciales, medir carga representativa, disponibilidad del recorrido completo, volumen mínimo y retención real. El laboratorio [Kubernetes](KUBERNETES.md) reutiliza estas reglas; cloud y tracing no forman parte de esta guía.
 
 ## SLOs con múltiples réplicas
 

@@ -2,6 +2,8 @@
 
 Consulta: **2026-10-04**, región **us-east-1 (N. Virginia)**, USD, on-demand, 730 horas/mes. Estimaciones, no cotización. No se utilizó una cuenta AWS. No se incluyen impuestos, créditos/free tier, descuentos ni costos de Vercel. Revisar tarifas y uso en AWS Pricing Calculator antes de autorizar un despliegue.
 
+Estas cifras son evidencia del análisis en esa fecha, no precios consultados de nuevo durante el cierre de portfolio. El diseño AWS no está desplegado y mantenerlo sin provisionamiento permanente evita estos costos continuos.
+
 ## Tarifas oficiales consultadas
 
 | Concepto | Tarifa USD | Fuente |

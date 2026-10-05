@@ -1,20 +1,20 @@
 # Operación del backend
 
-Esta guía cubre las capacidades operativas del backend y su validación local. La ejecución Kubernetes local complementaria está en [KUBERNETES](KUBERNETES.md); no se agrega cloud. La observabilidad local está documentada en [OBSERVABILITY](OBSERVABILITY.md). El arranque completo sigue documentado en README.
+Esta guía cubre las capacidades operativas del backend y su validación local. La ejecución Kubernetes local complementaria está en [KUBERNETES](KUBERNETES.md); no se agrega cloud. La observabilidad local está documentada en [OBSERVABILITY](OBSERVABILITY.md). El arranque y desarrollo están en [LOCAL_DEVELOPMENT](LOCAL_DEVELOPMENT.md).
 
 ## Health y tráfico
 
 Fuera del perfil `observability` sólo se expone Actuator `health`, sin componentes ni detalles incluso con un JWT válido. Seguridad permite GET anónimo exactamente sobre `/actuator/health`, `/actuator/health/liveness` y `/actuator/health/readiness`. No se habilitan env, metrics ni otros subpaths. En Compose, health y prometheus se sirven en management 9091; ver la política exacta en OBSERVABILITY.
 
-| Endpoint | Incluye | Interpretación futura |
+| Endpoint | Incluye | Interpretación operativa |
 | --- | --- | --- |
 | `/actuator/health/liveness` | `livenessState` de Spring Boot | Un fallo persistente puede justificar reiniciar la instancia |
 | `/actuator/health/readiness` | `readinessState` y `db` | Un fallo retira la instancia del tráfico; no exige reiniciarla |
 | `/actuator/health` | Health general de Boot | Compatibilidad con Render y healthcheck de Compose |
 
-La caída de PostgreSQL no significa que el proceso JVM esté roto. Por eso no forma parte de liveness. Readiness sí verifica la DB porque las operaciones comerciales la necesitan. Un proceso vivo también puede no estar listo durante bootstrap o apagado. HTTP 200 indica UP; DOWN/OUT_OF_SERVICE devuelve 503. Estas probes no garantizan detectar todos los deadlocks ni reemplazan una futura startup probe y política de umbrales.
+La caída de PostgreSQL no significa que el proceso JVM esté roto. Por eso no forma parte de liveness. Readiness sí verifica la DB porque las operaciones comerciales la necesitan. Un proceso vivo también puede no estar listo durante bootstrap o apagado. HTTP 200 indica UP; DOWN/OUT_OF_SERVICE devuelve 503. Estas probes no garantizan detectar todos los deadlocks ni reemplazan la startup probe y política de umbrales del [laboratorio Kubernetes](KUBERNETES.md#probes-y-arranque).
 
-Compose conserva el healthcheck general y no reinicia automáticamente un contenedor por quedar unhealthy. `depends_on` ordena el arranque inicial; no implementa retirada de tráfico durante una caída posterior. Las respuestas 503 siguen siendo necesarias hasta que exista un orquestador.
+Compose conserva el healthcheck general y no reinicia automáticamente un contenedor por quedar unhealthy. `depends_on` ordena el arranque inicial; no implementa retirada de tráfico durante una caída posterior. Las respuestas 503 siguen siendo necesarias en Compose; Kubernetes sí retira endpoints mediante readiness.
 
 ```bash
 docker compose exec backend curl -i http://backend-management:9091/actuator/health/liveness

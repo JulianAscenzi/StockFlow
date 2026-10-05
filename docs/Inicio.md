@@ -12,16 +12,36 @@ Las notas se versionan con Git. La carpeta `docs/.obsidian/`, que Obsidian crea 
 
 ## Documentación de referencia
 
-- [Arquitectura](ARCHITECTURE.md): módulos, modelo, reglas y transacciones.
-- [Roadmap](ROADMAP.md): alcance y planificación.
-- [Estado](STATUS.md): entregas, verificaciones y bloqueos.
-- [Despliegue](DEPLOYMENT.md): operación y límites de la demo.
-- [README del repositorio](../README.md): ejecución local, API y enlaces públicos.
+El [README](../README.md) es la entrada de 2–4 minutos. Cada guía profundiza una pregunta distinta:
+
+| Documento | Propósito |
+| --- | --- |
+| [LOCAL_DEVELOPMENT](LOCAL_DEVELOPMENT.md) | Ejecutar Compose, desarrollar con Maven/Vite, configuración y tests. |
+| [ARCHITECTURE](ARCHITECTURE.md) | Módulos, modelo, transacciones, concurrencia y diagramas técnicos. |
+| [OPERATIONS](OPERATIONS.md) | Semántica del proceso backend: probes, cierre, bootstrap, request ID y timeouts. |
+| [OBSERVABILITY](OBSERVABILITY.md) | Scraping, métricas técnicas, cardinalidad y provisioning de dashboards. |
+| [SRE](SRE.md) | Métricas transaccionales, SLI/SLO, cobertura, budget y política de alertas. |
+| [RUNBOOK](RUNBOOK.md) | Diagnóstico y recuperación según el síntoma; no redefine los SLOs. |
+| [KUBERNETES](KUBERNETES.md) | Laboratorio raw: red, recursos, persistencia, probes y experimentos registrados. |
+| [HELM](HELM.md) | Flujo recomendado: valores, ownership, instalación, upgrade/rollback y PVCs. |
+| [CONTAINER_REGISTRY](CONTAINER_REGISTRY.md) | Contrato CI/OCI/GHCR, promoción, digest, SBOM/provenance y permisos. |
+| [ADR cloud](adr/0001-cloud-runtime.md) | Elección ECS/EKS/EC2, alternativas y consecuencias. |
+| [AWS_COSTS](AWS_COSTS.md) | Estimación fechada, tarifas, supuestos y controles de costos. |
+| [Terraform](../terraform/README.md) | Implementación IaC, validación sin AWS y prerrequisitos de un despliegue opcional. |
+| [TERRAFORM_PLAN_REVIEW](TERRAFORM_PLAN_REVIEW.md) | Checkpoint histórico 9A: revisión estática; plan real no ejecutado. |
+| [DEPLOYMENT](DEPLOYMENT.md) | Demo Vercel/Render existente y sus límites; distinta del diseño AWS. |
+| [STATUS](STATUS.md) | Estado actual seguido por evidencia histórica local/Kubernetes/GitHub. |
+| [ROADMAP](ROADMAP.md) | Entregas completadas y mejoras futuras opcionales. |
+| [AUDIT](AUDIT.md) | Auditoría funcional histórica y regresiones corregidas. |
+| [PORTFOLIO_AUDIT](PORTFOLIO_AUDIT.md) | Diagnóstico del cierre documental y validaciones de portfolio. |
+| [PORTFOLIO](PORTFOLIO.md) | Descripciones CV/LinkedIn, pitch y preguntas de entrevista. |
+| [Capturas](images/README.md) | Inventario de imágenes reales y checklist manual. |
+| [Release notes](RELEASE_NOTES_1.0.0.md) | Borrador v1.0.0 y checklist previo a publicación. |
 
 ## Decisiones y presentación
 
-- [Bloqueo de stock](decisiones/Bloqueo%20de%20stock.md): cómo se coordinan ventas concurrentes y qué pruebas respaldan la solución.
-- [Guion de demostración](portfolio/Guion%20de%20demostracion.md): recorrido del producto y puntos técnicos para una entrevista.
+- [Bloqueo de stock](decisiones/Bloqueo%20de%20stock.md): decisión respaldada por código y pruebas.
+- [Guion de demostración](portfolio/Guion%20de%20demostracion.md): recorrido funcional de cinco minutos; complementa el pitch técnico.
 
 ## Cómo mantener este cuaderno
 

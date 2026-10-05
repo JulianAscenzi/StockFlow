@@ -47,6 +47,8 @@ frontend/playwright-report/
 *.tfstate.*
 *.tfplan
 *.plan
+*.tfplan.json
+*.plan.json
 *.tfvars
 *.tfvars.json
 override.tf
@@ -56,3 +58,36 @@ override.tf.json
 crash.log
 crash.*.log
 # Keep .terraform.lock.hcl and terraform.tfvars.example versionable.
+
+# Local secrets (keep public frontend config and example templates versionable)
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+!**/.env.*.example
+!frontend/.env.production
+*.pem
+*.key
+secrets.env
+grafana.env
+
+# Temporary Kubernetes configuration and runtime evidence
+kubeconfig
+kubeconfig.*
+*.kubeconfig
+.kube/
+.kubeconfig
+.aws/
+runtime-reports/
+
+# Local OCI archives, Python cache and temporary editor files
+*.tar
+*.oci
+*.dockerbuild
+oci-artifacts/
+__pycache__/
+*.pyc
+*.tmp
+*.swp
+*~

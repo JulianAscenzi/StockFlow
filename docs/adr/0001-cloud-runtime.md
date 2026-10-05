@@ -4,7 +4,7 @@ Fecha: 2026-10-04. Estado: aceptado para preparación; despliegue AWS no autoriz
 
 ## Contexto
 
-StockFlow ya demuestra Kubernetes, Helm, rolling updates, rollback y SRE mediante kind. Las imágenes públicas GHCR se identifican por digest y tienen SBOM/provenance. La siguiente demostración debe aportar networking, IAM, compute y PostgreSQL administrados, secretos y control de costos. No se necesita otro orquestador sólo para ampliar la lista de tecnologías.
+StockFlow ya demuestra Kubernetes, Helm, rolling updates, rollback y SRE mediante kind. Las imágenes públicas GHCR se identifican por digest y tienen SBOM/provenance. El diseño cloud aporta networking, IAM, compute y PostgreSQL administrados, secretos y control de costos como decisiones revisables. Su implementación Terraform se valida estáticamente; provisionar AWS es una extensión opcional, deliberadamente fuera del cierre de portfolio por costos. No se necesita otro orquestador sólo para ampliar la lista de tecnologías.
 
 ## Alternativas
 

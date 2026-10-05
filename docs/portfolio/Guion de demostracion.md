@@ -4,7 +4,7 @@ Objetivo: mostrar en unos cinco minutos cómo StockFlow conecta catálogo, inven
 
 ## Preparación
 
-Abrí la aplicación desde los enlaces del [README](../../README.md). Revisá los [límites de despliegue](../DEPLOYMENT.md) y comprobá que la demo responda antes de presentarla. Usá datos ficticios y un sufijo único para la categoría y el SKU, por ejemplo fecha y hora, para evitar colisiones con demostraciones anteriores.
+Abrí la aplicación local según el [README](../../README.md) o consultá los [enlaces de la demo](../DEPLOYMENT.md#enlaces-de-la-demo-registrada). Revisá los [límites de despliegue](../DEPLOYMENT.md) y comprobá que la demo responda antes de presentarla. Usá datos ficticios y un sufijo único para la categoría y el SKU, por ejemplo fecha y hora, para evitar colisiones con demostraciones anteriores.
 
 Anotá las métricas iniciales del resumen: la demo puede contener operaciones de otras personas. Los incrementos de abajo suponen que nadie más registra ventas durante el recorrido y que no cambia el día en Argentina.
 

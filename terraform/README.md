@@ -1,6 +1,8 @@
-# StockFlow — Terraform preparado, sin infraestructura creada
+# StockFlow — diseño AWS y Terraform validado, sin provisionar
 
 El [ADR 0001](../docs/adr/0001-cloud-runtime.md) elige ECS Fargate + ALB + RDS para ampliar la demostración AWS sin repetir Kubernetes. [AWS_COSTS](../docs/AWS_COSTS.md) estima USD 61,74/mes para lab y USD 240,33/mes para un ejemplo productivo distinto. **Esta etapa no autoriza plan contra AWS, apply, destroy ni comandos AWS sobre la cuenta.** Los comandos que pueden consultar/modificar AWS abajo son instrucciones para una etapa futura con autorización explícita.
+
+El diseño y la implementación IaC forman parte del portfolio completado. Se mantienen sin provisionamiento permanente para evitar costos cloud innecesarios. Siete tests con provider mock y validación estática no prueban operación AWS; el reporte de preparación [9A](../docs/TERRAFORM_PLAN_REVIEW.md) conserva los límites de un plan real que no se ejecutó. El cierre actual no requiere continuar esa etapa.
 
 ## Alcance y estructura
 
@@ -109,5 +111,13 @@ terraform apply destroy.tfplan
 Snapshot final obligatorio (`skip_final_snapshot=false`), backups automáticos conservados dentro de retención (`delete_automated_backups=false`). Los snapshots siguen generando costos después de borrar DB; si el nombre ya existe destroy falla, no desactivar snapshot para esconder el fallo. AWS elimina el master secret administrado al borrar DB; snapshot no conserva un secret operativo: recuperación requiere recrear/resetear master de forma segura. Secrets externos no son destruidos por Terraform y también facturan. Log group se borra en destroy: exportar evidencia necesaria antes, retención no es backup. ALB/IP tasks se liberan al destruir; verificar recursos/facturación reales en la etapa autorizada. Budgets notifican, no bloquean costos, y el preparado es account-wide si se activa.
 
 ## Límites de la validación
+
+### Pausa temporal RDS frente a destrucción
+
+Escalar ECS a cero deja de facturar CPU/RAM y las IPv4 de tasks terminadas; ALB y sus IPv4, RDS, almacenamiento, secretos y logs retenidos siguen generando cargos. No es equivalente a destruir el entorno.
+
+[RDS permite detener PostgreSQL temporalmente](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_StopInstance.html), como máximo siete días consecutivos; después AWS lo reinicia automáticamente. Detenido no cobra horas de instancia, pero cobra storage provisionado y backups/snapshots según tarifa/cuota. Esta DB no tiene IPv4 pública. Detener RDS no elimina ALB ni sus cargos; el backend perdería readiness mientras la DB está detenida. No diseñar ahorro indefinido basado en stop ni ejecutar stop como parte de una auditoría read-only.
+
+Un destroy futuro elimina gran parte del costo continuo después de desactivar protección conscientemente, pero conserva snapshot final, backups dentro de retención y secrets externos, según lo explicado arriba. State no desaparece por borrar recursos. Saved plans/JSON pueden revelar infraestructura: mantenerlos locales/ignorados y eliminarlos tras revisión si contienen datos sensibles. `.terraform.lock.hcl` debe permanecer.
 
 Fmt/init/validate y revisión estática no prueban cuotas/permisos, SKU regional PostgreSQL 17+t4g.micro, health de tasks, acceso GHCR desde Fargate, montaje/runtime, restore de snapshots ni disponibilidad real. No plan/account APIs, apply, state remoto, AWS CLI, creación cloud, staging, commit o push en Etapa 8.

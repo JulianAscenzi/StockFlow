@@ -1,4 +1,4 @@
-# Kubernetes local — Etapa 5
+# Kubernetes local — arquitectura y experimentos
 
 Referencia educativa de Etapa 5 (`raw manifests/reference`). El flujo recomendado de Etapa 6 está en [HELM](HELM.md); `scripts/k8s-up.sh` ahora usa Helm y `scripts/k8s-up-raw.sh` conserva el flujo base. No aplicar ambos a un mismo namespace.
 
@@ -66,7 +66,7 @@ kubectl --context kind-stockflow-lab -n stockflow port-forward --address 127.0.0
 
 Abrir http://127.0.0.1:5173. No publicar DB ni management. Port-forward se conecta a un pod, no demuestra balanceo del Service por sí mismo; el proxy Vite sí consulta el ClusterIP backend. Si se reemplaza el pod destino del port-forward, reiniciar ese comando.
 
-`k8s-up-raw.sh` construye imágenes `stage5-v1`, carga imágenes y configura los ConfigMaps de observabilidad desde los archivos canónicos de `helm/stockflow/files/monitoring/`. Valida cada manifiesto con dry-run del servidor y espera rollouts. La importación usa la plataforma del host porque Docker con índices multi-arquitectura incompletos puede hacer fallar `kind load --all-platforms`. El flujo raw local usa imágenes cargadas en kind. Etapa 7 prepara un camino opcional GHCR mediante Helm, sin CD: [CONTAINER_REGISTRY](CONTAINER_REGISTRY.md). No mutar un tag ya desplegado: usar un tag nuevo y actualizar el Deployment.
+`k8s-up-raw.sh` construye imágenes `stage5-v1`, carga imágenes y configura los ConfigMaps de observabilidad desde los archivos canónicos de `helm/stockflow/files/monitoring/`. Valida cada manifiesto con dry-run del servidor y espera rollouts. La importación usa la plataforma del host porque Docker con índices multi-arquitectura incompletos puede hacer fallar `kind load --all-platforms`. El flujo raw local usa imágenes cargadas en kind. Etapa 7 validó un camino GHCR mediante Helm, sin CD: [CONTAINER_REGISTRY](CONTAINER_REGISTRY.md). No mutar un tag ya desplegado: usar un tag nuevo y actualizar el Deployment.
 
 ## Probes y arranque
 
@@ -101,15 +101,15 @@ PostgreSQL usa shared_buffers=64MB y max_connections=50. Hikari conserva 10 por 
 
 StatefulSet proporciona identidad `database-0` y PVC `data-database-0` de 2Gi. UID 70 y fsGroup 70 permiten usar la imagen Alpine no root; PGDATA usa un subdirectorio. Service headless proporciona DNS interno. No hay failover ni réplica DB. Prometheus (3Gi), Grafana (1Gi) y Alertmanager (1Gi) también usan PVCs; Deployments Recreate evitan escritores simultáneos.
 
-Eliminar un pod conserva el PVC; eliminar el cluster destruye almacenamiento local. No es backup. **PostgreSQL dentro de Kubernetes se utiliza aquí para laboratorio; en producción/cloud evaluaremos una base administrada.** No se conectan ni borran volúmenes Compose.
+Eliminar un pod conserva el PVC; eliminar el cluster destruye almacenamiento local. No es backup. **PostgreSQL dentro de Kubernetes se utiliza aquí para laboratorio; el diseño AWS elige RDS administrado, sin provisionarlo.** No se conectan ni borran volúmenes Compose.
 
 ## Self-healing, rollout y rollback
 
 ```bash
-kubectl -n stockflow get pods -l app=backend
-kubectl -n stockflow delete pod <pod-backend>
-kubectl -n stockflow rollout status deployment/backend --timeout=240s
-kubectl -n stockflow get endpointslices -l kubernetes.io/service-name=backend -o yaml
+kubectl --context kind-stockflow-lab -n stockflow get pods -l app=backend
+kubectl --context kind-stockflow-lab -n stockflow delete pod <pod-backend>
+kubectl --context kind-stockflow-lab -n stockflow rollout status deployment/backend --timeout=240s
+kubectl --context kind-stockflow-lab -n stockflow get endpointslices -l kubernetes.io/service-name=backend -o yaml
 ```
 
 El controlador restaura Desired=2. El PDB `minAvailable: 1` protege evicciones voluntarias vía eviction API; no protege delete pod, fallos de nodo, liveness ni controla RollingUpdate. En un único nodo puede impedir drain completo mientras se conserva disponibilidad: no bajar esa protección sin aceptar el impacto.
@@ -120,18 +120,18 @@ Nueva imagen funcional con diferencia inocua en metadata:
 docker build --label stockflow.lab.revision=stage5-v2 -t stockflow-backend:stage5-v2 backend
 docker save stockflow-backend:stage5-v2 | docker exec -i stockflow-lab-control-plane \
   ctr --namespace=k8s.io images import --platform linux/amd64 --digests -
-kubectl -n stockflow set image deployment/backend backend=stockflow-backend:stage5-v2
-kubectl -n stockflow rollout status deployment/backend --timeout=240s
-kubectl -n stockflow rollout history deployment/backend
-kubectl -n stockflow rollout undo deployment/backend
-kubectl -n stockflow rollout status deployment/backend --timeout=240s
+kubectl --context kind-stockflow-lab -n stockflow set image deployment/backend backend=stockflow-backend:stage5-v2
+kubectl --context kind-stockflow-lab -n stockflow rollout status deployment/backend --timeout=240s
+kubectl --context kind-stockflow-lab -n stockflow rollout history deployment/backend
+kubectl --context kind-stockflow-lab -n stockflow rollout undo deployment/backend
+kubectl --context kind-stockflow-lab -n stockflow rollout status deployment/backend --timeout=240s
 ```
 
 `maxUnavailable=0`, `maxSurge=1`, `minReadySeconds=5`: el nuevo pod debe sostener readiness antes de retirar el anterior. Requiere memoria para tres JVM durante el rollout. Undo restaura el template anterior; no revierte datos ni migraciones. Probar tráfico continuo a través del frontend/Service durante ambas operaciones.
 
 ## Experimentos seguros
 
-Usar únicamente este cluster y datos ficticios. DB DOWN: `kubectl -n stockflow scale statefulset/database --replicas=0`, inspeccionar probes y EndpointSlices; restaurar SIEMPRE `--replicas=1`, esperar readiness sin reiniciar backend. Self-healing: borrar una réplica. Persistencia: consultar datos antes/después de borrar database-0.
+Usar únicamente este cluster y datos ficticios. DB DOWN: `kubectl --context kind-stockflow-lab -n stockflow scale statefulset/database --replicas=0`, inspeccionar probes y EndpointSlices; restaurar SIEMPRE `--replicas=1`, esperar readiness sin reiniciar backend. Self-healing: borrar una réplica. Persistencia: consultar datos antes/después de borrar database-0.
 
 Graceful: mantener una entrada de stock esperando un lock de fila adquirido con psql; verificar `pg_stat_activity.wait_event_type='Lock'`, borrar ese pod, observar endpoint terminating/ready=false y liberar el lock dentro de 30s. La respuesta debe finalizar y los logs mostrar cierre HTTP/JPA/Hikari. Kubernetes concede 45s, superior a la fase Boot de 30s, sin preStop ni sleeps productivos. La propagación de EndpointSlices y el cierre son concurrentes: no se promete cero pérdida para toda conexión nueva durante ese intervalo.
 
@@ -146,28 +146,28 @@ Las 50 reglas agregan rate/increase entre instancias; histogram_quantile usa `su
 BackendNotScrapeable ahora se activa cuando sum(up)=0 o no existen targets, conserva for=1m. Una réplica caída con otra UP no dispara esa alerta. Readiness y saturación conservan diagnóstico por instancia; burn y latencia permanecen agregados. Reglas, dashboards y Alertmanager se reutilizan desde helm/stockflow/files/monitoring, sin perder Compose. No se agrega Operator/ServiceMonitor.
 
 ```bash
-kubectl -n stockflow exec deployment/prometheus -- promtool check config /etc/prometheus/prometheus.yml
-kubectl -n stockflow exec deployment/prometheus -- promtool check rules /etc/prometheus/rules/stockflow-recording.yml /etc/prometheus/rules/stockflow-alerts.yml
+kubectl --context kind-stockflow-lab -n stockflow exec deployment/prometheus -- promtool check config /etc/prometheus/prometheus.yml
+kubectl --context kind-stockflow-lab -n stockflow exec deployment/prometheus -- promtool check rules /etc/prometheus/rules/stockflow-recording.yml /etc/prometheus/rules/stockflow-alerts.yml
 docker run --rm --entrypoint promtool -v "$PWD/monitoring/prometheus:/etc/prometheus:ro" -v "$PWD/helm/stockflow/files/monitoring/prometheus/rules:/etc/prometheus/rules:ro" \
   prom/prometheus:v3.14.0 test rules /etc/prometheus/tests/stockflow-rules.test.yml
-kubectl -n stockflow exec deployment/alertmanager -- amtool check-config /etc/alertmanager/alertmanager.yml
+kubectl --context kind-stockflow-lab -n stockflow exec deployment/alertmanager -- amtool check-config /etc/alertmanager/alertmanager.yml
 ```
 
 ## Diagnóstico
 
 ```bash
-kubectl -n stockflow get all
-kubectl -n stockflow get pods
-kubectl -n stockflow get deployments
-kubectl -n stockflow get services
-kubectl -n stockflow get pvc
-kubectl -n stockflow get endpointslices
-kubectl -n stockflow describe pod <pod>
-kubectl -n stockflow logs <pod> --timestamps
-kubectl -n stockflow logs -f <pod>
-kubectl -n stockflow logs <pod> --previous
-kubectl -n stockflow get events --sort-by=.lastTimestamp
-kubectl -n stockflow top pods
+kubectl --context kind-stockflow-lab -n stockflow get all
+kubectl --context kind-stockflow-lab -n stockflow get pods
+kubectl --context kind-stockflow-lab -n stockflow get deployments
+kubectl --context kind-stockflow-lab -n stockflow get services
+kubectl --context kind-stockflow-lab -n stockflow get pvc
+kubectl --context kind-stockflow-lab -n stockflow get endpointslices
+kubectl --context kind-stockflow-lab -n stockflow describe pod <pod>
+kubectl --context kind-stockflow-lab -n stockflow logs <pod> --timestamps
+kubectl --context kind-stockflow-lab -n stockflow logs -f <pod>
+kubectl --context kind-stockflow-lab -n stockflow logs <pod> --previous
+kubectl --context kind-stockflow-lab -n stockflow get events --sort-by=.lastTimestamp
+kubectl --context kind-stockflow-lab -n stockflow top pods
 ```
 
 `top` requiere metrics-server: no se instala en esta etapa; si no existe, usar cgroups, Micrometer y Prometheus. ImagePullBackOff de StockFlow: verificar tags y carga de imágenes en el nodo correcto. Pending: revisar PVC/eventos y memoria reservada. CrashLoop: revisar logs --previous, credenciales, conexión DB y OOMKilled. Probes 503 sin reinicios: readiness se comporta como diseñado; revisar DB. No repetir create secret con una contraseña nueva sobre datos ya inicializados.
@@ -184,7 +184,7 @@ Borra sólo el cluster `stockflow-lab` y sus PVCs. No toca Compose. Retirar desp
 
 ## Evidencia y límites
 
-Los resultados medidos se registran en STATUS y en la sección de validación que se completa después de ejecutar los experimentos. YAML válido no implica validación de orquestación. No hay alta disponibilidad DB/nodo, TLS, backups, cluster multi-nodo, probe externa, deadlines de queries/red silenciosa ni sizing comercial. PDB, counters, port-forward y SLOs tienen los límites explicados arriba. No avanzar a Helm, Terraform ni cloud en esta etapa.
+Los resultados medidos se registran en [STATUS](STATUS.md) y en la sección de resultados de esta guía. YAML válido no implica validación de orquestación. No hay alta disponibilidad DB/nodo, TLS, backups, cluster multi-nodo, probe externa, deadlines de queries/red silenciosa ni sizing comercial. PDB, counters, port-forward y SLOs tienen los límites explicados arriba. Helm y el diseño Terraform están documentados por separado; esta guía conserva el flujo raw y sus experimentos originales.
 
 ### Harness de experimentos
 

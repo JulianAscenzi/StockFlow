@@ -2,6 +2,15 @@
 
 Esta guía publica una demo técnica gratuita: Vercel para la interfaz y Render Free para API y PostgreSQL. No es un despliegue de producción ni debe contener datos reales. La demo desactiva intencionalmente la autenticación para que sea navegable desde un CV.
 
+La evidencia del despliegue es histórica; comprobar los enlaces antes de una presentación. La ejecución local de [LOCAL_DEVELOPMENT](LOCAL_DEVELOPMENT.md) es el camino principal de evaluación. Esta guía conserva la demo existente; no propone provisionar servicios adicionales para cerrar el portfolio.
+
+## Enlaces de la demo registrada
+
+- [Frontend Vercel](https://frontend-beta-plum-15.vercel.app/).
+- [Health de la API Render](https://stockflow-api-0fan.onrender.com/actuator/health).
+
+URLs conservadas del README anterior; su disponibilidad no se volvió a comprobar en este cierre documental. La captura de producto está en [images](images/README.md).
+
 ## Límites intencionales
 
 - Render Free detiene la API tras 15 minutos sin tráfico; la primera visita posterior puede demorar aproximadamente un minuto.
@@ -11,7 +20,7 @@ Esta guía publica una demo técnica gratuita: Vercel para la interfaz y Render 
 
 ## 1. API y base en Render
 
-1. En Render, abrí **New** → **Blueprint** y elegí este repositorio cuando el cambio a `plan: free` ya esté visible en GitHub.
+1. En Render, abrí **New** → **Blueprint** elegí este repositorio y revisá el `render.yaml` versionado.
 2. Confirmá que el plan de `stockflow-api` y `stockflow-postgres` sea **Free**; no aceptes una opción paga.
 3. Render pedirá `APP_CORS_ALLOWED_ORIGINS`. Ingresá temporalmente `https://example.com`; se reemplaza después de crear la interfaz.
 4. Aplicá el Blueprint. Render crea la base PostgreSQL 17, inyecta internamente `DATABASE_URL` y despliega la API.

@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-StockFlow es un backend para inventario y ventas de pequeños comercios. Expone operaciones HTTP para categorías, productos, inventario, confirmación de ventas y dashboard diario.
+StockFlow es una aplicación web de inventario y ventas de pequeños comercios, con frontend React y backend modular Spring Boot. Este documento describe el modelo, las garantías transaccionales y los límites técnicos; el [README](../README.md) presenta el producto y el diagrama de alto nivel. Expone operaciones HTTP para categorías, productos, inventario, confirmación de ventas y dashboard diario.
 
 ## Stack
 
@@ -23,7 +23,7 @@ Java 21, Spring Boot 4.1.1, Maven, Spring Data JPA/Hibernate, PostgreSQL 17 y Fl
 
 El backend incluye probes separadas (liveness sólo estado del proceso, readiness estado más DB), bootstrap de administrador serializado en PostgreSQL, request ID mediante MDC, perfil `prod` JSON y cierre ordenado nativo de Boot. La configuración, sus límites y el experimento de recuperación están en [OPERATIONS](OPERATIONS.md). Fuera del perfil local de observabilidad sólo health se expone por Actuator. Compose agrega Micrometer/Prometheus/Grafana: management 9091 ligado a una red interna de métricas, datasource y dashboard provisionados. [OBSERVABILITY](OBSERVABILITY.md) detalla seguridad y flujo.
 
-`docker compose up --build` inicia Prometheus, Grafana, PostgreSQL 17, la API con su Dockerfile multietapa existente y el frontend con Node 24/Vite. API y frontend ejecutan como usuarios no root. El navegador accede al frontend en loopback, puerto 5173 configurable con `FRONTEND_PORT`; Vite redirige `/api` a `backend:8080`. La API usa `database:5432`, sin puerto publicado. PostgreSQL conserva `postgres_data` y publica su puerto sólo en loopback para permitir también el desarrollo con Maven.
+`docker compose up --build` inicia Prometheus, Grafana, Alertmanager, PostgreSQL 17, la API con su Dockerfile multietapa existente y el frontend con Node 24/Vite. API y frontend ejecutan como usuarios no root. El navegador accede al frontend en loopback, puerto 5173 configurable con `FRONTEND_PORT`; Vite redirige `/api` a `backend:8080`. La API usa `database:5432`, sin puerto publicado. PostgreSQL conserva `postgres_data` y publica su puerto sólo en loopback para permitir también el desarrollo con Maven.
 
 El arranque espera `pg_isready` y después `/actuator/health`; el frontend comprueba HTTP con Node. Son health checks locales, no la estrategia definitiva de probes. Las credenciales se inyectan explícitamente desde `.env`, excluido de Git y de los contextos Docker. Compose deriva el login frontend del mismo `APP_AUTH_ENABLED` de la API. El código frontend se copia en la imagen y requiere rebuild al editar; esta imagen Vite es para reproducción local, mientras Vercel conserva su compilación estática.
 
@@ -73,7 +73,7 @@ El dinero usa `BigDecimal`, nunca tipos binarios. Producto y precios/costos de l
 
 ## Autenticación
 
-Con autenticación habilitada (valor por defecto), el primer arranque crea una única cuenta desde `APP_ADMIN_EMAIL` y `APP_ADMIN_PASSWORD`. La contraseña se guarda con BCrypt. `POST /api/auth/login` entrega un JWT HS256 de ocho horas firmado con `APP_JWT_SECRET`; sólo login y `GET /actuator/health` son públicos, y el resto de la API exige un bearer token. No hay registro público, recuperación de contraseña ni múltiples roles. En instalaciones privadas, el cliente trata centralmente los 401 de solicitudes protegidas: vuelve al login y, tras ingresar, restaura la sección anterior. Conserva la recuperación idempotente en sessionStorage y no reintenta escrituras automáticamente. El token y una versión de sesión capturados al enviar impiden que un 401 tardío cierre una sesión nueva; el 401 del login se mantiene como error de credenciales.
+Con autenticación habilitada (valor por defecto), el primer arranque crea una única cuenta desde `APP_ADMIN_EMAIL` y `APP_ADMIN_PASSWORD`. La contraseña se guarda con BCrypt. `POST /api/auth/login` entrega un JWT HS256 de ocho horas firmado con `APP_JWT_SECRET`; login y los GET exactos de health/liveness/readiness son públicos fuera del perfil de observabilidad, y el resto de la API exige un bearer token. No hay registro público, recuperación de contraseña ni múltiples roles. En instalaciones privadas, el cliente trata centralmente los 401 de solicitudes protegidas: vuelve al login y, tras ingresar, restaura la sección anterior. Conserva la recuperación idempotente en sessionStorage y no reintenta escrituras automáticamente. El token y una versión de sesión capturados al enviar impiden que un 401 tardío cierre una sesión nueva; el 401 del login se mantiene como error de credenciales.
 
 ## Pruebas
 
@@ -93,13 +93,13 @@ Los servicios de ventas e inventario registran counters de negocio mediante Busi
 
 ## Kubernetes local
 
-El laboratorio Etapa 5 usa namespace stockflow en kind: dos réplicas backend detrás de ClusterIP, frontend Vite con proxy DNS interno, PostgreSQL 17 StatefulSet/PVC y observabilidad con Deployments/PVCs. Flyway y bootstrap mantienen coordinación PostgreSQL en cada arranque. Management 9091 no forma parte del Service backend ni se publica al host; Prometheus descubre pods mediante RBAC namespaced. La Etapa 6 empaqueta estos recursos en un Chart propio, sin dependencias externas: [HELM](HELM.md). No hay Ingress ni operadores. [KUBERNETES](KUBERNETES.md) documenta seguridad, recursos y límites de nodo único. PostgreSQL dentro de Kubernetes se utiliza aquí para laboratorio; en producción/cloud evaluaremos una base administrada.
+El laboratorio Etapa 5 usa namespace stockflow en kind: dos réplicas backend detrás de ClusterIP, frontend Vite con proxy DNS interno, PostgreSQL 17 StatefulSet/PVC y observabilidad con Deployments/PVCs. Flyway y bootstrap mantienen coordinación PostgreSQL en cada arranque. Management 9091 no forma parte del Service backend ni se publica al host; Prometheus descubre pods mediante RBAC namespaced. La Etapa 6 empaqueta estos recursos en un Chart propio, sin dependencias externas: [HELM](HELM.md). No hay Ingress ni operadores. [KUBERNETES](KUBERNETES.md) documenta seguridad, recursos y límites de nodo único. PostgreSQL dentro de Kubernetes se utiliza aquí para laboratorio; el diseño AWS elige RDS administrado, sin provisionarlo.
 
-La Etapa 7 prepara la publicación mediante eventos GitHub de imágenes backend/frontend en GHCR, después de CI y smoke del mismo artefacto OCI. SBOM/provenance acompañan al digest; no hay despliegue automático ni cambio del runtime Vite de laboratorio. Helm permite repository/tag/digest sin modificar el flujo kind local. Contrato y límites: [CONTAINER_REGISTRY](CONTAINER_REGISTRY.md).
+La publicación validada de Etapa 7 usa eventos GitHub de imágenes backend/frontend en GHCR, después de CI y smoke del mismo artefacto OCI. SBOM/provenance acompañan al digest; no hay despliegue automático ni cambio del runtime Vite de laboratorio. Helm permite repository/tag/digest sin modificar el flujo kind local. Contrato y límites: [CONTAINER_REGISTRY](CONTAINER_REGISTRY.md).
 
-## Arquitectura cloud objetivo — Etapa 8, sin deployment
+## Arquitectura AWS diseñada — sin provisionar
 
-El [ADR 0001](adr/0001-cloud-runtime.md) selecciona ECS Fargate + ALB + RDS PostgreSQL 17. [Terraform](../terraform/README.md) prepara recursos explícitos para laboratorio; [AWS_COSTS](AWS_COSTS.md) compara ECS, EKS y EC2 con tarifas oficiales us-east-1. No se crearon recursos AWS ni se implementó CD.
+El [ADR 0001](adr/0001-cloud-runtime.md) selecciona ECS Fargate + ALB + RDS PostgreSQL 17. [Terraform](../terraform/README.md) prepara recursos explícitos para laboratorio; [AWS_COSTS](AWS_COSTS.md) compara ECS, EKS y EC2 con tarifas oficiales us-east-1. Terraform está implementado y validado con fmt/init/validate y siete tests con provider mock; no se ejecutó un plan real ni se crearon recursos AWS. La comparación ECS/EKS/EC2 y sus costos está registrada. Mantener el diseño sin provisionamiento permanente es deliberado para evitar costos cloud innecesarios en un proyecto personal de portfolio. HTTPS, bootstrap DB y validación runtime cloud permanecen prerrequisitos de un despliegue opcional, no capacidades desplegadas.
 
 ```mermaid
 flowchart TB

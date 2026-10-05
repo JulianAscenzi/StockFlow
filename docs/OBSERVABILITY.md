@@ -32,7 +32,7 @@ La cadena de seguridad de management permite GET anónimo únicamente a:
 
 Todo lo demás en management se deniega, incluso con autenticación del dominio desactivada. Env, configprops, heapdump y metrics no están expuestos; se deshabilita el índice de descubrimiento. Health nunca muestra detalles/componentes. No se permite `/actuator/**` globalmente. La decisión usa el puerto local real del servidor, nunca `X-Forwarded-Port`.
 
-**En Compose las probes conservan sus rutas, pero pasan de 8080 a 9091**. Consultarlas desde backend usando `http://backend-management:9091/actuator/health/readiness` (análogamente para liveness y health). La configuración de Compose actualiza su healthcheck. En una futura migración a Kubernetes deben mantenerse un puerto de management sin Ingress y una NetworkPolicy que permita sólo scraper/probes; aún no se implementa Kubernetes.
+**En Compose las probes conservan sus rutas, pero pasan de 8080 a 9091**. Consultarlas desde backend usando `http://backend-management:9091/actuator/health/readiness` (análogamente para liveness y health). La configuración de Compose actualiza su healthcheck. El [laboratorio Kubernetes](KUBERNETES.md) ya conserva management sin publicación externa. NetworkPolicy sigue siendo opcional y no está aplicada: kindnet no la hace efectiva.
 
 Prometheus usa `backend-management:9091`, nunca localhost; Grafana usa `http://prometheus:9090`. Scrape cada 15 segundos, timeout de 5 segundos: suficiente resolución local sin solicitudes excesivas. `up{job="stockflow"}` vale 1 si el último scrape fue exitoso; no representa readiness de la DB. Si el endpoint deja de responder, pasa a 0 después del siguiente scrape/timeout.
 
@@ -67,7 +67,7 @@ Sin tráfico el cociente puede no tener datos. Los 4xx se muestran separados: au
 
 ## Histogramas y percentiles
 
-Se configura explícitamente `management.metrics.distribution.percentiles-histogram.http.server.requests=true`. No se publican percentiles calculados localmente. Se conservan los buckets predeterminados de la integración Boot/Micrometer: en el scrape real se verificaron 69 límites por combinación de etiquetas, desde 1ms hasta 30s más `+Inf`. No hay evidencia de carga que justifique inventar límites locales. Los buckets permiten sumar observaciones entre futuras réplicas antes de calcular percentiles. Las aproximaciones están condicionadas por su resolución; no son mediciones exactas de cada request.
+Se configura explícitamente `management.metrics.distribution.percentiles-histogram.http.server.requests=true`. No se publican percentiles calculados localmente. Se parte de los buckets predeterminados Boot/Micrometer: la Etapa 3 verificó 69 límites por combinación de etiquetas, desde 1ms hasta 30s más `+Inf`. La configuración actual añade los umbrales exactos de 500ms y 1s para los SLIs de latencia; aquel conteo es histórico, no el conteo actual. Los objetivos y su carácter provisional se explican en SRE. Los buckets permiten sumar observaciones entre réplicas antes de calcular percentiles. Las aproximaciones están condicionadas por su resolución; no son mediciones exactas de cada request.
 
 El promedio es suma de duraciones / cantidad y puede ocultar una cola lenta. p50 es la mediana: aproximadamente 50% de requests tarda ese tiempo o menos. p95 cubre el 95%; p99 el 99%, útil para la cola lenta, pero inestable con pocas observaciones.
 
@@ -143,6 +143,6 @@ Etapa 4: [SRE](SRE.md) centraliza SLIs, objetivos, budget, cardinalidad y reglas
 
 ## Observabilidad de Kubernetes
 
-[KUBERNETES](KUBERNETES.md) usa configuración propia `k8s/observability/prometheus.yml` y reutiliza rules, dashboards y Alertmanager canónicos mediante ConfigMaps. Descubrimiento de pods con RBAC local al namespace filtra backend/management y conserva targets Running aunque readiness esté DOWN. instance=IP:9091 y pod distinguen JVM; rate/increase se calculan antes de sumar, histogramas se agregan por le. Leyendas Hikari incluyen instance para no confundir pools con el mismo nombre. UI por port-forward en loopback; no se agrega Operator ni se altera scraping Compose.
+La referencia raw de Kubernetes usa `k8s/observability/prometheus.yml`; el flujo Helm recomendado usa `helm/stockflow/files/prometheus-kubernetes.yml`, parametrizado por namespace/release. Ambos reutilizan rules, dashboards y Alertmanager canónicos mediante ConfigMaps. Descubrimiento de pods con RBAC local al namespace filtra backend/management y conserva targets Running aunque readiness esté DOWN. instance=IP:9091 y pod distinguen JVM; rate/increase se calculan antes de sumar, histogramas se agregan por le. Leyendas Hikari incluyen instance para no confundir pools con el mismo nombre. UI por port-forward en loopback; no se agrega Operator ni se altera scraping Compose.
 
 La revisión visual final encontró que lastNotNull sobre gauges por instancia podía conservar pods eliminados en tarjetas UP/uptime/readiness/edad. Esas tarjetas consultan ahora instant=true/range=false, mostrando sólo instancias actuales; los gráficos históricos conservan sus series y los SLOs agregados no cambian.

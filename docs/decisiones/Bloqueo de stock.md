@@ -28,7 +28,7 @@ Los snapshots de las líneas preservan la información histórica de la venta. E
 
 ## Evidencia en el repositorio
 
-- [ProductRepository](../../backend/src/main/java/com/julianas/stockflow/product/ProductRepository.java): consulta con bloqueo pesimista.
+- [ProductRepository](../../backend/src/main/java/com/julianas/stockflow/product/ProductRepository.java): contrato de lectura bloqueada; [implementación](../../backend/src/main/java/com/julianas/stockflow/product/ProductLockingRepositoryImpl.java) con flush, bloqueo y refresh.
 - [InventoryService](../../backend/src/main/java/com/julianas/stockflow/inventory/InventoryService.java): validación, descuento y movimiento transaccional.
 - [SaleService](../../backend/src/main/java/com/julianas/stockflow/sale/SaleService.java): orden de productos y confirmación transaccional.
 - [SaleServiceIntegrationTest](../../backend/src/test/java/com/julianas/stockflow/sale/SaleServiceIntegrationTest.java): `concurrentSalesCannotOversellStock`, `concurrentSalesWithOppositeLineOrdersCompleteWithoutDeadlocking` y `rollsBackTheSaleAndPreviousStockChangesWhenAnyItemHasInsufficientStock`.

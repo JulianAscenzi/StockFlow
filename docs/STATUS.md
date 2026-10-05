@@ -1,12 +1,33 @@
 # Status
 
-## Completed modules
+## Estado actual — portfolio (2026-10-04)
+
+Producto y alcance de ingeniería completados hasta Etapa 8: backend modular, frontend, autenticación, concurrencia/idempotencia, Compose, observabilidad/SRE, kind, Helm, CI/GHCR y diseño AWS/Terraform. [ROADMAP](ROADMAP.md) separa lo completado de las mejoras opcionales. AWS está diseñado e implementado como IaC, con validación estática y tests mock; **no está desplegado ni se ejecutó un plan real contra AWS**. No provisionarlo permanentemente evita costos cloud innecesarios y no bloquea el portfolio.
+
+| Contexto | Última evidencia registrada | Alcance |
+| --- | --- | --- |
+| Backend local | Etapa 8, 2026-10-04: 385 tests, cero fallos/errores/omisiones | PostgreSQL real/Testcontainers. |
+| Navegador local | Etapa 7: 28/28 Playwright; build frontend aprobado | Runner aislado; no confundir con el E2E comercial Kubernetes adicional. |
+| Compose/SRE local | Etapas 2–4 y comprobación Etapa 7 | Recuperación DB, graceful shutdown, dashboards, alertas y persistencia. |
+| Kubernetes/Helm local | Etapas 5–6; consumo GHCR en kind, Etapa 7 remota | Dos réplicas, experimentos, PVCs y rollback. No cloud ni HA de nodo/DB. |
+| GitHub/GHCR remoto | Run [37237744986](https://github.com/JulianAscenzi/StockFlow/actions/runs/37237744986), commit 5063c4b | CI y publicación verificadas; no representa CI del HEAD posterior ni del working tree. |
+| Terraform sin AWS | Etapa 8 y preparación 9A: fmt/init/validate + siete tests mock | Sin identidad de cuenta confirmada, plan real, apply ni recursos provisionados. |
+
+Los estados healthy/Ready/UP, capturas, digests locales y artefactos temporales de abajo pertenecen al instante y entorno de cada checkpoint; **no describen servicios actualmente levantados**. Retención de artifacts GitHub y archivos `/tmp` no garantiza evidencia durable. Los digests remotos publicados se distinguen de builds locales sin commit.
+
+El reporte 9A conserva una exploración anterior de cuenta/plan que no se ejecutó. Ese trabajo es opcional y queda fuera del cierre actual. No requiere instalar AWS CLI, pedir credenciales ni continuar hacia cloud.
+
+## Evidencia histórica
+
+Se conserva el registro anterior, incluidas cantidades de tests y pendientes que fueron resueltos en checkpoints posteriores. Frases como «sin commit», «próximo bloque», «Docker no disponible» o «publicación pendiente» describen ese momento; no reemplazan el estado actual de arriba. El código y las pruebas son la fuente de verdad.
+
+### Módulos al cierre del MVP
 
 El backend MVP está cerrado: `category`, `product`, `inventory`, `common`, `sale` y `dashboard` están completados. El esquema incluye categorías, productos, movimientos de stock, ventas e ítems de venta.
 
-## Current module
+### Cabecera histórica — Etapas 1–4
 
-Etapa 4: métricas transaccionales, SLI/SLO provisionales, budget y alertas locales implementados y verificados el 2026-10-03. Guías: [SRE](SRE.md) y [RUNBOOK](RUNBOOK.md). 385 tests backend y28 escenarios Playwright aprobados; seis servicios Compose healthy. Sin staging/commit/push; se detiene al terminar esta etapa.
+Etapa 4: métricas transaccionales, SLI/SLO provisionales, budget y alertas locales implementados y verificados el 2026-10-03. Guías: [SRE](SRE.md) y [RUNBOOK](RUNBOOK.md). 385 tests backend y 28 escenarios Playwright aprobados; seis servicios Compose healthy. Sin staging/commit/push; se detiene al terminar esta etapa.
 
 Etapa 3: observabilidad local implementada y verificada el 2026-10-03, sin staging, commit ni push. Guía central: [OBSERVABILITY](OBSERVABILITY.md). Backend 375 pruebas y navegador 28 escenarios aprobados; Compose con cinco servicios healthy.
 
@@ -14,31 +35,32 @@ Etapas 1 y 2 DevOps implementadas y verificadas el 2026-10-03, sin staging, comm
 
 MVP de portfolio terminado. `auth` conserva un único administrador inicial configurable por entorno, contraseñas BCrypt, JWT HS256 de ocho horas y una pantalla de inicio de sesión para instalaciones privadas. La demo gratuita de portfolio permanece pública con autenticación desactivada intencionalmente y datos ficticios; en ese modo no se crean los componentes ni la ruta JWT y no se requiere `APP_JWT_SECRET`. El catálogo de productos se pagina en la interfaz y el selector de categorías carga todas sus páginas; ventas e inventario consultan una página por vez mediante búsqueda por nombre/SKU. La confirmación de venta bloquea sus controles mientras la solicitud está en curso.
 
-## Deployment decision
+### Decisión de demo al cierre del MVP
 
 El alcance aprobado es una demostración pública para CV: Vercel sirve la interfaz y Render Free la API con PostgreSQL. No se autorizan datos comerciales ni se contrata infraestructura de producción. La guía de despliegue explica la persistencia limitada, falta de backups y el smoke test de la demo.
 
-## Last general test result
+### Resultados hasta Etapa 4
 
-Etapa 4 — 2026-10-03: **385 tests backend y28 escenarios Playwright aprobados**, sin fallos/errores/omisiones; promtool/amtool, dashboards y experimentos pending/firing/resolved verificados.
+Etapa 4 — 2026-10-03: **385 tests backend y 28 escenarios Playwright aprobados**, sin fallos/errores/omisiones; promtool/amtool, dashboards y experimentos pending/firing/resolved verificados.
 
 Etapa 3 — 2026-10-03: **375 pruebas backend y 28 escenarios Playwright aprobados**, sin fallos, errores, omisiones ni reintentos. Compose con cinco servicios healthy; scraping, percentiles, PostgreSQL DOWN y persistencia verificados.
 
 Verificación del 2026-10-03: **370 pruebas backend sin fallos, errores ni omisiones** y **28 escenarios de navegador aislado** aprobados. La compilación frontend fue verificada en la Etapa 1, sin cambios de fuentes frontend en la Etapa 2. Los checkpoints de auditoría se registran abajo.
 
-## Cuaderno del proyecto
+### Checkpoint documental anterior
 
 La carpeta `docs` puede abrirse como bóveda de Obsidian desde [Inicio](Inicio.md). Incluye una decisión sobre bloqueo de stock y un guion de demostración, con enlaces Markdown y configuración personal excluida de Git. El cambio documental se valida mediante revisión de enlaces locales y `git diff --check`; por autorización explícita del usuario no se ejecuta Maven para este cambio, dado que Docker no está disponible. El resultado general anterior corresponde a la última ejecución registrada, no a esta actualización documental.
 
-## Pending decisions
+### Decisiones al cierre del MVP
 
 Ninguna para el MVP de portfolio. Un uso comercial futuro requerirá decidir proveedor, backups, operación y secretos propios antes de cargar información real.
 
-## Real blockers
+### Bloqueos al cierre del MVP
 
 Ninguno dentro del alcance de portfolio.
 
-## Ampliaciones en curso
+
+## Ampliaciones posteriores al MVP — checkpoints históricos
 
 Docker es accesible con ejecución fuera del sandbox. La verificación inicial detectó una regresión previa: el advice convertía rutas inexistentes en 500; se corrige a 404 `RESOURCE_NOT_FOUND`, con regresión para login deshabilitado.
 
@@ -409,3 +431,25 @@ Límites: no plan normal contra AWS ni consultas de cuenta, por lo que IAM/SCP/c
 No se ejecutó `terraform apply`, ningún plan contra AWS ni creación/modificación AWS CLI. **Ningún recurso cloud creado por esta etapa.** No credenciales reales generadas, no state versionado, no CD, staging, commit ni push. Todo permanece local para revisión.
 
 Etapa 8 preparada y validada sin crear infraestructura cloud.
+
+## Etapa 9A — validación de cuenta/plan pendiente (2026-10-04)
+
+Inicio limpio en `4367a2d`, staging vacío. Terraform 1.16.5 y provider AWS 6.67.0 sin actualizar: fmt, init sin backend con lockfile readonly, validate y siete tests mock aprobaron nuevamente. Auditoría sin provisioners/local-exec/remote-exec/data sources externos/hooks ni comandos de escritura en Terraform. Healthcheck curl sólo ejecutaría dentro del contenedor futuro.
+
+AWS CLI no está disponible en PATH/ubicaciones habituales: `aws --version` y el intento STS read-only con region us-east-1 devolvieron command not found. No variables AWS ni archivos estándar config/credentials; identidad/cuenta no confirmadas. Se pidió ubicación de instalación y perfil/sesión existente, sin solicitar claves/tokens. **No se ejecutó terraform plan contra AWS**, dado que el usuario exige confirmar identidad antes. AZs, cuotas, permisos, VPCs y orderability RDS pendientes; no se confunde mock con plan real ni se declara Etapa 9A validada.
+
+Reporte [TERRAFORM_PLAN_REVIEW](TERRAFORM_PLAN_REVIEW.md): inventario exclusivamente estático de 37 recursos con defaults, cero NAT, Budget deshabilitado, ALB HTTP cerrado, SG sólo relaciones ALB→backend→DB, RDS privado/cifrado/protegido, secretos externos e imagen GHCR por digest. Cost gate mensual/24h basado en plan real pendiente; baseline histórico no se recotiza sin evidencia. RDS stop revisado en fuente AWS: siete días máximo/reinicio automático, storage y backups cobrando. Riesgos de snapshot/secrets después de destroy documentados, sin ejecutar destroy.
+
+Preparado terraform.tfvars local ignorado, modo 600, no secreto, digest remoto validado y ARNs ficticios de cuenta cero, no atribuidos al usuario; AZ default aún sin confirmar. Sin plan, show JSON ni state generado. Cambios únicamente .gitignore para JSON de planes, guía Terraform RDS stop y documentación de revisión/estado. No cambios de arquitectura/runtime/CD/OIDC. Lockfile preservado. Ninguna creación/modificación/eliminación AWS, apply, destroy, AWS CLI de escritura, staging, commit ni push.
+
+## Cierre documental de portfolio — 2026-10-04
+
+Auditoría inicial desde `4367a2d`, preservando cambios previos de `.gitignore`, guía Terraform, este registro y reporte 9A. Se conserva la evidencia histórica y se agrega una cabecera actual que distingue Compose/SRE local, Kubernetes local y CI/GHCR remoto. No se volvió a ejecutar CI ni se presume disponibilidad actual de servicios o artefactos temporales.
+
+README reorganizado alrededor de producto, arquitectura de alto nivel, quick start, testing, siete engineering highlights, experimentos de confiabilidad, supply chain y AWS diseñado sin provisionar. Comandos detallados trasladados a [LOCAL_DEVELOPMENT](LOCAL_DEVELOPMENT.md); [Inicio](Inicio.md) define responsabilidades documentales. ROADMAP separa entregas completadas de mejoras opcionales; la preparación 9A no bloquea el portfolio.
+
+[PORTFOLIO](PORTFOLIO.md) prepara CV/LinkedIn, pitch e interview talking points. [Imágenes](images/README.md) conserva una captura real y enumera capturas manuales pendientes; los diagramas Mermaid no se presentan como runtime. [Release notes](RELEASE_NOTES_1.0.0.md) es un borrador con checklist: falta autorizar versionado/commit, limpiar árbol y confirmar CI del candidato. Licencia MIT preservada.
+
+Validación documental: 27 archivos Markdown, 164 enlaces relativos revisados sin errores; doce tests existentes de scripts aprobados, Bash syntax válido, Compose config --quiet aprobado con ejemplo y secretos aleatorios temporales fuera del repositorio. `.gitignore` comprobado con 27 rutas locales ignoradas y siete archivos fuente/ejemplo/lockfile versionables. Revisión estática publicable sin credenciales reales detectadas; candidatos de URLs son fixtures de tests. Patrones fuertes de secretos en historial accesible sin coincidencias. No se accedió a alertas GitHub Security autenticadas. Informe: [PORTFOLIO_AUDIT](PORTFOLIO_AUDIT.md).
+
+Las cifras 385 backend/28 Playwright siguen respaldadas por checkpoints/reportes existentes. Los XML locales incluyen además el runner BrowserE2EIT (un test), que no forma parte de mvn test habitual. No se repiten suites de aplicación ni experimentos porque no cambió código funcional, configuración ejecutable o infraestructura. `git diff --check` aprobado y diff revisado; staging vacío. Sin commit, push, tag, release ni plan/apply/cloud. Working tree deliberadamente con cambios para revisión.
