@@ -60,7 +60,7 @@ class SaleServiceIntegrationTest {
 
     @AfterEach
     void clearDatabase() {
-        jdbcTemplate.execute("TRUNCATE TABLE sale_confirmations, sale_items, sales, stock_movements, products, categories RESTART IDENTITY");
+        jdbcTemplate.execute("TRUNCATE TABLE inventory_confirmations, sale_confirmations, sale_items, sales, stock_movements, products, categories RESTART IDENTITY");
     }
 
     @Test

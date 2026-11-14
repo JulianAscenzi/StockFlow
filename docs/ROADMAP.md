@@ -5,12 +5,13 @@ StockFlow está completo dentro de su alcance de proyecto personal de portfolio.
 ## Completed
 
 - [x] Backend MVP modular: categorías, productos, inventario, ventas y dashboard diario.
-- [x] PostgreSQL 17/Flyway V1–V5, constraints, dinero BigDecimal e historial con snapshots.
+- [x] PostgreSQL 17/Flyway V1–V6, constraints, dinero BigDecimal e historial con snapshots.
 - [x] Ventas, stock y movimientos transaccionales; rollback completo, bloqueo pesimista ordenado y pruebas de concurrencia.
 - [x] Frontend React/TypeScript: catálogo, inventario, ventas, historial, búsqueda paginada y dashboard.
 - [x] Administrador inicial BCrypt/JWT, recuperación de sesión y confirmación idempotente persistente.
+- [x] Ajustes manuales de inventario idempotentes y recuperación de respuestas inciertas al navegar/recargar.
 - [x] Auditoría funcional y regresiones de estado JPA obsoleto, stock concurrente, precisión monetaria y respuestas tardías de UI.
-- [x] Testing por capas con PostgreSQL real/Testcontainers y Playwright aislado; evidencia de 385 tests backend y 28 escenarios de navegador.
+- [x] Testing por capas con PostgreSQL real/Testcontainers y Playwright aislado; evidencia actual de 397 tests backend y 35 escenarios de navegador.
 - [x] Demo Vercel/Render con datos ficticios y límites documentados; reproducción local independiente de su disponibilidad.
 - [x] Docker/Compose: imágenes no root, persistencia, red interna y configuración externa.
 - [x] Operación: liveness/readiness, graceful shutdown, request ID, logs JSON y recuperación DB.

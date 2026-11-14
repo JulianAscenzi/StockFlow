@@ -83,8 +83,16 @@ export const api = {
     request<Category>('/api/categories', { method: 'POST', body: JSON.stringify(body) }),
   createProduct: (body: Omit<Product, 'id' | 'stock' | 'active'>) =>
     request<Product>('/api/products', { method: 'POST', body: JSON.stringify(body) }),
-  moveStock: (productId: number, direction: 'in' | 'out', body: { quantity: number; reason: string }) =>
-    request(`/api/products/${productId}/stock/${direction}`, { method: 'POST', body: JSON.stringify(body) }),
+  moveStock: async (productId: number, direction: 'in' | 'out', body: { quantity: number; reason: string }, key: string) => {
+    const movement = await request<{ id: number; productId: number; movementType: string; quantity: number; stockAfter: number }>(
+      `/api/products/${productId}/stock/${direction}`, { method: 'POST', body: JSON.stringify(body), headers: { 'Idempotency-Key': key } });
+    if (!movement || !Number.isSafeInteger(movement.id) || movement.id <= 0
+      || movement.productId !== productId || movement.movementType !== direction.toUpperCase()
+      || movement.quantity !== body.quantity || !Number.isInteger(movement.stockAfter) || movement.stockAfter < 0) {
+      throw new HttpError('La respuesta del ajuste no se pudo interpretar.', 200);
+    }
+    return movement;
+  },
   createSale: async (body: SaleRequest, key?: string) => {
     const sale = await request<Sale>('/api/sales', { method: 'POST', body: JSON.stringify(body),
       headers: key ? { 'Idempotency-Key': key } : undefined });

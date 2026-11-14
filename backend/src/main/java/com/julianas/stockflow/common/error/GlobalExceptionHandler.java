@@ -9,6 +9,7 @@ import com.julianas.stockflow.category.CategoryNotFoundException;
 import com.julianas.stockflow.category.DuplicateCategoryNameException;
 import com.julianas.stockflow.inventory.InsufficientStockException;
 import com.julianas.stockflow.inventory.StockLimitExceededException;
+import com.julianas.stockflow.inventory.InventoryIdempotencyConflictException;
 import com.julianas.stockflow.product.DuplicateProductSkuException;
 import com.julianas.stockflow.product.ProductNotFoundException;
 import com.julianas.stockflow.sale.EmptySaleException;
@@ -68,6 +69,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IdempotencyConflictException.class)
     public ResponseEntity<ApiError> handleIdempotencyConflict(
             IdempotencyConflictException exception, HttpServletRequest request) {
+        return response(HttpStatus.CONFLICT, exception.getCode(), exception.getMessage(), request, Map.of());
+    }
+
+    @ExceptionHandler(InventoryIdempotencyConflictException.class)
+    public ResponseEntity<ApiError> handleInventoryIdempotencyConflict(
+            InventoryIdempotencyConflictException exception, HttpServletRequest request) {
         return response(HttpStatus.CONFLICT, exception.getCode(), exception.getMessage(), request, Map.of());
     }
 

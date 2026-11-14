@@ -87,7 +87,7 @@ public class StockMovement {
 
     @PrePersist
     private void initializeCreatedAt() {
-        createdAt = Instant.now();
+        createdAt = Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS);
     }
 
     private static Integer requirePositive(Integer value, String fieldName) {

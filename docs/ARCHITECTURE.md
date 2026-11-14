@@ -52,6 +52,7 @@ Las rutas HTTP reciben DTOs validados, los controllers coordinan servicios y map
 - `stock_movements`: registro inmutable de entradas/salidas, cantidad, balances, motivo y timestamp; referencia a producto.
 - `sales`: total `NUMERIC(14,2)`, notas opcionales y timestamp de creación.
 - `sale_confirmations`: clave UUID de idempotencia, hash de la solicitud, venta confirmada y timestamp; impide reutilizar una clave para otra operación.
+- `inventory_confirmations`: clave UUID de idempotencia, hash del ajuste, movimiento confirmado y timestamp; conserva el resultado de entradas y salidas manuales.
 - `sale_items`: producto, snapshots de nombre/SKU/precio/costo, cantidad y subtotal; la migración impide productos repetidos en una venta.
 - `application_users`: una cuenta administradora inicial con email único sin distinción de mayúsculas y hash BCrypt.
 
@@ -63,6 +64,8 @@ Flyway es la única vía de cambio de esquema y Hibernate usa `ddl-auto=validate
 
 La migración V5 agrega `sale_confirmations` con una clave primaria UUID, hash de solicitud, relación única con `sales` y FK restrictiva.
 
+La migración V6 agrega `inventory_confirmations`, con clave UUID, hash SHA-256 del producto/dirección/cantidad/motivo normalizado y relación única y restrictiva con `stock_movements`.
+
 ## Dinero
 
 El dinero usa `BigDecimal`, nunca tipos binarios. Producto y precios/costos de líneas usan `NUMERIC(12,2)`; subtotales y totales usan `NUMERIC(14,2)` para soportar cantidades y acumulación de líneas. Precio y costo de productos admiten de cero a 9999999999.99 y hasta dos decimales; DTOs, servicios y entidades rechazan el exceso sin redondear, y normalizan valores válidos a escala dos. Las ventas almacenan snapshots para que futuros cambios de producto no reescriban el historial comercial.
@@ -70,6 +73,14 @@ El dinero usa `BigDecimal`, nunca tipos binarios. Producto y precios/costos de l
 ## Inventario y concurrencia
 
 `ProductService` bloquea también las modificaciones de catálogo y los cambios de estado mediante `PESSIMISTIC_WRITE`, para que una edición concurrente no sobrescriba stock con valores anteriores. `ProductRepository.findByIdForUpdate` usa una implementación JPA que hace flush de los cambios pendientes de la transacción, adquiere `PESSIMISTIC_WRITE` y refresca el producto bajo ese bloqueo. El bloqueo por sí solo no actualiza una entidad ya cargada en la sesión; el refresco evita validar estado o stock obsoleto, y el flush previo conserva cambios propios de operaciones anteriores en la misma transacción. `InventoryService` ejecuta entradas y salidas dentro de transacciones. Obtiene el producto con `PESSIMISTIC_WRITE`, valida límites/suficiencia, actualiza el stock mediante métodos de dominio y guarda `StockMovement` en la misma transacción. `StockMovement` es `@Immutable`; el historial se pagina por `created_at DESC, id DESC`.
+
+## Recuperación de ajustes de inventario
+
+Los POST `/api/products/{id}/stock/in` y `/stock/out` aceptan `Idempotency-Key` UUID opcional para conservar compatibilidad con clientes existentes; sin clave, cada POST sigue siendo un movimiento independiente. La interfaz siempre envía una clave nueva por ajuste y la guarda con la solicitud en sessionStorage antes de enviar. Una respuesta perdida, ilegible, 401 o error de resultado incierto conserva la recuperación y bloquea nuevos ajustes hasta resolverla o cerrarla explícitamente. Navegar, recargar o volver a ingresar conserva la misma clave y payload; no hay reintentos automáticos. Cerrar la pestaña o borrar su almacenamiento pierde esa recuperación local.
+
+`IdempotentInventoryService` adquiere un advisory lock transaccional PostgreSQL en un namespace separado de ventas/bootstrap. Un competidor devuelve 409 `IDEMPOTENCY_IN_PROGRESS`; repetir una clave confirmada con otro producto, dirección, cantidad o motivo devuelve 409 `IDEMPOTENCY_KEY_REUSED`. Repetir el mismo ajuste devuelve el movimiento histórico, aunque haya cambiado el stock o el estado del producto, sin emitir nuevas métricas ni tocar stock. Ajuste, movimiento y clave se confirman o revierten en una sola transacción READ_COMMITTED. Los timestamps nuevos se truncan a microsegundos para que la respuesta inicial y la recuperación coincidan con la precisión PostgreSQL.
+
+La interfaz conserva los campos ante rechazos definitivos de validación, producto inexistente, stock insuficiente o límite excedido, y permite corregirlos con una nueva clave. Si falla el almacenamiento, no envía el ajuste; si falla la limpieza tras confirmar, conserva la misma clave. Las respuestas recibidas después de abandonar la vista no alteran avisos ni estado ni eliminan recuperaciones. Ventas conserva su propio flujo de idempotencia independiente.
 
 ## Autenticación
 

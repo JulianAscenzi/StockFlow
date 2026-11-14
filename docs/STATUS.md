@@ -1,5 +1,21 @@
 # Status
 
+## Corrección de inventario — 2026-11-13
+
+Desde `29e9b2b`, con working tree inicialmente limpio, se corrigió el riesgo de duplicar entradas/salidas manuales al reintentar una respuesta perdida. La migración nueva V6 agrega `inventory_confirmations`, sin alterar V1–V5. Los endpoints aceptan `Idempotency-Key` UUID opcional; la interfaz siempre lo envía. Clave, movimiento y cambio de stock comparten transacción; replay devuelve el histórico sin otro movimiento ni métricas. Concurrencia devuelve `IDEMPOTENCY_IN_PROGRESS`; cambiar producto/dirección/cantidad/motivo con una clave confirmada devuelve `IDEMPOTENCY_KEY_REUSED`. El timestamp del movimiento usa precisión de microsegundos para mantener igualdad entre respuesta inicial y replay PostgreSQL.
+
+La interfaz guarda el ajuste antes de enviar, bloquea edición ante resultado incierto y ofrece reintentar la misma clave. Conserva recuperación al navegar, recargar o volver a ingresar; no reintenta automáticamente. Rechazos definitivos liberan la recuperación y conservan campos editables. Si no puede guardar, no envía; cerrar una recuperación requiere una advertencia explícita. La recuperación local se pierde al cerrar la pestaña o borrar sessionStorage. Clientes HTTP que omitan la clave conservan la semántica anterior, sin protección de reintentos.
+
+Validación actual:
+
+- Pruebas específicas: **31 aprobadas**, incluyendo unidad, controller con mocks/advice real e integración PostgreSQL/Testcontainers: replay IN/OUT con igualdad de respuesta, cambios posteriores de stock/estado, conflictos de payload, UUID inválidos, integridad FK/unique, rollback exterior y concurrencia determinista con latches/Futures y timeout.
+- `backend/./mvnw test`: **397 tests, cero fallos/errores/omisiones**, PostgreSQL 17 real/Testcontainers.
+- `BrowserE2EIT`: **35/35 escenarios Playwright**, incluyendo siete regresiones nuevas de inventario: respuesta perdida/ilegible después de commit para IN/OUT, navegación/recarga conservando clave/payload/ID, almacenamiento bloqueado, rechazo definitivo editable y motivo vacío sin envío. La primera ejecución falló en el selector exacto de un textarea con contenido conservado; se cambió al rol/nombre accesible y la suite final completa aprobó.
+- `npm run build`: aprobado. Dependencias instaladas con `npm ci`, sin modificar lockfile. Chromium de pruebas instalado en `/tmp`.
+- `git diff --check`: aprobado; revisión de cambios transaccionales, migración aditiva, DTOs/LAZY, recuperación, archivos generados y configuración local realizada antes del commit.
+
+Docker respondió al ejecutar Maven como el mismo usuario mediante `sudo -n -u juliana`, que actualiza sus grupos suplementarios existentes. No se modificaron permisos del socket, usuarios ni configuración del daemon. Sólo se usaron bases aisladas de Testcontainers; sin despliegue, push ni cambios cloud. El estado de portfolio histórico de abajo se conserva como evidencia de su checkpoint.
+
 ## Estado actual — portfolio (2026-10-04)
 
 Producto y alcance de ingeniería completados hasta Etapa 8: backend modular, frontend, autenticación, concurrencia/idempotencia, Compose, observabilidad/SRE, kind, Helm, CI/GHCR y diseño AWS/Terraform. [ROADMAP](ROADMAP.md) separa lo completado de las mejoras opcionales. AWS está diseñado e implementado como IaC, con validación estática y tests mock; **no está desplegado ni se ejecutó un plan real contra AWS**. No provisionarlo permanentemente evita costos cloud innecesarios y no bloquea el portfolio.

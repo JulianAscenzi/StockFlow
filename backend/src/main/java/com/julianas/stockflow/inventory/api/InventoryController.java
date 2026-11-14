@@ -2,6 +2,8 @@ package com.julianas.stockflow.inventory.api;
 
 import com.julianas.stockflow.common.api.PageResponse;
 import com.julianas.stockflow.inventory.InventoryService;
+import com.julianas.stockflow.inventory.IdempotentInventoryService;
+import com.julianas.stockflow.inventory.StockMovementType;
 import com.julianas.stockflow.inventory.StockMovement;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -19,27 +22,36 @@ public class InventoryController {
 
     private final InventoryService inventoryService;
     private final StockMovementMapper stockMovementMapper;
+    private final IdempotentInventoryService idempotentInventory;
 
-    public InventoryController(InventoryService inventoryService, StockMovementMapper stockMovementMapper) {
+    public InventoryController(InventoryService inventoryService, StockMovementMapper stockMovementMapper,
+            IdempotentInventoryService idempotentInventory) {
         this.inventoryService = inventoryService;
         this.stockMovementMapper = stockMovementMapper;
+        this.idempotentInventory = idempotentInventory;
     }
 
     @PostMapping("/stock/in")
     public StockMovementResponse increaseStock(
             @PathVariable Long productId,
-            @Valid @RequestBody StockMovementRequest request
+            @Valid @RequestBody StockMovementRequest request,
+            @RequestHeader(value = "Idempotency-Key", required = false) String key
     ) {
-        StockMovement movement = inventoryService.increaseStock(productId, request.quantity(), request.reason());
+        StockMovement movement = key == null
+                ? inventoryService.increaseStock(productId, request.quantity(), request.reason())
+                : idempotentInventory.confirm(key, productId, StockMovementType.IN, request.quantity(), request.reason());
         return stockMovementMapper.toResponse(movement);
     }
 
     @PostMapping("/stock/out")
     public StockMovementResponse decreaseStock(
             @PathVariable Long productId,
-            @Valid @RequestBody StockMovementRequest request
+            @Valid @RequestBody StockMovementRequest request,
+            @RequestHeader(value = "Idempotency-Key", required = false) String key
     ) {
-        StockMovement movement = inventoryService.decreaseStock(productId, request.quantity(), request.reason());
+        StockMovement movement = key == null
+                ? inventoryService.decreaseStock(productId, request.quantity(), request.reason())
+                : idempotentInventory.confirm(key, productId, StockMovementType.OUT, request.quantity(), request.reason());
         return stockMovementMapper.toResponse(movement);
     }
 

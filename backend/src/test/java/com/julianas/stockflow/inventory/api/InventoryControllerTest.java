@@ -4,6 +4,7 @@ import com.julianas.stockflow.common.api.PageResponse;
 import com.julianas.stockflow.common.error.GlobalExceptionHandler;
 import com.julianas.stockflow.inventory.InsufficientStockException;
 import com.julianas.stockflow.inventory.InventoryService;
+import com.julianas.stockflow.inventory.IdempotentInventoryService;
 import com.julianas.stockflow.inventory.StockLimitExceededException;
 import com.julianas.stockflow.inventory.StockMovement;
 import com.julianas.stockflow.inventory.StockMovementType;
@@ -59,6 +60,9 @@ class InventoryControllerTest {
     private InventoryService inventoryService;
 
     @MockitoBean
+    private IdempotentInventoryService idempotentInventory;
+
+    @MockitoBean
     private StockMovementMapper stockMovementMapper;
 
     private StockMovement movement;
@@ -95,6 +99,21 @@ class InventoryControllerTest {
         verify(inventoryService).increaseStock(PRODUCT_ID, 5, "Supplier delivery");
         verify(inventoryService, never()).decreaseStock(any(), any(), any());
         verify(stockMovementMapper).toResponse(movement);
+    }
+
+    @Test
+    void keyedRequestsDelegateDirectionToIdempotentService() throws Exception {
+        String key = java.util.UUID.randomUUID().toString();
+        for (StockMovementType type : StockMovementType.values()) {
+            when(idempotentInventory.confirm(key, PRODUCT_ID, type, 5, "Supplier delivery")).thenReturn(movement);
+            when(stockMovementMapper.toResponse(movement)).thenReturn(response(type, 10, 15));
+            mockMvc.perform(post("/api/products/{productId}/stock/{direction}", PRODUCT_ID,
+                            type.name().toLowerCase(java.util.Locale.ROOT))
+                            .header("Idempotency-Key", key).contentType(MediaType.APPLICATION_JSON).content(requestJson()))
+                    .andExpect(status().isOk());
+            verify(idempotentInventory).confirm(key, PRODUCT_ID, type, 5, "Supplier delivery");
+        }
+        verifyNoInteractions(inventoryService);
     }
 
     @Test

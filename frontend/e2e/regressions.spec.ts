@@ -358,7 +358,7 @@ for (const rejected of [false, true]) {
     await expect(page.getByRole('combobox', { name: /^Producto/ }).locator(`option[value="${product.id}"]`)).toHaveCount(1);
     await page.getByRole('combobox', { name: /^Producto/ }).selectOption(String(product.id));
     await page.getByLabel('Cantidad', { exact: true }).fill('2');
-    await page.getByLabel('Motivo', { exact: true }).fill('Late movement');
+    await page.getByRole('textbox', { name: 'Motivo', exact: true }).fill('Late movement');
     await page.evaluate(() => {
       const originalFetch = window.fetch;
       window.fetch = async (...args) => {
@@ -402,3 +402,137 @@ for (const rejected of [false, true]) {
     expect((await saved.json()).stock).toBe(rejected ? 5 : 7);
   });
 }
+
+for (const direction of ['in', 'out'] as const) {
+  for (const failure of ['lost', 'malformed']) {
+    test(`inventory ${direction} recovers ${failure} response after navigation and reload without duplicate stock`, async ({ page }) => {
+      await login(page);
+      const product = await fixture(page, `RECOVER_${direction}_${failure}`);
+      await page.getByRole('button', { name: 'Inventario', exact: true }).click();
+      await page.getByLabel('Buscar por nombre o SKU').fill(product.sku);
+      await page.getByRole('button', { name: 'Buscar productos', exact: true }).click();
+      const selector = page.getByRole('combobox', { name: /^Producto/ });
+      await expect(selector.locator(`option[value="${product.id}"]`)).toHaveCount(1);
+      await selector.selectOption(String(product.id));
+      if (direction === 'out') await page.getByRole('button', { name: 'Salida', exact: true }).click();
+      await page.getByLabel('Cantidad', { exact: true }).fill('2');
+      await page.getByRole('textbox', { name: 'Motivo', exact: true }).fill('Recover once');
+      const keys: string[] = [];
+      const payloads: string[] = [];
+      const results: number[] = [];
+      await page.route(`**/api/products/${product.id}/stock/${direction}`, async (route) => {
+        keys.push(route.request().headers()['idempotency-key']);
+        payloads.push(route.request().postData()!);
+        const response = await route.fetch();
+        expect(response.status()).toBe(200);
+        results.push((await response.json()).id);
+        if (keys.length === 1) {
+          if (failure === 'lost') await route.abort('failed');
+          else await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
+        } else await route.fulfill({ response });
+      });
+      await page.getByRole('button', { name: direction === 'in' ? 'Registrar entrada' : 'Registrar salida', exact: true }).click();
+      await expect(page.getByText('No se pudo confirmar el resultado.', { exact: false })).toBeVisible();
+      await expect(page.getByLabel('Cantidad', { exact: true })).toBeDisabled();
+      const pending = await page.evaluate(() => sessionStorage.getItem('stockflow.pending-inventory.v1'));
+      expect(pending).not.toBeNull();
+      const expectedStock = direction === 'in' ? 7 : 3;
+      expect((await (await page.request.get(`/api/products/${product.id}`, { headers: product.headers })).json()).stock).toBe(expectedStock);
+      await page.getByRole('button', { name: 'Resumen', exact: true }).click();
+      await page.getByRole('button', { name: 'Inventario', exact: true }).click();
+      await expect(page.getByRole('button', { name: 'Reintentar ajuste', exact: true })).toBeVisible();
+      await page.reload();
+      await page.getByRole('button', { name: 'Inventario', exact: true }).click();
+      expect(await page.evaluate(() => sessionStorage.getItem('stockflow.pending-inventory.v1'))).toBe(pending);
+      expect(keys).toHaveLength(1);
+      await page.getByRole('button', { name: 'Reintentar ajuste', exact: true }).click();
+      await expect(page.getByRole('status')).toContainText(direction === 'in' ? 'Entrada registrada.' : 'Salida registrada.');
+      await expect(page.getByRole('button', { name: 'Reintentar ajuste', exact: true })).toHaveCount(0);
+      expect(keys).toHaveLength(2);
+      expect(keys[0]).toMatch(/^[0-9a-f-]{36}$/);
+      expect(keys[1]).toBe(keys[0]);
+      expect(payloads[1]).toBe(payloads[0]);
+      expect(results[1]).toBe(results[0]);
+      expect(await page.evaluate(() => sessionStorage.getItem('stockflow.pending-inventory.v1'))).toBeNull();
+      expect((await (await page.request.get(`/api/products/${product.id}`, { headers: product.headers })).json()).stock).toBe(expectedStock);
+      const history = await page.request.get(`/api/products/${product.id}/stock-movements`, { headers: product.headers });
+      expect((await history.json()).totalElements).toBe(2);
+    });
+  }
+}
+
+test('inventory does not submit if recovery cannot be stored', async ({ page }) => {
+  await login(page);
+  const product = await fixture(page, 'MOVE_STORAGE');
+  await page.getByRole('button', { name: 'Inventario', exact: true }).click();
+  await page.getByLabel('Buscar por nombre o SKU').fill(product.sku);
+  await page.getByRole('button', { name: 'Buscar productos', exact: true }).click();
+  const selector = page.getByRole('combobox', { name: /^Producto/ });
+  await expect(selector.locator(`option[value="${product.id}"]`)).toHaveCount(1);
+  await selector.selectOption(String(product.id));
+  await page.getByLabel('Cantidad', { exact: true }).fill('2');
+  await page.getByRole('textbox', { name: 'Motivo', exact: true }).fill('Storage unavailable');
+  await page.evaluate(() => {
+    const original = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key, value) {
+      if (key === 'stockflow.pending-inventory.v1') throw new Error('Storage blocked');
+      original.call(this, key, value);
+    };
+  });
+  let requests = 0;
+  await page.route(`**/api/products/${product.id}/stock/in`, async (route) => { requests++; await route.continue(); });
+  await page.getByRole('button', { name: 'Registrar entrada', exact: true }).click();
+  await expect(page.getByText('No se envió la solicitud.', { exact: false })).toBeVisible();
+  expect(requests).toBe(0);
+  expect((await (await page.request.get(`/api/products/${product.id}`, { headers: product.headers })).json()).stock).toBe(5);
+});
+
+test('inventory definitive rejection preserves editable values and clears only its recovery', async ({ page }) => {
+  await login(page);
+  const product = await fixture(page, 'MOVE_REJECT');
+  await page.getByRole('button', { name: 'Inventario', exact: true }).click();
+  await page.getByLabel('Buscar por nombre o SKU').fill(product.sku);
+  await page.getByRole('button', { name: 'Buscar productos', exact: true }).click();
+  const selector = page.getByRole('combobox', { name: /^Producto/ });
+  await expect(selector.locator(`option[value="${product.id}"]`)).toHaveCount(1);
+  await selector.selectOption(String(product.id));
+  await page.getByRole('button', { name: 'Salida', exact: true }).click();
+  await page.getByLabel('Cantidad', { exact: true }).fill('6');
+  await page.getByRole('textbox', { name: 'Motivo', exact: true }).fill('Too many');
+  const keys: string[] = [];
+  await page.route(`**/api/products/${product.id}/stock/out`, async (route) => {
+    keys.push(route.request().headers()['idempotency-key']); await route.continue();
+  });
+  await page.getByRole('button', { name: 'Registrar salida', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Insufficient stock');
+  await expect(page.getByLabel('Cantidad', { exact: true })).toBeEnabled();
+  await expect(page.getByLabel('Cantidad', { exact: true })).toHaveValue('6');
+  await expect(page.getByRole('textbox', { name: 'Motivo', exact: true })).toHaveValue('Too many');
+  expect(await page.evaluate(() => sessionStorage.getItem('stockflow.pending-inventory.v1'))).toBeNull();
+  await page.getByLabel('Cantidad', { exact: true }).fill('2');
+  await page.getByRole('button', { name: 'Registrar salida', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Salida registrada.');
+  expect(keys).toHaveLength(2);
+  expect(keys[0]).not.toBe(keys[1]);
+  expect((await (await page.request.get(`/api/products/${product.id}`, { headers: product.headers })).json()).stock).toBe(3);
+});
+
+test('inventory rejects blank reason before storing or sending an operation', async ({ page }) => {
+  await login(page);
+  const product = await fixture(page, 'MOVE_BLANK');
+  await page.getByRole('button', { name: 'Inventario', exact: true }).click();
+  await page.getByLabel('Buscar por nombre o SKU').fill(product.sku);
+  await page.getByRole('button', { name: 'Buscar productos', exact: true }).click();
+  const selector = page.getByRole('combobox', { name: /^Producto/ });
+  await expect(selector.locator(`option[value="${product.id}"]`)).toHaveCount(1);
+  await selector.selectOption(String(product.id));
+  await page.getByLabel('Cantidad', { exact: true }).fill('2');
+  await page.getByRole('textbox', { name: 'Motivo', exact: true }).fill('   ');
+  let requests = 0;
+  await page.route(`**/api/products/${product.id}/stock/in`, async (route) => { requests++; await route.continue(); });
+  await page.getByRole('button', { name: 'Registrar entrada', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Ingresá una cantidad entera positiva y un motivo');
+  await expect(page.getByRole('textbox', { name: 'Motivo', exact: true })).toBeEnabled();
+  expect(requests).toBe(0);
+  expect(await page.evaluate(() => sessionStorage.getItem('stockflow.pending-inventory.v1'))).toBeNull();
+});
