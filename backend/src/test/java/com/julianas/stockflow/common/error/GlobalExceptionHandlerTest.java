@@ -256,6 +256,15 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void preservesFrameworkStatusWithoutExposingItsInternalReason() throws Exception {
+        mockMvc.perform(get("/test/http-error"))
+                .andExpect(status().isNotAcceptable())
+                .andExpect(jsonPath("$.code").value("NOT_ACCEPTABLE"))
+                .andExpect(jsonPath("$.message").value("Not Acceptable."))
+                .andExpect(content().string(not(containsString("sensitive server detail"))));
+    }
+
+    @Test
     void handlesUnexpectedExceptionWithoutTechnicalDetails() throws Exception {
         mockMvc.perform(get("/test/unexpected"))
                 .andExpect(status().isInternalServerError())
@@ -270,6 +279,12 @@ class GlobalExceptionHandlerTest {
     @RestController
     @RequestMapping("/test")
     private static class TestController {
+
+        @GetMapping("/http-error")
+        void httpError() {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.NOT_ACCEPTABLE, "sensitive server detail");
+        }
 
         @GetMapping("/database-unavailable")
         void databaseUnavailable() {

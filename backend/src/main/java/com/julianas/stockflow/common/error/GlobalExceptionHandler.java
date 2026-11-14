@@ -26,6 +26,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -305,6 +306,21 @@ public class GlobalExceptionHandler {
             Exception exception,
             HttpServletRequest request
     ) {
+        if (exception instanceof ErrorResponse httpError) {
+            int status = httpError.getStatusCode().value();
+            HttpStatus knownStatus = HttpStatus.resolve(status);
+            String reason = knownStatus == null ? "HTTP Error" : knownStatus.getReasonPhrase();
+            String code = switch (status) {
+                case 400 -> "INVALID_REQUEST";
+                case 405 -> "METHOD_NOT_ALLOWED";
+                case 406 -> "NOT_ACCEPTABLE";
+                case 415 -> "UNSUPPORTED_MEDIA_TYPE";
+                default -> "HTTP_ERROR";
+            };
+            ApiError error = new ApiError(Instant.now(), status, reason, code,
+                    reason + ".", request.getRequestURI(), Map.of());
+            return ResponseEntity.status(httpError.getStatusCode()).headers(httpError.getHeaders()).body(error);
+        }
         if (isDatabaseUnavailable(exception)) {
             LOGGER.error("Database unavailable while processing request {}", request.getRequestURI(), exception);
             return response(HttpStatus.SERVICE_UNAVAILABLE, "DATABASE_UNAVAILABLE",

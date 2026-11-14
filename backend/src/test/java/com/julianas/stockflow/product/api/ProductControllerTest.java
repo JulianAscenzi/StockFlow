@@ -40,6 +40,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -80,6 +81,29 @@ class ProductControllerTest {
         product = org.mockito.Mockito.mock(Product.class);
         activeResponse = response(true);
         inactiveResponse = response(false);
+    }
+
+    @Test
+    void unsupportedMethodKeeps405AndAllowHeaderWithoutInvokingDomain() throws Exception {
+        mockMvc.perform(delete("/api/products/{id}", PRODUCT_ID))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(header().string("Allow", containsString("GET")))
+                .andExpect(jsonPath("$.status").value(405))
+                .andExpect(jsonPath("$.code").value("METHOD_NOT_ALLOWED"))
+                .andExpect(jsonPath("$.message").value("Method Not Allowed."))
+                .andExpect(jsonPath("$.path").value("/api/products/" + PRODUCT_ID))
+                .andExpect(jsonPath("$.fieldErrors").isEmpty());
+        verifyNoInteractions(productService, productMapper);
+    }
+
+    @Test
+    void unsupportedContentTypeKeeps415AndAcceptedMediaTypes() throws Exception {
+        mockMvc.perform(post("/api/products").contentType(MediaType.APPLICATION_XML).content("<product/>"))
+                .andExpect(status().isUnsupportedMediaType())
+                .andExpect(header().string("Accept", containsString("application/json")))
+                .andExpect(jsonPath("$.code").value("UNSUPPORTED_MEDIA_TYPE"))
+                .andExpect(jsonPath("$.message").value("Unsupported Media Type."));
+        verifyNoInteractions(productService, productMapper);
     }
 
     @Test

@@ -1,5 +1,11 @@
 # Status
 
+## Cierre de auditoría HTTP — 2026-11-13
+
+Desde `031b8d6`, con árbol limpio. `GlobalExceptionHandler` conserva status y headers de las excepciones HTTP de Spring que implementan `ErrorResponse`, en lugar de convertirlas en 500. Los casos 405/406/415 usan códigos propios y un mensaje público basado en el status, sin publicar el detalle interno de Spring; los handlers de dominio/validación y el fallback 500/503 existentes se conservan. Las regresiones MVC comprueban DELETE no soportado con `Allow`, Content-Type no soportado con `Accept`, y sanitización de un `ResponseStatusException`.
+
+Validación: **51 pruebas específicas aprobadas** (`GlobalExceptionHandlerTest,ProductControllerTest`), luego **400 tests en `mvn test`, cero fallos/errores/omisiones**, con PostgreSQL/Testcontainers. `git diff --check` aprobado y diff completo revisado. Sin cambios de esquema, frontend, dependencias ni despliegue. Esta corrección cierra el segundo hallazgo de la auditoría; la paginación estable queda para la siguiente unidad.
+
 ## Corrección de inventario — 2026-11-13
 
 Desde `29e9b2b`, con working tree inicialmente limpio, se corrigió el riesgo de duplicar entradas/salidas manuales al reintentar una respuesta perdida. La migración nueva V6 agrega `inventory_confirmations`, sin alterar V1–V5. Los endpoints aceptan `Idempotency-Key` UUID opcional; la interfaz siempre lo envía. Clave, movimiento y cambio de stock comparten transacción; replay devuelve el histórico sin otro movimiento ni métricas. Concurrencia devuelve `IDEMPOTENCY_IN_PROGRESS`; cambiar producto/dirección/cantidad/motivo con una clave confirmada devuelve `IDEMPOTENCY_KEY_REUSED`. El timestamp del movimiento usa precisión de microsegundos para mantener igualdad entre respuesta inicial y replay PostgreSQL.
