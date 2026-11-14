@@ -1,5 +1,24 @@
 # Status
 
+## Release v1.0.0 publicada — 2026-11-14
+
+[StockFlow v1.0.0](https://github.com/JulianAscenzi/StockFlow/releases/tag/v1.0.0) publicada como Latest, no prerelease, a las `2026-11-14T03:00:47Z` (00:00:47 de Argentina). Tag anotado `v1.0.0` sobre `8cfd8c7a7e8e9592bf4232e58a8cbda6d02c3eac`; backend/frontend `1.0.0`, Chart `0.2.1` / appVersion `1.0.0`. El usuario habilitó GitHub CLI y se retomó la publicación ya autorizada; sin imprimir tokens ni cambiar permisos de cuentas/paquetes.
+
+[CI main 43548090690](https://github.com/JulianAscenzi/StockFlow/actions/runs/43548090690) y [CI tag 43548667219](https://github.com/JulianAscenzi/StockFlow/actions/runs/43548667219) completadas con éxito: frontend, backend, navegador, imágenes backend/frontend, smoke y ambos publish. Los artifacts del tag se descargaron y sus informes se inspeccionaron: **406 tests backend, cero fallos/errores/omisiones**, **35 escenarios Playwright, cero fallos/omisiones/flaky**. La evidencia local adicional del candidato sigue siendo Helm lint y doce tests de scripts/Chart aprobados.
+
+| Componente | Digest OCI publicado bajo 1.0.0 |
+| --- | --- |
+| backend | `sha256:6e30830aaede1156593d3b04b0d7df38a36ea41b6a7e0d56074c2ee47de7e935` |
+| frontend | `sha256:2ba86fbfa64928709d2e98b6c0cd42c4e78910f5d19a8d3bd317a72f2a1da2a5` |
+
+Se verificaron anónimamente en GHCR los tags `1.0.0`, índices por digest, config con labels de commit/versión y blobs de SBOM/provenance con SHA-256 y subjects vinculados al manifiesto ejecutable. Los dos pulls Docker anónimos por digest aprobaron con DOCKER_CONFIG aislado, sin credenciales de GHCR. Los digests coinciden con los artifacts exactos probados y publicados en la CI del tag. No se reconstruyeron imágenes ni se desplegó infraestructura para estas comprobaciones.
+
+La release conserva 13 assets: tres capturas reales, Chart empaquetado, dos metadata de publicación, dos SBOM, dos provenance, reporte de verificación de registry, resumen de tests y SHA256SUMS. Todos se comprobaron por nombre, tamaño, estado uploaded y SHA-256 remoto antes de hacer público el borrador. Se revisaron los JSON sin patrones fuertes de credenciales; no se subieron tars OCI, tokens ni informes completos de runtime. Esta evidencia ya no depende sólo de la retención de Actions; no equivale a firma independiente ni scanner de vulnerabilidades.
+
+README, material de portfolio, ROADMAP, notas de release y guía de registry enlazan la publicación real. Este checkpoint sólo actualiza documentación: no cambia el tag, código, versiones ni artefactos de v1.0.0. Enlaces relativos, diff completo y `git diff --check` revisados antes del commit. No se repiten pruebas locales de aplicación por cambios únicamente documentales; la CI remota del tag está aprobada.
+
+La última comprobación de demo (2026-11-13) conserva Vercel HTTP 200 y API Render sin respuesta tras dos intentos de 45 segundos; la demo completa sigue sin estar validada. La release recomienda reproducción local y explicita límites. Sin AWS, cambios de datos comerciales, publicación en LinkedIn ni ampliación funcional.
+
 ## Candidato v1.0.0 versionado — 2026-11-13
 
 Desde `fe5fa25`, con árbol limpio. El usuario autorizó alinear versiones, push, CI, tag y publicación de release. Backend y frontend pasan a `1.0.0` (incluido el lockfile raíz); Chart Helm `0.2.1` con `appVersion: 1.0.0`. No cambian dependencias, reglas de negocio, imágenes base ni migraciones. Helm 3.19.0 se descargó en `/tmp` y se verificó contra el checksum oficial, sin instalación global.

@@ -1,6 +1,6 @@
 # StockFlow v1.0.0
 
-**Estado: candidato versionado para v1.0.0; publicación autorizada.** Backend y frontend `1.0.0`; Chart Helm `0.2.1` con `appVersion: 1.0.0`. El candidato pasó validación local el 2026-11-13. Antes de declarar la release publicada se deben verificar CI del SHA final, tag y las dos imágenes remotas.
+**Publicada el 2026-11-14:** [StockFlow v1.0.0](https://github.com/JulianAscenzi/StockFlow/releases/tag/v1.0.0), tag anotado sobre `8cfd8c7a7e8e9592bf4232e58a8cbda6d02c3eac`. Backend/frontend `1.0.0`; Chart `0.2.1`, `appVersion: 1.0.0`. CI de main y del tag aprobadas; ambos digests y attestations remotos verificados.
 
 StockFlow reúne una aplicación de inventario y ventas utilizable en un laboratorio reproducible con evidencia de consistencia, recuperación y entrega de artefactos. Es un proyecto personal; no promete operación empresarial ni SLA comercial.
 
@@ -37,18 +37,17 @@ ADR comparando ECS, EKS y EC2, estimaciones de costos y Terraform para ECS Farga
 
 Frontend Vite en contenedor para laboratorio; demo gratuita con datos ficticios y persistencia limitada. Comprobación del 2026-11-13: frontend HTTP 200, API sin respuesta tras dos intentos de 45 segundos; la demo completa no está validada y se recomienda la reproducción local. Sin backups automatizados/restore local, NetworkPolicy efectiva, TLS de laboratorio, scanner de vulnerabilidades, firma independiente ni evidencia de 30 días de SLO. AWS diseñado no representa operación cloud. Estas extensiones están separadas como [Optional future work](ROADMAP.md#optional-future-work).
 
-## Release readiness
+## Evidencia publicada
 
-| Criterio | Estado comprobado | Paso antes de publicar |
-| --- | --- | --- |
-| Auditoría funcional | Tres hallazgos corregidos: inventario `031b8d6`, HTTP `f827289`, paginación `3699a59` | Mantener sus regresiones en CI. |
-| Tests locales | 406 backend / 35 navegador y build frontend aprobados con las versiones de release | Confirmar CI del SHA final, incluido el cierre documental. |
-| CI e imágenes | La evidencia GHCR remota de STATUS sigue siendo histórica; no se hizo push de estos cambios | Autorizar push y comprobar tests, smoke, publicación y ambos digests del candidato. |
-| Árbol y docs | Correcciones funcionales en commits separados; README, presentación y este borrador actualizados | Confirmar árbol limpio tras el commit documental y revisar sus enlaces. |
-| Secrets | Revisión de los diffs locales y capturas sin credenciales reales expuestas | Revisar también alertas GitHub Security autenticadas; no se accedió a ellas. |
-| Versionado | Backend/frontend 1.0.0; Chart 0.2.1 / appVersion 1.0.0; dependencias sin cambios | Verificar estas versiones en el SHA que se etiquete. |
-| Capturas | Resumen, historial y detalle actualizados con datos ficticios en instancia aislada | Usar el contexto/commit registrados en el [inventario de imágenes](images/README.md); no atribuirlas a la demo pública. |
-| Infraestructura | Compose/kind/GHCR con evidencia histórica; AWS diseñado sin provisionar | No se requiere desplegar AWS para presentar el portfolio. |
-| Licencia | MIT existente | Mantener atribución. |
+- [CI de main](https://github.com/JulianAscenzi/StockFlow/actions/runs/43548090690) y [CI de v1.0.0](https://github.com/JulianAscenzi/StockFlow/actions/runs/43548667219): ambas aprobadas para `8cfd8c7`.
+- Informes descargados del tag: **406 pruebas backend**, cero fallos/errores/omisiones; **35 escenarios Playwright**, cero fallos/omisiones/flaky. Build, smoke del OCI exacto y publicación de ambos componentes aprobados.
+- Verificación independiente de GHCR: tags `1.0.0`, índices por digest, labels de commit/versión, SBOM/provenance y sus subjects; pull Docker anónimo por digest de ambos componentes aprobado.
 
-La publicación está autorizada. Antes de anunciar v1.0.0, comprobar CI del SHA final, tag semántico y los dos digests publicados. La validación local no sustituye estas comprobaciones remotas.
+| Imagen | Digest OCI de v1.0.0 |
+| --- | --- |
+| `ghcr.io/julianascenzi/stockflow-backend:1.0.0` | `sha256:6e30830aaede1156593d3b04b0d7df38a36ea41b6a7e0d56074c2ee47de7e935` |
+| `ghcr.io/julianascenzi/stockflow-frontend:1.0.0` | `sha256:2ba86fbfa64928709d2e98b6c0cd42c4e78910f5d19a8d3bd317a72f2a1da2a5` |
+
+La [release](https://github.com/JulianAscenzi/StockFlow/releases/tag/v1.0.0) conserva **13 assets**: tres capturas, Chart `stockflow-0.2.1.tgz`, dos metadata publicadas, dos SBOM, dos provenance, verificación de registry, resumen de tests y `SHA256SUMS`. Los trece archivos se contrastaron por nombre, tamaño y SHA-256 con la API de GitHub antes de publicar. No se subieron OCI tars, credenciales ni informes runtime completos.
+
+El tag permanece fijo sobre el commit de release. El cierre documental posterior registra resultados sin cambiar ese tag ni reconstruir sus imágenes. Las capturas conservan su contexto original; no representan la demo pública. Las alertas autenticadas de GitHub Security no se inspeccionaron y esta publicación no acredita ausencia de vulnerabilidades.

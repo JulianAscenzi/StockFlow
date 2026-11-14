@@ -2,6 +2,8 @@
 
 Proyecto personal de portfolio, construido para demostrar backend engineering, confiabilidad y decisiones de plataforma con evidencia reproducible. No se presenta como experiencia de operación empresarial ni como servicio corriendo en AWS. El [README](../README.md) presenta el producto; [STATUS](STATUS.md) respalda resultados y límites.
 
+[Repositorio](https://github.com/JulianAscenzi/StockFlow) · [Release v1.0.0](https://github.com/JulianAscenzi/StockFlow/releases/tag/v1.0.0) · [Reproducción local](LOCAL_DEVELOPMENT.md)
+
 ## Versión corta — CV
 
 - Built a personal inventory and sales platform with Java 21/Spring Boot, React/TypeScript and PostgreSQL; implemented transactional stock updates, concurrency control and persistent sale idempotency.

@@ -1,9 +1,10 @@
 # Roadmap
 
-StockFlow está completo dentro de su alcance de proyecto personal de portfolio. El cierre incluye producto, backend, frontend, operación local, supply chain y diseño cloud validado sin provisionamiento AWS. Las entregas y sus resultados históricos están en [STATUS](STATUS.md); la preparación de release está en [RELEASE_NOTES_1.0.0](RELEASE_NOTES_1.0.0.md).
+StockFlow está completo dentro de su alcance de proyecto personal de portfolio. El cierre incluye producto, backend, frontend, operación local, supply chain y diseño cloud validado sin provisionamiento AWS. Las entregas y sus resultados históricos están en [STATUS](STATUS.md); la release publicada está documentada en [RELEASE_NOTES_1.0.0](RELEASE_NOTES_1.0.0.md).
 
 ## Completed
 
+- [x] [Release v1.0.0](https://github.com/JulianAscenzi/StockFlow/releases/tag/v1.0.0) publicada, CI del tag aprobada y ambos digests GHCR verificados.
 - [x] Backend MVP modular: categorías, productos, inventario, ventas y dashboard diario.
 - [x] PostgreSQL 17/Flyway V1–V6, constraints, dinero BigDecimal e historial con snapshots.
 - [x] Ventas, stock y movimientos transaccionales; rollback completo, bloqueo pesimista ordenado y pruebas de concurrencia.
@@ -22,7 +23,7 @@ StockFlow está completo dentro de su alcance de proyecto personal de portfolio.
 - [x] CI/GHCR: tests, build OCI, smoke del artefacto exacto, publicación SHA, SBOM/provenance y consumo por digest desde kind. Validación remota registrada en el checkpoint 18de2c0.
 - [x] Cloud Architecture / IaC: ADR ECS/EKS/EC2, costos evaluados, Terraform ECS Fargate/ALB/RDS implementado, validación estática y siete tests mock. Implementación en 4367a2d; sin plan real ni recursos AWS.
 
-El cierre documental inicial está registrado en `29e9b2b`. La auditoría posterior quedó corregida en `031b8d6`, `f827289` y `3699a59`, con suites locales verificadas. README, material de portfolio y borrador de release se actualizan con esa evidencia. Tag, release y CI remota del candidato permanecen pendientes de publicación autorizada.
+El cierre documental inicial está registrado en `29e9b2b`. La auditoría posterior quedó corregida en `031b8d6`, `f827289` y `3699a59`, con suites locales verificadas. README, material de portfolio y notas de release reflejan esa evidencia. v1.0.0 quedó publicada el 2026-11-14 sobre `8cfd8c7`, con CI remota aprobada, ambas imágenes GHCR verificadas y trece assets de evidencia en la release.
 
 ## Optional future work
 

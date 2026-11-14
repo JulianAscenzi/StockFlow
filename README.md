@@ -4,6 +4,8 @@ Aplicación web de inventario y ventas para pequeños comercios. Proyecto person
 
 Permite administrar **categorías y productos**, registrar **entradas/salidas de inventario**, confirmar ventas con descuento de **stock**, consultar historial y un **dashboard diario**. Incluye autenticación de administrador con BCrypt/JWT para instalaciones privadas.
 
+**Release publicada:** [v1.0.0](https://github.com/JulianAscenzi/StockFlow/releases/tag/v1.0.0) · [CI del tag](https://github.com/JulianAscenzi/StockFlow/actions/runs/43548667219)
+
 ![Dashboard de StockFlow: ventas, facturación y productos a reponer](docs/images/product-overview.png)
 
 Captura real del 2026-11-13, código `3699a59`, instancia local aislada con datos ficticios. Más vistas: [historial](docs/images/sales-history.png) y [detalle de venta](docs/images/sale-detail.png). Recorrido de cinco minutos: [guion de demostración](docs/portfolio/Guion%20de%20demostracion.md).
@@ -61,7 +63,7 @@ Configuración, puertos, desarrollo Maven/Vite y troubleshooting: [guía local](
 
 ## Tests
 
-**406 tests backend y 35 escenarios Playwright** en la última evidencia registrada: [STATUS](docs/STATUS.md). Cubren dominio, servicios, contratos HTTP, migraciones/repositorios PostgreSQL, rollback, concurrencia, idempotencia y flujos de navegador. Validación local del código funcional de `3699a59`; la CI remota del candidato se comprueba por separado antes de publicar.
+**406 tests backend y 35 escenarios Playwright** en la última evidencia registrada: [STATUS](docs/STATUS.md). Cubren dominio, servicios, contratos HTTP, migraciones/repositorios PostgreSQL, rollback, concurrencia, idempotencia y flujos de navegador. Validación local y [CI de v1.0.0](https://github.com/JulianAscenzi/StockFlow/actions/runs/43548667219) aprobadas para el commit de release `8cfd8c7`.
 
 ```bash
 (cd backend && ./mvnw test)
