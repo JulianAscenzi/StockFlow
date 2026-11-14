@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -44,6 +45,32 @@ class ProductServiceTest {
     @BeforeEach
     void setUp() {
         productService = new ProductService(productRepository, categoryRepository);
+    }
+
+    @Test
+    void addsIdAsLastTieBreakerWhilePreservingRequestedSortPageAndSize() {
+        Pageable requested = PageRequest.of(2, 7, Sort.by(Sort.Order.desc("price"), Sort.Order.asc("name")));
+        Pageable expected = PageRequest.of(2, 7, requested.getSort().and(Sort.by("id")));
+        when(categoryRepository.existsById(CATEGORY_ID)).thenReturn(true);
+        productService.findAll(requested);
+        productService.findByCategory(CATEGORY_ID, requested);
+        productService.searchByName("Mouse", requested);
+        productService.findActive(requested);
+        verify(productRepository).findAll(expected);
+        verify(productRepository).findByCategoryId(CATEGORY_ID, expected);
+        verify(productRepository).findByNameContainingIgnoreCase("Mouse", expected);
+        verify(productRepository).findByActiveTrue(expected);
+    }
+
+    @Test
+    void preservesExplicitIdDirectionAndHandlesUnsortedAndUnpagedRequests() {
+        Pageable explicit = PageRequest.of(1, 2, Sort.by(Sort.Order.desc("name"), Sort.Order.desc("id")));
+        productService.findAll(explicit);
+        verify(productRepository).findAll(explicit);
+        productService.findActive(PageRequest.of(0, 10));
+        verify(productRepository).findByActiveTrue(PageRequest.of(0, 10, Sort.by("id")));
+        productService.searchByName("Mouse", Pageable.unpaged(Sort.by("name")));
+        verify(productRepository).findByNameContainingIgnoreCase("Mouse", Pageable.unpaged(Sort.by("name", "id")));
     }
 
     @Test
@@ -218,7 +245,7 @@ class ProductServiceTest {
 
     @Test
     void listsProductsUsingProvidedPageable() {
-        Pageable pageable = PageRequest.of(1, 2);
+        Pageable pageable = PageRequest.of(1, 2, Sort.by("name", "id"));
         Page<Product> page = new PageImpl<>(List.of(existingProduct(new Category("A", null), true)));
         when(productRepository.findAll(pageable)).thenReturn(page);
 
@@ -230,7 +257,7 @@ class ProductServiceTest {
 
     @Test
     void findsByCategoryUsingProvidedPageable() {
-        Pageable pageable = PageRequest.of(2, 3);
+        Pageable pageable = PageRequest.of(2, 3, Sort.by("name", "id"));
         Page<Product> page = new PageImpl<>(List.of());
         when(categoryRepository.existsById(CATEGORY_ID)).thenReturn(true);
         when(productRepository.findByCategoryId(CATEGORY_ID, pageable)).thenReturn(page);
@@ -243,7 +270,7 @@ class ProductServiceTest {
 
     @Test
     void rejectsMissingCategoryBeforeSearchingProducts() {
-        Pageable pageable = PageRequest.of(0, 10);
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("name", "id"));
         when(categoryRepository.existsById(CATEGORY_ID)).thenReturn(false);
 
         assertThrows(
@@ -256,7 +283,7 @@ class ProductServiceTest {
 
     @Test
     void searchesByNormalizedPartialNameUsingProvidedPageable() {
-        Pageable pageable = PageRequest.of(1, 5);
+        Pageable pageable = PageRequest.of(1, 5, Sort.by("name", "id"));
         Page<Product> page = new PageImpl<>(List.of());
         when(productRepository.findByNameContainingIgnoreCase("wireless", pageable)).thenReturn(page);
 
@@ -268,7 +295,7 @@ class ProductServiceTest {
 
     @Test
     void rejectsBlankNameSearch() {
-        Pageable pageable = PageRequest.of(0, 10);
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("name", "id"));
 
         assertThrows(IllegalArgumentException.class, () -> productService.searchByName("   ", pageable));
 
@@ -277,7 +304,7 @@ class ProductServiceTest {
 
     @Test
     void listsOnlyActiveProductsUsingProvidedPageable() {
-        Pageable pageable = PageRequest.of(0, 10);
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("name", "id"));
         Page<Product> page = new PageImpl<>(List.of(existingProduct(new Category("A", null), true)));
         when(productRepository.findByActiveTrue(pageable)).thenReturn(page);
 

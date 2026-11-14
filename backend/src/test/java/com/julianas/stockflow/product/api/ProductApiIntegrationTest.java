@@ -3,6 +3,8 @@ package com.julianas.stockflow.product.api;
 import com.julianas.stockflow.api.ApiIntegrationTestSupport;
 import com.julianas.stockflow.category.api.CategoryCreateRequest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -11,6 +13,11 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.startsWith;
@@ -30,6 +37,31 @@ class ProductApiIntegrationTest extends ApiIntegrationTestSupport {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @ParameterizedTest
+    @ValueSource(strings = {"/api/products", "/api/products/search", "/api/products/category", "/api/products/active"})
+    void pagesWithEqualNamesHaveNoDuplicatesOrOmissions(String endpoint) throws Exception {
+        long categoryId = createCategory("Repeated names");
+        List<Long> ids = new ArrayList<>();
+        for (int i = 0; i < 5; i++) ids.add(createProduct(categoryId, "Repeated name", "PAGE-" + i));
+        String path = endpoint.equals("/api/products/category") ? endpoint + "/" + categoryId : endpoint;
+        for (String sort : new String[]{null, "name,desc", "id,desc"}) {
+            List<Long> actual = new ArrayList<>();
+            for (int page = 0; page < 3; page++) {
+                var request = get(path).param("page", String.valueOf(page)).param("size", "2");
+                if (endpoint.endsWith("/search")) request.param("name", "Repeated");
+                if (sort != null) request.param("sort", sort);
+                MvcResult result = mockMvc.perform(request).andExpect(status().isOk())
+                        .andExpect(jsonPath("$.totalElements").value(5)).andReturn();
+                for (JsonNode product : objectMapper.readTree(result.getResponse().getContentAsString()).get("content")) {
+                    actual.add(product.get("id").asLong());
+                }
+            }
+            List<Long> expected = new ArrayList<>(ids);
+            if ("id,desc".equals(sort)) Collections.reverse(expected);
+            assertThat(actual).containsExactlyElementsOf(expected);
+        }
+    }
 
     @Test
     void createsReadsSearchesAndUpdatesAProductWithLazyCategoryMapping() throws Exception {

@@ -5,6 +5,8 @@ import com.julianas.stockflow.category.CategoryNotFoundException;
 import com.julianas.stockflow.category.CategoryRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,13 +67,13 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public Page<Product> findAll(Pageable pageable) {
-        return productRepository.findAll(Objects.requireNonNull(pageable, "pageable"));
+        return productRepository.findAll(stablePageable(pageable));
     }
 
     @Transactional(readOnly = true)
     public Page<Product> findByCategory(Long categoryId, Pageable pageable) {
         Objects.requireNonNull(categoryId, "categoryId");
-        Pageable requiredPageable = Objects.requireNonNull(pageable, "pageable");
+        Pageable requiredPageable = stablePageable(pageable);
         ensureCategoryExists(categoryId);
         return productRepository.findByCategoryId(categoryId, requiredPageable);
     }
@@ -81,7 +83,7 @@ public class ProductService {
         String normalizedName = normalizeSearchName(name);
         return productRepository.findByNameContainingIgnoreCase(
                 normalizedName,
-                Objects.requireNonNull(pageable, "pageable")
+                stablePageable(pageable)
         );
     }
 
@@ -94,7 +96,15 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public Page<Product> findActive(Pageable pageable) {
-        return productRepository.findByActiveTrue(Objects.requireNonNull(pageable, "pageable"));
+        return productRepository.findByActiveTrue(stablePageable(pageable));
+    }
+
+    private static Pageable stablePageable(Pageable pageable) {
+        Objects.requireNonNull(pageable, "pageable");
+        if (pageable.getSort().getOrderFor("id") != null) return pageable;
+        Sort sort = pageable.getSort().and(Sort.by("id"));
+        return pageable.isPaged() ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort)
+                : Pageable.unpaged(sort);
     }
 
     @Transactional

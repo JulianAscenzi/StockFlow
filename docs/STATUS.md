@@ -1,5 +1,11 @@
 # Status
 
+## Cierre de auditoría de paginación — 2026-11-13
+
+Desde `f827289`, con árbol limpio. Los cuatro listados de productos (catálogo, búsqueda por nombre, categoría y activos) agregan ID ascendente como último desempate del orden solicitado, salvo que el cliente ya incluya ID, cuya dirección se conserva. Se mantienen filtros, tamaño y número de página; lookup conserva su orden estable existente. No es un snapshot entre peticiones: cambios concurrentes del conjunto pueden desplazar filas en paginación por offset.
+
+Validación: **41 pruebas específicas aprobadas** (`ProductServiceTest,ProductApiIntegrationTest`), incluyendo las cuatro rutas con nombres repetidos, recorrido completo de páginas, orden predeterminado y órdenes explícitos por nombre/ID descendentes. Se corrigió una referencia inexistente a un helper en la prueba antes de completar la validación. Luego **406 tests en `mvn test`, cero fallos/errores/omisiones**, **35/35 escenarios Playwright** en backend/PostgreSQL aislados y `npm run build` aprobado. `git diff --check` aprobado y diff completo revisado; sin migraciones, dependencias nuevas ni cambios de frontend. Los tres hallazgos de la auditoría quedan corregidos localmente; no se hizo push ni se atribuye una nueva CI remota a estos commits.
+
 ## Cierre de auditoría HTTP — 2026-11-13
 
 Desde `031b8d6`, con árbol limpio. `GlobalExceptionHandler` conserva status y headers de las excepciones HTTP de Spring que implementan `ErrorResponse`, en lugar de convertirlas en 500. Los casos 405/406/415 usan códigos propios y un mensaje público basado en el status, sin publicar el detalle interno de Spring; los handlers de dominio/validación y el fallback 500/503 existentes se conservan. Las regresiones MVC comprueban DELETE no soportado con `Allow`, Content-Type no soportado con `Accept`, y sanitización de un `ResponseStatusException`.

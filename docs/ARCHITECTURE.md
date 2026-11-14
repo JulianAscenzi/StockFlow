@@ -96,6 +96,8 @@ Hay pruebas unitarias de entidades, servicios, validación, mappers y controller
 
 ## Selección paginada de productos
 
+Los listados de catálogo, búsqueda por nombre, categoría y productos activos agregan `id ASC` como último desempate a la ordenación solicitada. Si el cliente ya ordena por ID, se conserva su dirección sin duplicarlo. Con el conjunto de datos sin cambios entre consultas, los nombres/precios repetidos no causan omisiones ni duplicados entre páginas. La paginación por offset no ofrece un snapshot entre solicitudes: altas o cambios concurrentes pueden desplazar filas.
+
 GET `/api/products/lookup?q=&sellable=false&page=0&size=20` busca subcadenas literales de nombre o SKU sin distinguir mayúsculas, con máximo 100 y orden nombre/ID. `locate` permite tratar `%` y `_` como texto sin convertirlos en comodines. PostgreSQL filtra y cuenta antes de paginar. Ventas usa `sellable=true` (activo y stock positivo); inventario incluye todos. El contrato `/search?name=` permanece intacto. El selector compartido cancela respuestas obsoletas y mantiene la selección y el carrito fuera de los resultados visibles. Los errores de refresco posteriores a una operación confirmada lo aclaran explícitamente.
 
 ## Métricas transaccionales y confiabilidad
