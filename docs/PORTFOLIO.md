@@ -5,14 +5,14 @@ Proyecto personal de portfolio, construido para demostrar backend engineering, c
 ## Versión corta — CV
 
 - Built a personal inventory and sales platform with Java 21/Spring Boot, React/TypeScript and PostgreSQL; implemented transactional stock updates, concurrency control and persistent sale idempotency.
-- Validated the application with 385 backend tests and 28 Playwright scenarios; built Docker/Helm labs with observability, SLO/error-budget alerts and documented recovery experiments.
+- Validated the application with 406 backend tests and 35 Playwright scenarios; built Docker/Helm labs with observability, SLO/error-budget alerts and documented recovery experiments.
 - Implemented a tested OCI-to-GHCR pipeline with SBOM/provenance and digest-based deployment; designed ECS Fargate/ALB/RDS infrastructure in Terraform with static validation and mock tests, intentionally without AWS provisioning.
 
 Las cantidades corresponden a los checkpoints de STATUS. Antes de enviar el CV, actualizar sólo si existe nueva evidencia y comprobar la disponibilidad de cualquier demo que se enlace.
 
 ## Versión LinkedIn
 
-StockFlow es mi proyecto personal de portfolio: una aplicación de inventario y ventas para pequeños comercios con Java 21/Spring Boot, React/TypeScript y PostgreSQL. Trabajé la consistencia entre ventas, stock e historial con transacciones, bloqueos ordenados e idempotencia persistente, respaldada por 385 tests backend y 28 escenarios Playwright registrados. Extendí el proyecto con Docker, Kubernetes local y Helm, observabilidad con Prometheus/Grafana, SLOs provisionales, error budget y experimentos documentados de recuperación y despliegue. La CI prueba el artefacto OCI antes de publicarlo en GHCR con SBOM/provenance y permite desplegar por digest. También comparé ECS, EKS y EC2, evalué costos y definí el diseño ECS Fargate/ALB/RDS en Terraform con validación estática y tests mock. AWS permanece sin provisionar deliberadamente para evitar costos continuos; la evidencia operativa corresponde a laboratorios locales y a CI/GHCR remotos.
+StockFlow es mi proyecto personal de portfolio: una aplicación de inventario y ventas para pequeños comercios con Java 21/Spring Boot, React/TypeScript y PostgreSQL. Trabajé la consistencia entre ventas, stock e historial con transacciones, bloqueos ordenados e idempotencia persistente, respaldada por 406 tests backend y 35 escenarios Playwright registrados. Extendí el proyecto con Docker, Kubernetes local y Helm, observabilidad con Prometheus/Grafana, SLOs provisionales, error budget y experimentos documentados de recuperación y despliegue. La CI prueba el artefacto OCI antes de publicarlo en GHCR con SBOM/provenance y permite desplegar por digest. También comparé ECS, EKS y EC2, evalué costos y definí el diseño ECS Fargate/ALB/RDS en Terraform con validación estática y tests mock. AWS permanece sin provisionar deliberadamente para evitar costos continuos; la evidencia operativa corresponde a laboratorios locales y a CI/GHCR remotos.
 
 ## Versión entrevista — 60–90 segundos
 

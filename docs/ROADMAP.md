@@ -11,7 +11,7 @@ StockFlow está completo dentro de su alcance de proyecto personal de portfolio.
 - [x] Administrador inicial BCrypt/JWT, recuperación de sesión y confirmación idempotente persistente.
 - [x] Ajustes manuales de inventario idempotentes y recuperación de respuestas inciertas al navegar/recargar.
 - [x] Auditoría funcional y regresiones de estado JPA obsoleto, stock concurrente, precisión monetaria y respuestas tardías de UI.
-- [x] Testing por capas con PostgreSQL real/Testcontainers y Playwright aislado; evidencia actual de 397 tests backend y 35 escenarios de navegador.
+- [x] Testing por capas con PostgreSQL real/Testcontainers y Playwright aislado; evidencia actual de 406 tests backend y 35 escenarios de navegador.
 - [x] Demo Vercel/Render con datos ficticios y límites documentados; reproducción local independiente de su disponibilidad.
 - [x] Docker/Compose: imágenes no root, persistencia, red interna y configuración externa.
 - [x] Operación: liveness/readiness, graceful shutdown, request ID, logs JSON y recuperación DB.
@@ -22,7 +22,7 @@ StockFlow está completo dentro de su alcance de proyecto personal de portfolio.
 - [x] CI/GHCR: tests, build OCI, smoke del artefacto exacto, publicación SHA, SBOM/provenance y consumo por digest desde kind. Validación remota registrada en el checkpoint 18de2c0.
 - [x] Cloud Architecture / IaC: ADR ECS/EKS/EC2, costos evaluados, Terraform ECS Fargate/ALB/RDS implementado, validación estática y siete tests mock. Implementación en 4367a2d; sin plan real ni recursos AWS.
 
-El cierre documental de portfolio se prepara en el working tree: README, mapa documental, CV/entrevista, checklist de capturas y borrador de release. No implica un commit, tag ni release publicados.
+El cierre documental inicial está registrado en `29e9b2b`. La auditoría posterior quedó corregida en `031b8d6`, `f827289` y `3699a59`, con suites locales verificadas. README, material de portfolio y borrador de release se actualizan con esa evidencia. Tag, release y CI remota del candidato permanecen pendientes de publicación autorizada.
 
 ## Optional future work
 

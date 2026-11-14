@@ -1,5 +1,13 @@
 # Status
 
+## Preparación de portfolio actualizada — 2026-11-13
+
+Desde `3699a59`, con árbol inicialmente limpio. Los tres hallazgos de la auditoría están corregidos en `031b8d6` (inventario idempotente), `f827289` (status/headers HTTP) y `3699a59` (paginación estable). Evidencia local vigente del código funcional: **406 tests backend, 35 escenarios Playwright y build frontend aprobados**. README, ROADMAP, material de CV/entrevista y borrador de release se sincronizan con esos resultados, sin atribuirlos a GitHub Actions.
+
+Se incorporan tres capturas reales: resumen, historial y detalle de venta. Chromium 1440×960, backend real, PostgreSQL 17/Testcontainers aislado, datos ficticios cargados por HTTP. Escenario de captura independiente aprobado, sin errores JavaScript de página; se revisaron las imágenes visualmente. La instrumentación temporal de captura (spec y filtro del runner) se retiró; no hay cambios de aplicación ni de pruebas permanentes en este checkpoint. Contexto y cifras: [inventario de imágenes](images/README.md). La captura anterior se conserva como histórica.
+
+El borrador de v1.0.0 identifica código funcional y validación local; conserva como pendientes el versionado de componentes, push autorizado, CI del SHA final, ambos digests y tag/release. No se publicaron imágenes nuevas, releases, tags, mensajes de LinkedIn ni cambios cloud. Sin AWS, backups ni ampliación funcional: la prioridad elegida es presentar un portfolio verificable. Revisión de enlaces Markdown e imágenes locales, `git diff --check` y revisión completa del diff documental antes del commit. Los resultados de aplicación anteriores siguen vigentes porque este checkpoint sólo cambia documentación y capturas.
+
 ## Cierre de auditoría de paginación — 2026-11-13
 
 Desde `f827289`, con árbol limpio. Los cuatro listados de productos (catálogo, búsqueda por nombre, categoría y activos) agregan ID ascendente como último desempate del orden solicitado, salvo que el cliente ya incluya ID, cuya dirección se conserva. Se mantienen filtros, tamaño y número de página; lookup conserva su orden estable existente. No es un snapshot entre peticiones: cambios concurrentes del conjunto pueden desplazar filas en paginación por offset.
@@ -28,7 +36,7 @@ Validación actual:
 
 Docker respondió al ejecutar Maven como el mismo usuario mediante `sudo -n -u juliana`, que actualiza sus grupos suplementarios existentes. No se modificaron permisos del socket, usuarios ni configuración del daemon. Sólo se usaron bases aisladas de Testcontainers; sin despliegue, push ni cambios cloud. El estado de portfolio histórico de abajo se conserva como evidencia de su checkpoint.
 
-## Estado actual — portfolio (2026-10-04)
+## Estado base del portfolio (2026-10-04)
 
 Producto y alcance de ingeniería completados hasta Etapa 8: backend modular, frontend, autenticación, concurrencia/idempotencia, Compose, observabilidad/SRE, kind, Helm, CI/GHCR y diseño AWS/Terraform. [ROADMAP](ROADMAP.md) separa lo completado de las mejoras opcionales. AWS está diseñado e implementado como IaC, con validación estática y tests mock; **no está desplegado ni se ejecutó un plan real contra AWS**. No provisionarlo permanentemente evita costos cloud innecesarios y no bloquea el portfolio.
 
