@@ -1,5 +1,15 @@
 # Status
 
+## Candidato v1.0.0 versionado — 2026-11-13
+
+Desde `fe5fa25`, con árbol limpio. El usuario autorizó alinear versiones, push, CI, tag y publicación de release. Backend y frontend pasan a `1.0.0` (incluido el lockfile raíz); Chart Helm `0.2.1` con `appVersion: 1.0.0`. No cambian dependencias, reglas de negocio, imágenes base ni migraciones. Helm 3.19.0 se descargó en `/tmp` y se verificó contra el checksum oficial, sin instalación global.
+
+Validación del candidato: **53 pruebas específicas**, luego **406 tests backend, cero fallos/errores/omisiones**, **35/35 escenarios Playwright**, `npm run build`, `helm lint` y **12/12 tests de scripts/Chart** aprobados. `git diff --check`, coherencia de versiones/lockfile y revisión de diff aprobados antes del commit. La evidencia local anterior se conserva; esta validación se repitió con las versiones de release.
+
+Comprobación remota inicial: GitHub `main` coincide con `fe5fa25`, sin tag `v1.0.0` ni releases. El conector permite leer CI pero carece de creación de releases; Git no tiene credenciales en esta sesión (`git push --dry-run` falla sin modificar el remoto), y gh no está instalado. El usuario eligió configurar Git/GitHub desde su terminal. La publicación queda pendiente de esa autenticación; no se crearon tags, releases ni nuevas imágenes desde este checkpoint. No se pidió ni imprimió ningún token.
+
+Demo read-only: Vercel HTTP 200; API Render sin respuesta tras dos intentos de 45 segundos. No se confirmó la causa ni el flujo completo, y no se recrearon servicios/bases ni se aprovisionó infraestructura. DEPLOYMENT y release notes lo distinguen de la reproducción local comprobada.
+
 ## Preparación de portfolio actualizada — 2026-11-13
 
 Desde `3699a59`, con árbol inicialmente limpio. Los tres hallazgos de la auditoría están corregidos en `031b8d6` (inventario idempotente), `f827289` (status/headers HTTP) y `3699a59` (paginación estable). Evidencia local vigente del código funcional: **406 tests backend, 35 escenarios Playwright y build frontend aprobados**. README, ROADMAP, material de CV/entrevista y borrador de release se sincronizan con esos resultados, sin atribuirlos a GitHub Actions.

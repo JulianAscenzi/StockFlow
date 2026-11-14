@@ -1,6 +1,6 @@
-# StockFlow v1.0.0 — borrador de release
+# StockFlow v1.0.0
 
-**Estado: candidato local para revisión; no publicado.** Código funcional validado: `3699a59` (2026-11-13). Este cierre no crea un tag v1.0.0 ni publica una release. La versión propuesta corresponde al alcance del portfolio; falta alinear las versiones de componentes y validar CI remota del SHA final antes de etiquetar.
+**Estado: candidato versionado para v1.0.0; publicación autorizada.** Backend y frontend `1.0.0`; Chart Helm `0.2.1` con `appVersion: 1.0.0`. El candidato pasó validación local el 2026-11-13. Antes de declarar la release publicada se deben verificar CI del SHA final, tag y las dos imágenes remotas.
 
 StockFlow reúne una aplicación de inventario y ventas utilizable en un laboratorio reproducible con evidencia de consistencia, recuperación y entrega de artefactos. Es un proyecto personal; no promete operación empresarial ni SLA comercial.
 
@@ -15,7 +15,7 @@ StockFlow reúne una aplicación de inventario y ventas utilizable en un laborat
 
 ## Testing y reproducción
 
-Evidencia local de `3699a59`: **406 tests backend y 35 escenarios Playwright**, todos aprobados el 2026-11-13, más build frontend aprobado. Las pruebas usan PostgreSQL real/Testcontainers y cubren contratos MVC, rollback, concurrencia y flujos de navegador aislados. Compose inicia aplicación y observabilidad con configuración externa, imágenes no root y persistencia local. [Guía local](LOCAL_DEVELOPMENT.md).
+Validación local repetida con las versiones de release: **406 tests backend y 35 escenarios Playwright**, todos aprobados el 2026-11-13, más build frontend, lint Helm y doce tests de scripts/Chart aprobados. Las pruebas usan PostgreSQL real/Testcontainers y cubren contratos MVC, rollback, concurrencia y flujos de navegador aislados. Compose inicia aplicación y observabilidad con configuración externa, imágenes no root y persistencia local. [Guía local](LOCAL_DEVELOPMENT.md).
 
 ## Observabilidad y SRE
 
@@ -35,20 +35,20 @@ ADR comparando ECS, EKS y EC2, estimaciones de costos y Terraform para ECS Farga
 
 ## Límites conocidos
 
-Frontend Vite en contenedor para laboratorio; demo gratuita con datos ficticios y persistencia limitada. Sin backups automatizados/restore local, NetworkPolicy efectiva, TLS de laboratorio, scanner de vulnerabilidades, firma independiente ni evidencia de 30 días de SLO. AWS diseñado no representa operación cloud. Estas extensiones están separadas como [Optional future work](ROADMAP.md#optional-future-work).
+Frontend Vite en contenedor para laboratorio; demo gratuita con datos ficticios y persistencia limitada. Comprobación del 2026-11-13: frontend HTTP 200, API sin respuesta tras dos intentos de 45 segundos; la demo completa no está validada y se recomienda la reproducción local. Sin backups automatizados/restore local, NetworkPolicy efectiva, TLS de laboratorio, scanner de vulnerabilidades, firma independiente ni evidencia de 30 días de SLO. AWS diseñado no representa operación cloud. Estas extensiones están separadas como [Optional future work](ROADMAP.md#optional-future-work).
 
 ## Release readiness
 
 | Criterio | Estado comprobado | Paso antes de publicar |
 | --- | --- | --- |
 | Auditoría funcional | Tres hallazgos corregidos: inventario `031b8d6`, HTTP `f827289`, paginación `3699a59` | Mantener sus regresiones en CI. |
-| Tests locales | 406 backend / 35 navegador y build frontend aprobados para el código funcional `3699a59` | Confirmar CI del SHA final, incluido el cierre documental. |
+| Tests locales | 406 backend / 35 navegador y build frontend aprobados con las versiones de release | Confirmar CI del SHA final, incluido el cierre documental. |
 | CI e imágenes | La evidencia GHCR remota de STATUS sigue siendo histórica; no se hizo push de estos cambios | Autorizar push y comprobar tests, smoke, publicación y ambos digests del candidato. |
 | Árbol y docs | Correcciones funcionales en commits separados; README, presentación y este borrador actualizados | Confirmar árbol limpio tras el commit documental y revisar sus enlaces. |
 | Secrets | Revisión de los diffs locales y capturas sin credenciales reales expuestas | Revisar también alertas GitHub Security autenticadas; no se accedió a ellas. |
-| Versionado | Backend 0.0.1-SNAPSHOT, frontend 0.1.0, Chart 0.2.0 / appVersion 0.0.1-SNAPSHOT | Alinear backend/frontend y appVersion con la versión de release autorizada. El Chart mantiene su ciclo propio. |
+| Versionado | Backend/frontend 1.0.0; Chart 0.2.1 / appVersion 1.0.0; dependencias sin cambios | Verificar estas versiones en el SHA que se etiquete. |
 | Capturas | Resumen, historial y detalle actualizados con datos ficticios en instancia aislada | Usar el contexto/commit registrados en el [inventario de imágenes](images/README.md); no atribuirlas a la demo pública. |
 | Infraestructura | Compose/kind/GHCR con evidencia histórica; AWS diseñado sin provisionar | No se requiere desplegar AWS para presentar el portfolio. |
 | Licencia | MIT existente | Mantener atribución. |
 
-Esta preparación incluye commits locales según el flujo del repositorio. Push, versionado de release, tag y publicación requieren autorización explícita posterior. Tras autorizar y ejecutar esos pasos, verificar CI del SHA final, el flujo semver y los dos digests antes de afirmar que v1.0.0 está publicada.
+La publicación está autorizada. Antes de anunciar v1.0.0, comprobar CI del SHA final, tag semántico y los dos digests publicados. La validación local no sustituye estas comprobaciones remotas.

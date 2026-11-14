@@ -9,7 +9,7 @@ La evidencia del despliegue es histórica; comprobar los enlaces antes de una pr
 - [Frontend Vercel](https://frontend-beta-plum-15.vercel.app/).
 - [Health de la API Render](https://stockflow-api-0fan.onrender.com/actuator/health).
 
-URLs conservadas del README anterior; su disponibilidad no se volvió a comprobar en este cierre documental. La captura de producto está en [images](images/README.md).
+Comprobación read-only del 2026-11-13: Vercel respondió HTTP 200; el health de Render no respondió en dos intentos de 45 segundos, sin status HTTP recibido. No se confirmó la demo de extremo a extremo ni la causa del fallo de API. Antes de enlazarla como demo funcional en el CV, verificar su recuperación. La reproducción local y las [capturas reales](images/README.md) siguen disponibles para evaluar el producto. No se modificó ni recreó infraestructura pública.
 
 ## Límites intencionales
 
